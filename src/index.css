@@ -2,95 +2,100 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
-
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
+    
+    /* Healthcare teal/green theme */
+    --primary: 174 73% 35%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 174 50% 50%;
+    --primary-dark: 174 73% 25%;
+    
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
+    --accent: 174 30% 90%;
+    --accent-foreground: 174 73% 25%;
+    
+    /* Alert colors */
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
+    --destructive-foreground: 0 0% 100%;
+    --warning: 45 93% 58%;
+    --warning-foreground: 0 0% 100%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --ring: 174 73% 35%;
+    --radius: 0.75rem;
+    
+    /* Healthcare specific colors */
+    --health-primary: 174 73% 35%;
+    --health-light: 174 50% 90%;
+    --health-accent: 184 65% 59%;
+    --health-muted: 220 14% 96%;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.1), 0 2px 4px -2px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
+    
+    --chart-1: 174 73% 35%;
+    --chart-2: 184 65% 59%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 45 93% 58%;
+    --chart-5: 142 76% 36%;
   }
 
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
+    
+    --primary: 174 50% 50%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --primary-light: 174 50% 60%;
+    --primary-dark: 174 73% 25%;
+    
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-
+    
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
+    --warning: 45 93% 58%;
+    --warning-foreground: 222.2 84% 4.9%;
+    --success: 142 76% 36%;
+    --success-foreground: 210 40% 98%;
+    
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --ring: 174 50% 50%;
+    
+    --health-primary: 174 50% 50%;
+    --health-light: 174 30% 20%;
+    --health-accent: 184 65% 59%;
+    --health-muted: 217.2 32.6% 17.5%;
+    
+    --chart-1: 174 50% 50%;
+    --chart-2: 184 65% 59%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 45 93% 58%;
+    --chart-5: 142 76% 36%;
   }
 }
 
@@ -98,8 +103,51 @@ All colors MUST be HSL.
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
+  }
+  
+  /* Mobile-first responsive typography */
+  .text-mobile-sm { font-size: 14px; line-height: 20px; }
+  .text-mobile-base { font-size: 16px; line-height: 24px; }
+  .text-mobile-lg { font-size: 18px; line-height: 28px; }
+  .text-mobile-xl { font-size: 20px; line-height: 28px; }
+  .text-mobile-2xl { font-size: 24px; line-height: 32px; }
+  .text-mobile-3xl { font-size: 30px; line-height: 36px; }
+}
+
+@layer components {
+  /* Healthcare themed components */
+  .btn-health {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+    @apply rounded-xl px-6 py-3 min-h-[44px] font-medium;
+    @apply transition-colors duration-200;
+    @apply shadow-md hover:shadow-lg;
+  }
+  
+  .btn-health-outline {
+    @apply border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground;
+    @apply rounded-xl px-6 py-3 min-h-[44px] font-medium;
+    @apply transition-colors duration-200;
+  }
+  
+  .card-health {
+    @apply bg-card rounded-xl p-4 shadow-md border border-border/50;
+  }
+  
+  .floating-action-btn {
+    @apply fixed bottom-6 right-6 z-50;
+    @apply bg-primary text-primary-foreground;
+    @apply w-14 h-14 rounded-full shadow-lg;
+    @apply flex items-center justify-center;
+    @apply hover:bg-primary/90 transition-colors duration-200;
+  }
+  
+  .back-btn {
+    @apply absolute top-4 left-4 z-10;
+    @apply w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm;
+    @apply flex items-center justify-center;
+    @apply text-foreground hover:bg-background;
+    @apply transition-colors duration-200;
   }
 }

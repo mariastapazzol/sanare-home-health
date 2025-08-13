@@ -14,7 +14,263 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      dependentes: {
+        Row: {
+          created_at: string
+          id: string
+          nascimento: string | null
+          nome: string
+          observacoes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nascimento?: string | null
+          nome: string
+          observacoes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nascimento?: string | null
+          nome?: string
+          observacoes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      lembretes: {
+        Row: {
+          created_at: string
+          datas: Json
+          dependente_id: string | null
+          descricao: string | null
+          horarios: Json
+          icone: string
+          id: string
+          nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          datas?: Json
+          dependente_id?: string | null
+          descricao?: string | null
+          horarios?: Json
+          icone: string
+          id?: string
+          nome: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          datas?: Json
+          dependente_id?: string | null
+          descricao?: string | null
+          horarios?: Json
+          icone?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lembretes_dependente_id_fkey"
+            columns: ["dependente_id"]
+            isOneToOne: false
+            referencedRelation: "dependentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medicamentos: {
+        Row: {
+          alerta_minimo: number
+          created_at: string
+          data_inicio: string
+          dependente_id: string | null
+          dosagem: string
+          frequencia: string
+          horarios: Json
+          id: string
+          imagem_url: string | null
+          nome: string
+          precisa_receita: boolean
+          quantidade_atual: number
+          quantidade_por_dose: number
+          quantidade_por_embalagem: number
+          unidade_dose: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alerta_minimo?: number
+          created_at?: string
+          data_inicio?: string
+          dependente_id?: string | null
+          dosagem: string
+          frequencia: string
+          horarios?: Json
+          id?: string
+          imagem_url?: string | null
+          nome: string
+          precisa_receita?: boolean
+          quantidade_atual?: number
+          quantidade_por_dose: number
+          quantidade_por_embalagem: number
+          unidade_dose: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alerta_minimo?: number
+          created_at?: string
+          data_inicio?: string
+          dependente_id?: string | null
+          dosagem?: string
+          frequencia?: string
+          horarios?: Json
+          id?: string
+          imagem_url?: string | null
+          nome?: string
+          precisa_receita?: boolean
+          quantidade_atual?: number
+          quantidade_por_dose?: number
+          quantidade_por_embalagem?: number
+          unidade_dose?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medicamentos_dependente_id_fkey"
+            columns: ["dependente_id"]
+            isOneToOne: false
+            referencedRelation: "dependentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      movimentacoes_estoque: {
+        Row: {
+          created_at: string
+          data_hora: string
+          id: string
+          medicamento_id: string
+          nota: string | null
+          quantidade: number
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_hora?: string
+          id?: string
+          medicamento_id: string
+          nota?: string | null
+          quantidade: number
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_hora?: string
+          id?: string
+          medicamento_id?: string
+          nota?: string | null
+          quantidade?: number
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_estoque_medicamento_id_fkey"
+            columns: ["medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "medicamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      posologias: {
+        Row: {
+          created_at: string
+          duracao_tipo: string
+          duracao_valor: number
+          frequencia: string
+          horarios: Json
+          id: string
+          medicamento_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duracao_tipo: string
+          duracao_valor: number
+          frequencia: string
+          horarios?: Json
+          id?: string
+          medicamento_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duracao_tipo?: string
+          duracao_valor?: number
+          frequencia?: string
+          horarios?: Json
+          id?: string
+          medicamento_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posologias_medicamento_id_fkey"
+            columns: ["medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "medicamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          telefone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
