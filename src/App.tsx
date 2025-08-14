@@ -9,6 +9,8 @@ import Welcome from "./pages/Welcome";
 import Auth from "./pages/Auth";
 import AuthSignup from "./pages/AuthSignup";
 import AuthSignupPersonal from "./pages/AuthSignupPersonal";
+import AuthSignupCaregiver from "./pages/AuthSignupCaregiver";
+import AuthSignupPatient from "./pages/AuthSignupPatient";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 
@@ -26,6 +28,8 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/signup" element={<AuthSignup />} />
             <Route path="/auth/signup/personal" element={<AuthSignupPersonal />} />
+            <Route path="/auth/signup/caregiver" element={<AuthSignupCaregiver />} />
+            <Route path="/auth/signup/patient" element={<AuthSignupPatient />} />
             <Route path="/home" element={
               <ProtectedRoute>
                 <Home />
