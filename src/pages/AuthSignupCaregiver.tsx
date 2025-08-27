@@ -59,6 +59,7 @@ const AuthSignupCaregiver = () => {
     setLoading(true);
     
     try {
+      // Etapa 1: Criar conta do cuidador no Auth
       const { error: authError } = await signUp(caregiverData.email, caregiverData.password, caregiverData.nome);
       
       if (authError) {
@@ -67,10 +68,14 @@ const AuthSignupCaregiver = () => {
           description: authError.message,
           variant: "destructive"
         });
+        setLoading(false);
         return;
       }
 
-      // Get current user to save caregiver data
+      // Aguardar um pouco para garantir que o usuário foi criado
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Obter o usuário atual
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       
       if (!currentUser) {
@@ -79,10 +84,11 @@ const AuthSignupCaregiver = () => {
           description: "Usuário não encontrado após cadastro",
           variant: "destructive"
         });
+        setLoading(false);
         return;
       }
 
-      // Save caregiver data to cuidadores table
+      // Etapa 1: Salvar dados do cuidador na tabela cuidadores
       const { data: caregiverRecord, error: caregiverError } = await supabase
         .from('cuidadores')
         .insert({
@@ -99,16 +105,23 @@ const AuthSignupCaregiver = () => {
           description: caregiverError.message,
           variant: "destructive"
         });
+        setLoading(false);
         return;
       }
 
+      // Guardar o ID do cuidador para a próxima etapa
       setCaregiverId(caregiverRecord.id);
+      
       toast({
-        title: "Cuidador cadastrado!",
-        description: "Agora cadastre o paciente"
+        title: "Etapa 1 concluída!",
+        description: "Agora vamos cadastrar o paciente na Etapa 2"
       });
+      
+      // Avançar para a Etapa 2
       setCurrentStep('patient');
+      
     } catch (error) {
+      console.error('Erro no cadastro do cuidador:', error);
       toast({
         title: "Erro inesperado",
         description: "Tente novamente mais tarde.",
@@ -125,7 +138,7 @@ const AuthSignupCaregiver = () => {
     if (!caregiverId) {
       toast({
         title: "Erro",
-        description: "ID do cuidador não encontrado",
+        description: "ID do cuidador não encontrado. Por favor, refaça o cadastro.",
         variant: "destructive"
       });
       return;
@@ -143,13 +156,14 @@ const AuthSignupCaregiver = () => {
     setLoading(true);
     
     try {
-      // Create a new user for the patient
+      // Etapa 2: Criar nova conta do paciente no Auth
       const { data: patientAuth, error: authError } = await supabase.auth.signUp({
-        email: `${patientData.username}@temp.com`, // Temporary email format
+        email: `${patientData.username}@paciente.temp.com`, // Email temporário único
         password: patientData.password,
         options: {
           data: {
-            nome: patientData.nome
+            nome: patientData.nome,
+            tipo_usuario: 'paciente_dependente'
           }
         }
       });
@@ -160,6 +174,7 @@ const AuthSignupCaregiver = () => {
           description: authError.message,
           variant: "destructive"
         });
+        setLoading(false);
         return;
       }
 
@@ -169,12 +184,13 @@ const AuthSignupCaregiver = () => {
           description: "Usuário do paciente não foi criado",
           variant: "destructive"
         });
+        setLoading(false);
         return;
       }
 
-      // Save patient data to pacientes_dependentes table
+      // Etapa 2: Salvar dados do paciente na tabela pacientes_dependentes
       const { error: patientError } = await supabase
-        .from('pacientes_dependentes')
+        .from('pacientes_dependentes')  
         .insert({
           user_id: patientAuth.user.id,
           cuidador_id: caregiverId,
@@ -188,18 +204,22 @@ const AuthSignupCaregiver = () => {
           description: patientError.message,
           variant: "destructive"
         });
+        setLoading(false);
         return;
       }
 
+      // Ambas as contas foram criadas e salvas com sucesso
       toast({
-        title: "Paciente cadastrado com sucesso!",
-        description: "Redirecionando para a página inicial..."
+        title: "Cadastro completo!",
+        description: "Cuidador e paciente cadastrados com sucesso. Redirecionando..."
       });
       
       setTimeout(() => {
         navigate('/home');
-      }, 1500);
+      }, 2000);
+      
     } catch (error) {
+      console.error('Erro no cadastro do paciente:', error);
       toast({
         title: "Erro inesperado",
         description: "Tente novamente mais tarde.",
