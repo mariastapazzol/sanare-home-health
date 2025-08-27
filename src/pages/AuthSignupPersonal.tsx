@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { ArrowLeft, Heart } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { supabase } from '@/integrations/supabase/client';
 
 const AuthSignupPersonal = () => {
   const navigate = useNavigate();
@@ -29,32 +28,10 @@ const AuthSignupPersonal = () => {
     
     setLoading(true);
     
-    try {
-      const { error: authError } = await signUp(formData.email, formData.password, formData.nome);
-      
-      if (authError) {
-        console.error('Auth error:', authError);
-        setLoading(false);
-        return;
-      }
-
-      // Get current user to save autonomous patient data
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      
-      if (currentUser) {
-        // Save autonomous patient data to pacientes_autonomos table
-        await supabase
-          .from('pacientes_autonomos')
-          .insert({
-            user_id: currentUser.id,
-            nome: formData.nome,
-            nome_usuario: formData.username
-          });
-      }
-
-      navigate('/home');
-    } catch (error) {
-      console.error('Signup error:', error);
+    const { error } = await signUp(formData.email, formData.password, formData.nome);
+    
+    if (!error) {
+      navigate('/auth');
     }
     
     setLoading(false);

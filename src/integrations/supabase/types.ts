@@ -14,34 +14,34 @@ export type Database = {
   }
   public: {
     Tables: {
-      cuidadores: {
+      dependentes: {
         Row: {
           created_at: string
           id: string
+          nascimento: string | null
           nome: string
-          nome_usuario: string
+          nome_usuario: string | null
           observacoes: string | null
-          telefone: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          nascimento?: string | null
           nome: string
-          nome_usuario: string
+          nome_usuario?: string | null
           observacoes?: string | null
-          telefone?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          nascimento?: string | null
           nome?: string
-          nome_usuario?: string
+          nome_usuario?: string | null
           observacoes?: string | null
-          telefone?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -84,7 +84,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "lembretes_dependente_id_fkey"
+            columns: ["dependente_id"]
+            isOneToOne: false
+            referencedRelation: "dependentes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       medicamentos: {
         Row: {
@@ -144,7 +152,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "medicamentos_dependente_id_fkey"
+            columns: ["dependente_id"]
+            isOneToOne: false
+            referencedRelation: "dependentes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       movimentacoes_estoque: {
         Row: {
@@ -183,83 +199,6 @@ export type Database = {
             columns: ["medicamento_id"]
             isOneToOne: false
             referencedRelation: "medicamentos"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      pacientes_autonomos: {
-        Row: {
-          created_at: string
-          id: string
-          nascimento: string | null
-          nome: string
-          nome_usuario: string
-          observacoes: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          nascimento?: string | null
-          nome: string
-          nome_usuario: string
-          observacoes?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          nascimento?: string | null
-          nome?: string
-          nome_usuario?: string
-          observacoes?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      pacientes_dependentes: {
-        Row: {
-          created_at: string
-          cuidador_id: string
-          id: string
-          nascimento: string | null
-          nome: string
-          nome_usuario: string
-          observacoes: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          cuidador_id: string
-          id?: string
-          nascimento?: string | null
-          nome: string
-          nome_usuario: string
-          observacoes?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          cuidador_id?: string
-          id?: string
-          nascimento?: string | null
-          nome?: string
-          nome_usuario?: string
-          observacoes?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pacientes_dependentes_cuidador_id_fkey"
-            columns: ["cuidador_id"]
-            isOneToOne: false
-            referencedRelation: "cuidadores"
             referencedColumns: ["id"]
           },
         ]
