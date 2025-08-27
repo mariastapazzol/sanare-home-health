@@ -30,8 +30,12 @@ const AuthSignupCaregiver = () => {
   
   const [patientData, setPatientData] = useState({
     nome: '',
-    username: ''
+    username: '',
+    password: '',
+    confirmPassword: ''
   });
+  
+  const [caregiverId, setCaregiverId] = useState<string | null>(null);
 
   useEffect(() => {
     // Check if user is already authenticated
@@ -55,21 +59,55 @@ const AuthSignupCaregiver = () => {
     setLoading(true);
     
     try {
-      const { error } = await signUp(caregiverData.email, caregiverData.password, caregiverData.nome);
+      const { error: authError } = await signUp(caregiverData.email, caregiverData.password, caregiverData.nome);
       
-      if (error) {
+      if (authError) {
         toast({
           title: "Erro no cadastro",
-          description: error.message,
+          description: authError.message,
           variant: "destructive"
         });
-      } else {
-        toast({
-          title: "Cuidador cadastrado!",
-          description: "Agora cadastre o paciente"
-        });
-        setCurrentStep('patient');
+        return;
       }
+
+      // Get current user to save caregiver data
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
+      if (!currentUser) {
+        toast({
+          title: "Erro",
+          description: "Usuário não encontrado após cadastro",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Save caregiver data to cuidadores table
+      const { data: caregiverRecord, error: caregiverError } = await supabase
+        .from('cuidadores')
+        .insert({
+          user_id: currentUser.id,
+          nome: caregiverData.nome,
+          nome_usuario: caregiverData.username
+        })
+        .select()
+        .single();
+
+      if (caregiverError) {
+        toast({
+          title: "Erro ao salvar dados do cuidador",
+          description: caregiverError.message,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setCaregiverId(caregiverRecord.id);
+      toast({
+        title: "Cuidador cadastrado!",
+        description: "Agora cadastre o paciente"
+      });
+      setCurrentStep('patient');
     } catch (error) {
       toast({
         title: "Erro inesperado",
@@ -84,10 +122,19 @@ const AuthSignupCaregiver = () => {
   const handlePatientSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) {
+    if (!caregiverId) {
       toast({
         title: "Erro",
-        description: "Usuário não autenticado",
+        description: "ID do cuidador não encontrado",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (patientData.password !== patientData.confirmPassword) {
+      toast({
+        title: "Erro",
+        description: "As senhas não coincidem",
         variant: "destructive"
       });
       return;
@@ -96,31 +143,62 @@ const AuthSignupCaregiver = () => {
     setLoading(true);
     
     try {
-      const { error } = await supabase
-        .from('dependentes')
-        .insert({
-          user_id: user.id,
-          nome: patientData.nome,
-          nome_usuario: patientData.username,
-          observacoes: null
-        });
+      // Create a new user for the patient
+      const { data: patientAuth, error: authError } = await supabase.auth.signUp({
+        email: `${patientData.username}@temp.com`, // Temporary email format
+        password: patientData.password,
+        options: {
+          data: {
+            nome: patientData.nome
+          }
+        }
+      });
 
-      if (error) {
+      if (authError) {
         toast({
-          title: "Erro ao cadastrar paciente",
-          description: error.message,
+          title: "Erro ao criar conta do paciente",
+          description: authError.message,
           variant: "destructive"
         });
-      } else {
-        toast({
-          title: "Paciente cadastrado com sucesso!",
-          description: "Redirecionando para a página inicial..."
-        });
-        
-        setTimeout(() => {
-          navigate('/home');
-        }, 1500);
+        return;
       }
+
+      if (!patientAuth.user) {
+        toast({
+          title: "Erro",
+          description: "Usuário do paciente não foi criado",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Save patient data to pacientes_dependentes table
+      const { error: patientError } = await supabase
+        .from('pacientes_dependentes')
+        .insert({
+          user_id: patientAuth.user.id,
+          cuidador_id: caregiverId,
+          nome: patientData.nome,
+          nome_usuario: patientData.username
+        });
+
+      if (patientError) {
+        toast({
+          title: "Erro ao cadastrar paciente",
+          description: patientError.message,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Paciente cadastrado com sucesso!",
+        description: "Redirecionando para a página inicial..."
+      });
+      
+      setTimeout(() => {
+        navigate('/home');
+      }, 1500);
     } catch (error) {
       toast({
         title: "Erro inesperado",
@@ -292,6 +370,35 @@ const AuthSignupCaregiver = () => {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="patientPassword">Senha do paciente</Label>
+                <Input
+                  id="patientPassword"
+                  type="password"
+                  value={patientData.password}
+                  onChange={(e) => handlePatientChange('password', e.target.value)}
+                  placeholder="Senha do paciente"
+                  required
+                  className="min-h-[44px]"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="patientConfirmPassword">Confirmar senha</Label>
+                <Input
+                  id="patientConfirmPassword"
+                  type="password"
+                  value={patientData.confirmPassword}
+                  onChange={(e) => handlePatientChange('confirmPassword', e.target.value)}
+                  placeholder="Confirme a senha"
+                  required
+                  className="min-h-[44px]"
+                />
+                {patientData.password !== patientData.confirmPassword && patientData.confirmPassword && (
+                  <p className="text-sm text-destructive">As senhas não coincidem</p>
+                )}
+              </div>
+
               <div className="flex space-x-4">
                 <Button 
                   type="button"
@@ -305,7 +412,7 @@ const AuthSignupCaregiver = () => {
                 <Button 
                   type="submit" 
                   className="btn-health flex-1"
-                  disabled={loading}
+                  disabled={loading || patientData.password !== patientData.confirmPassword}
                 >
                   {loading ? 'Salvando...' : 'Concluir'}
                 </Button>
