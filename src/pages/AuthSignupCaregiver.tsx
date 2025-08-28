@@ -30,7 +30,9 @@ const AuthSignupCaregiver = () => {
   
   const [patientData, setPatientData] = useState({
     nome: '',
-    username: ''
+    username: '',
+    password: '',
+    confirmPassword: ''
   });
 
   useEffect(() => {
@@ -64,11 +66,29 @@ const AuthSignupCaregiver = () => {
           variant: "destructive"
         });
       } else {
-        toast({
-          title: "Cuidador cadastrado!",
-          description: "Agora cadastre o paciente"
-        });
-        setCurrentStep('patient');
+        // Salvar dados do cuidador na tabela cuidadores
+        const { error: caregiverError } = await supabase
+          .from('cuidadores')
+          .insert({
+            user_id: user?.id,
+            nome: caregiverData.nome,
+            nome_usuario: caregiverData.username,
+            observacoes: null
+          });
+
+        if (caregiverError) {
+          toast({
+            title: "Erro ao salvar dados do cuidador",
+            description: caregiverError.message,
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Cuidador cadastrado!",
+            description: "Agora cadastre o paciente"
+          });
+          setCurrentStep('patient');
+        }
       }
     } catch (error) {
       toast({
@@ -87,7 +107,16 @@ const AuthSignupCaregiver = () => {
     if (!user) {
       toast({
         title: "Erro",
-        description: "Usuário não autenticado",
+        description: "Cuidador não autenticado",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (patientData.password !== patientData.confirmPassword) {
+      toast({
+        title: "Erro",
+        description: "As senhas não coincidem",
         variant: "destructive"
       });
       return;
@@ -96,19 +125,59 @@ const AuthSignupCaregiver = () => {
     setLoading(true);
     
     try {
-      const { error } = await supabase
-        .from('dependentes')
+      // Primeiro cria o usuário do paciente
+      const { data: patientUser, error: signUpError } = await supabase.auth.signUp({
+        email: `${patientData.username}@temp.local`,
+        password: patientData.password,
+        options: {
+          data: {
+            nome: patientData.nome
+          }
+        }
+      });
+
+      if (signUpError) {
+        toast({
+          title: "Erro ao criar conta do paciente",
+          description: signUpError.message,
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Busca o cuidador ID
+      const { data: caregiverData } = await supabase
+        .from('cuidadores')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!caregiverData) {
+        toast({
+          title: "Erro",
+          description: "Dados do cuidador não encontrados",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Cria o registro do paciente dependente
+      const { error: patientError } = await supabase
+        .from('pacientes_dependentes')
         .insert({
-          user_id: user.id,
+          user_id: patientUser?.user?.id,
+          cuidador_id: caregiverData.id,
           nome: patientData.nome,
           nome_usuario: patientData.username,
           observacoes: null
         });
 
-      if (error) {
+      if (patientError) {
         toast({
           title: "Erro ao cadastrar paciente",
-          description: error.message,
+          description: patientError.message,
           variant: "destructive"
         });
       } else {

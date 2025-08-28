@@ -70,11 +70,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+  const signIn = async (emailOrUsername: string, password: string) => {
+    // Verifica se é email ou usuário
+    const isEmail = emailOrUsername.includes('@');
+    
+    let error;
+    
+    if (isEmail) {
+      // Login com email
+      const result = await supabase.auth.signInWithPassword({
+        email: emailOrUsername,
+        password
+      });
+      error = result.error;
+    } else {
+      // Login com nome de usuário - busca o email primeiro
+      const { data: profileData } = await supabase
+        .from('cuidadores')
+        .select('user_id')
+        .eq('nome_usuario', emailOrUsername)
+        .single();
+      
+      if (profileData) {
+        // Busca o email do usuário
+        const { data: userData } = await supabase.auth.admin.getUserById(profileData.user_id);
+        if (userData.user?.email) {
+          const result = await supabase.auth.signInWithPassword({
+            email: userData.user.email,
+            password
+          });
+          error = result.error;
+        } else {
+          error = { message: "Usuário não encontrado" };
+        }
+      } else {
+        // Tenta buscar em pacientes_autonomos
+        const { data: autonomousData } = await supabase
+          .from('pacientes_autonomos')
+          .select('user_id')
+          .eq('nome_usuario', emailOrUsername)
+          .single();
+        
+        if (autonomousData) {
+          const { data: userData } = await supabase.auth.admin.getUserById(autonomousData.user_id);
+          if (userData.user?.email) {
+            const result = await supabase.auth.signInWithPassword({
+              email: userData.user.email,
+              password
+            });
+            error = result.error;
+          } else {
+            error = { message: "Usuário não encontrado" };
+          }
+        } else {
+          error = { message: "Usuário não encontrado" };
+        }
+      }
+    }
 
     if (error) {
       toast({

@@ -51,13 +51,13 @@ const Auth = () => {
         <Card className="card-health">
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
+              <Label htmlFor="email">E-mail ou Nome de usuário</Label>
               <Input
                 id="email"
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu@email.com"
+                placeholder="seu@email.com ou usuario123"
                 required
                 className="min-h-[44px]"
               />
