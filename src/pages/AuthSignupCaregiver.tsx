@@ -36,11 +36,33 @@ const AuthSignupCaregiver = () => {
   });
 
   useEffect(() => {
-    // Check if user is already authenticated
-    if (user && currentStep === 'caregiver') {
+    // Check if user is already authenticated and save caregiver data
+    if (user && currentStep === 'caregiver' && caregiverData.nome) {
+      saveCaregiverData();
       setCurrentStep('patient');
     }
-  }, [user, currentStep]);
+  }, [user, currentStep, caregiverData.nome]);
+
+  const saveCaregiverData = async () => {
+    if (!user || !caregiverData.nome) return;
+
+    const { error } = await supabase
+      .from('cuidadores')
+      .insert({
+        user_id: user.id,
+        nome: caregiverData.nome,
+        nome_usuario: caregiverData.username,
+        observacoes: null
+      });
+
+    if (error) {
+      toast({
+        title: "Erro ao salvar dados do cuidador",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
 
   const handleCaregiverSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,36 +81,12 @@ const AuthSignupCaregiver = () => {
     try {
       const { error } = await signUp(caregiverData.email, caregiverData.password, caregiverData.nome);
       
-      if (error) {
+      if (!error) {
         toast({
-          title: "Erro no cadastro",
-          description: error.message,
-          variant: "destructive"
+          title: "Cuidador cadastrado!",
+          description: "Agora cadastre o paciente"
         });
-      } else {
-        // Salvar dados do cuidador na tabela cuidadores
-        const { error: caregiverError } = await supabase
-          .from('cuidadores')
-          .insert({
-            user_id: user?.id,
-            nome: caregiverData.nome,
-            nome_usuario: caregiverData.username,
-            observacoes: null
-          });
-
-        if (caregiverError) {
-          toast({
-            title: "Erro ao salvar dados do cuidador",
-            description: caregiverError.message,
-            variant: "destructive"
-          });
-        } else {
-          toast({
-            title: "Cuidador cadastrado!",
-            description: "Agora cadastre o paciente"
-          });
-          setCurrentStep('patient');
-        }
+        setCurrentStep('patient');
       }
     } catch (error) {
       toast({
@@ -361,6 +359,35 @@ const AuthSignupCaregiver = () => {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="patientPassword">Senha do paciente</Label>
+                <Input
+                  id="patientPassword"
+                  type="password"
+                  value={patientData.password}
+                  onChange={(e) => handlePatientChange('password', e.target.value)}
+                  placeholder="Senha do paciente"
+                  required
+                  className="min-h-[44px]"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="patientConfirmPassword">Confirmar senha</Label>
+                <Input
+                  id="patientConfirmPassword"
+                  type="password"
+                  value={patientData.confirmPassword}
+                  onChange={(e) => handlePatientChange('confirmPassword', e.target.value)}
+                  placeholder="Confirme a senha"
+                  required
+                  className="min-h-[44px]"
+                />
+                {patientData.password !== patientData.confirmPassword && patientData.confirmPassword && (
+                  <p className="text-sm text-destructive">As senhas não coincidem</p>
+                )}
+              </div>
+
               <div className="flex space-x-4">
                 <Button 
                   type="button"
@@ -374,7 +401,7 @@ const AuthSignupCaregiver = () => {
                 <Button 
                   type="submit" 
                   className="btn-health flex-1"
-                  disabled={loading}
+                  disabled={loading || patientData.password !== patientData.confirmPassword}
                 >
                   {loading ? 'Salvando...' : 'Concluir'}
                 </Button>

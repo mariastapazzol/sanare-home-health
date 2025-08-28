@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import AuthSignup from "./pages/AuthSignup";
 import AuthSignupPersonal from "./pages/AuthSignupPersonal";
 import AuthSignupCaregiver from "./pages/AuthSignupCaregiver";
+import Profile from "./pages/Profile";
 
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
@@ -33,6 +34,11 @@ const App = () => (
             <Route path="/home" element={
               <ProtectedRoute>
                 <Home />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

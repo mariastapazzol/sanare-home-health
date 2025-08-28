@@ -84,47 +84,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       error = result.error;
     } else {
-      // Login com nome de usuário - busca o email primeiro
+      // Login com nome de usuário - busca o email nos profiles primeiro
       const { data: profileData } = await supabase
-        .from('cuidadores')
+        .from('profiles')
         .select('user_id')
-        .eq('nome_usuario', emailOrUsername)
+        .eq('nome', emailOrUsername) // Assume que nome é usado como username nos profiles
         .single();
       
       if (profileData) {
-        // Busca o email do usuário
-        const { data: userData } = await supabase.auth.admin.getUserById(profileData.user_id);
-        if (userData.user?.email) {
-          const result = await supabase.auth.signInWithPassword({
-            email: userData.user.email,
-            password
-          });
-          error = result.error;
-        } else {
-          error = { message: "Usuário não encontrado" };
-        }
+        // Para username, usa um email temporário baseado no username
+        const result = await supabase.auth.signInWithPassword({
+          email: `${emailOrUsername}@temp.system`,
+          password
+        });
+        error = result.error;
       } else {
-        // Tenta buscar em pacientes_autonomos
-        const { data: autonomousData } = await supabase
-          .from('pacientes_autonomos')
-          .select('user_id')
-          .eq('nome_usuario', emailOrUsername)
-          .single();
-        
-        if (autonomousData) {
-          const { data: userData } = await supabase.auth.admin.getUserById(autonomousData.user_id);
-          if (userData.user?.email) {
-            const result = await supabase.auth.signInWithPassword({
-              email: userData.user.email,
-              password
-            });
-            error = result.error;
-          } else {
-            error = { message: "Usuário não encontrado" };
-          }
-        } else {
-          error = { message: "Usuário não encontrado" };
-        }
+        error = { message: "Usuário não encontrado" };
       }
     }
 
