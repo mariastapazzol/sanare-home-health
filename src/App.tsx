@@ -11,6 +11,8 @@ import AuthSignup from "./pages/AuthSignup";
 import AuthSignupPersonal from "./pages/AuthSignupPersonal";
 import AuthSignupCaregiver from "./pages/AuthSignupCaregiver";
 import Profile from "./pages/Profile";
+import Medicamentos from "./pages/Medicamentos";
+import NovoMedicamento from "./pages/NovoMedicamento";
 
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
@@ -39,6 +41,16 @@ const App = () => (
             <Route path="/profile" element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            } />
+            <Route path="/medicamentos" element={
+              <ProtectedRoute>
+                <Medicamentos />
+              </ProtectedRoute>
+            } />
+            <Route path="/medicamentos/novo" element={
+              <ProtectedRoute>
+                <NovoMedicamento />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
