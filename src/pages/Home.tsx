@@ -127,7 +127,7 @@ const Home = () => {
               <DropdownMenuItem onClick={() => navigate('/profile')}>
                 Perfil
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/reminders')}>
+              <DropdownMenuItem onClick={() => navigate('/lembretes')}>
                 Lembretes
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleLogout}>

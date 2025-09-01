@@ -15,6 +15,8 @@ import Medicamentos from "./pages/Medicamentos";
 import NovoMedicamento from "./pages/NovoMedicamento";
 
 import Home from "./pages/Home";
+import Lembretes from "./pages/Lembretes";
+import NovoLembrete from "./pages/NovoLembrete";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +53,21 @@ const App = () => (
             <Route path="/medicamentos/novo" element={
               <ProtectedRoute>
                 <NovoMedicamento />
+              </ProtectedRoute>
+            } />
+            <Route path="/lembretes" element={
+              <ProtectedRoute>
+                <Lembretes />
+              </ProtectedRoute>
+            } />
+            <Route path="/lembretes/novo" element={
+              <ProtectedRoute>
+                <NovoLembrete />
+              </ProtectedRoute>
+            } />
+            <Route path="/lembretes/editar/:id" element={
+              <ProtectedRoute>
+                <NovoLembrete />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
