@@ -71,28 +71,56 @@ const Home = () => {
   const fetchChecklistDiario = async () => {
     if (!user) return;
     
-    // Simular checklist diário (substituir pela lógica real)
-    const { data } = await supabase
+    // Buscar medicamentos
+    const { data: medicamentos } = await supabase
       .from('medicamentos')
       .select('id, nome, horarios')
       .eq('user_id', user.id);
     
-    if (data) {
-      // Processar horários para criar checklist
-      const hoje = new Date().toISOString().split('T')[0];
-      const checklist = data.flatMap(medicamento => {
+    // Buscar lembretes personalizados
+    const { data: lembretes } = await supabase
+      .from('lembretes')
+      .select('id, nome, horarios')
+      .eq('user_id', user.id);
+    
+    const checklist: any[] = [];
+    
+    // Processar medicamentos
+    if (medicamentos) {
+      const medicamentosChecklist = medicamentos.flatMap(medicamento => {
         const horarios = Array.isArray(medicamento.horarios) ? medicamento.horarios : [];
         return horarios.map((horario: string) => ({
-          id: `${medicamento.id}-${horario}`,
-          medicamento_id: medicamento.id,
+          id: `med-${medicamento.id}-${horario}`,
+          item_id: medicamento.id,
           nome: medicamento.nome,
           horario,
-          tomado: false
+          tomado: false,
+          tipo: 'medicamento'
         }));
       });
-      
-      setChecklistDiario(checklist);
+      checklist.push(...medicamentosChecklist);
     }
+    
+    // Processar lembretes
+    if (lembretes) {
+      const lembretesChecklist = lembretes.flatMap(lembrete => {
+        const horarios = Array.isArray(lembrete.horarios) ? lembrete.horarios : [];
+        return horarios.map((horario: string) => ({
+          id: `lem-${lembrete.id}-${horario}`,
+          item_id: lembrete.id,
+          nome: lembrete.nome,
+          horario,
+          tomado: false,
+          tipo: 'lembrete'
+        }));
+      });
+      checklist.push(...lembretesChecklist);
+    }
+    
+    // Ordenar por horário
+    checklist.sort((a, b) => a.horario.localeCompare(b.horario));
+    
+    setChecklistDiario(checklist);
   };
 
   const toggleMedicamento = (id: string) => {
@@ -185,13 +213,13 @@ const Home = () => {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <Clock className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold">Medicamentos de Hoje</h3>
+              <h3 className="font-semibold">CheckList Diário</h3>
             </div>
             
             {checklistDiario.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">
-                Nenhum medicamento para hoje
-              </p>
+            <p className="text-muted-foreground text-center py-4">
+              Nenhum item para hoje
+            </p>
             ) : (
               <div className="space-y-3">
                 {checklistDiario.map((item) => (
@@ -199,9 +227,20 @@ const Home = () => {
                     key={item.id}
                     className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
                   >
-                    <div className="flex-1">
-                      <p className="font-medium">{item.nome}</p>
-                      <p className="text-sm text-muted-foreground">{item.horario}</p>
+                    <div className="flex items-center space-x-3 flex-1">
+                      <div className="flex-shrink-0">
+                        {item.tipo === 'medicamento' ? (
+                          <Pill className="h-4 w-4 text-primary" />
+                        ) : (
+                          <AlertTriangle className="h-4 w-4 text-secondary" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">{item.nome}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {item.horario} • {item.tipo === 'medicamento' ? 'Medicamento' : 'Lembrete'}
+                        </p>
+                      </div>
                     </div>
                     
                     <div className="flex space-x-2">
