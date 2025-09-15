@@ -95,6 +95,7 @@ const Home = () => {
           nome: medicamento.nome,
           horario,
           tomado: false,
+          inativo: false,
           tipo: 'medicamento'
         }));
       });
@@ -111,6 +112,7 @@ const Home = () => {
           nome: lembrete.nome,
           horario,
           tomado: false,
+          inativo: false,
           tipo: 'lembrete'
         }));
       });
@@ -125,8 +127,14 @@ const Home = () => {
 
   const toggleMedicamento = (id: string) => {
     setChecklistDiario(prev => 
+      prev.filter(item => item.id !== id)
+    );
+  };
+
+  const marcarInativo = (id: string) => {
+    setChecklistDiario(prev => 
       prev.map(item => 
-        item.id === id ? { ...item, tomado: !item.tomado } : item
+        item.id === id ? { ...item, inativo: true } : item
       )
     );
   };
@@ -225,7 +233,9 @@ const Home = () => {
                 {checklistDiario.map((item) => (
                   <div 
                     key={item.id}
-                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                    className={`flex items-center justify-between p-3 bg-muted/50 rounded-lg ${
+                      item.inativo ? 'opacity-30' : ''
+                    }`}
                   >
                     <div className="flex items-center space-x-3 flex-1">
                       <div className="flex-shrink-0">
@@ -246,21 +256,18 @@ const Home = () => {
                     <div className="flex space-x-2">
                       <Button
                         size="sm"
-                        variant={item.tomado ? "default" : "outline"}
+                        variant="outline"
                         onClick={() => toggleMedicamento(item.id)}
                         className="w-10 h-10 p-0"
                       >
-                        {item.tomado ? (
-                          <Check className="h-4 w-4" />
-                        ) : (
-                          <Check className="h-4 w-4 opacity-50" />
-                        )}
+                        <Check className="h-4 w-4" />
                       </Button>
                       
                       <Button
                         size="sm"
                         variant="outline"
                         className="w-10 h-10 p-0 text-muted-foreground"
+                        onClick={() => marcarInativo(item.id)}
                       >
                         <X className="h-4 w-4" />
                       </Button>
