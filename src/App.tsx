@@ -13,6 +13,7 @@ import AuthSignupCaregiver from "./pages/AuthSignupCaregiver";
 import Profile from "./pages/Profile";
 import Medicamentos from "./pages/Medicamentos";
 import NovoMedicamento from "./pages/NovoMedicamento";
+import Estoque from "./pages/Estoque";
 
 import Home from "./pages/Home";
 import Lembretes from "./pages/Lembretes";
@@ -53,6 +54,11 @@ const App = () => (
             <Route path="/medicamentos/novo" element={
               <ProtectedRoute>
                 <NovoMedicamento />
+              </ProtectedRoute>
+            } />
+            <Route path="/stock" element={
+              <ProtectedRoute>
+                <Estoque />
               </ProtectedRoute>
             } />
             <Route path="/lembretes" element={
