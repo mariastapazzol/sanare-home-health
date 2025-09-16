@@ -3,7 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, ArrowLeft, Pill } from "lucide-react";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Plus, Search, ArrowLeft, Pill, Edit, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -51,6 +62,34 @@ const Medicamentos = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const deleteMedicamento = async (id: string, nome: string) => {
+    try {
+      const { error } = await supabase
+        .from('medicamentos')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setMedicamentos(prev => prev.filter(med => med.id !== id));
+      toast({
+        title: "Sucesso",
+        description: `${nome} foi removido com sucesso.`,
+      });
+    } catch (error) {
+      console.error('Erro ao excluir medicamento:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o medicamento.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const editMedicamento = (id: string) => {
+    navigate(`/medicamentos/editar/${id}`);
   };
 
   const filteredMedicamentos = medicamentos.filter(med =>
@@ -173,6 +212,45 @@ const Medicamentos = () => {
                           Precisa receita
                         </Badge>
                       )}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => editMedicamento(medicamento.id)}
+                        className="w-8 h-8 p-0"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="w-8 h-8 p-0 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir medicamento</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja excluir "{medicamento.nome}"? Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteMedicamento(medicamento.id, medicamento.nome)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </CardContent>
