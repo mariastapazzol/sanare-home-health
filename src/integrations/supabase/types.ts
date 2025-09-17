@@ -47,6 +47,33 @@ export type Database = {
         }
         Relationships: []
       }
+      diary_entries: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          mood: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          mood: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          mood?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       lembretes: {
         Row: {
           created_at: string
@@ -307,33 +334,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      profiles: {
-        Row: {
-          created_at: string
-          id: string
-          nome: string
-          telefone: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          nome: string
-          telefone?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          nome?: string
-          telefone?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
       }
     }
     Views: {
