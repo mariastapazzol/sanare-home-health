@@ -43,14 +43,18 @@ const Home = () => {
   const fetchProfile = async () => {
     if (!user) return;
     
-    const { data } = await supabase
-      .from('profiles')
-      .select('nome')
-      .eq('user_id', user.id)
-      .single();
-    
-    if (data) {
-      setProfile(data);
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('nome')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (data) {
+        setProfile(data);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
     }
   };
 

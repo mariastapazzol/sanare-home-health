@@ -14,6 +14,9 @@ import Profile from "./pages/Profile";
 import Medicamentos from "./pages/Medicamentos";
 import NovoMedicamento from "./pages/NovoMedicamento";
 import Estoque from "./pages/Estoque";
+import Diary from "./pages/Diary";
+import DiaryWrite from "./pages/DiaryWrite";
+import DiaryRecords from "./pages/DiaryRecords";
 
 import Home from "./pages/Home";
 import Lembretes from "./pages/Lembretes";
@@ -59,6 +62,21 @@ const App = () => (
             <Route path="/stock" element={
               <ProtectedRoute>
                 <Estoque />
+              </ProtectedRoute>
+            } />
+            <Route path="/diary" element={
+              <ProtectedRoute>
+                <Diary />
+              </ProtectedRoute>
+            } />
+            <Route path="/diary/write" element={
+              <ProtectedRoute>
+                <DiaryWrite />
+              </ProtectedRoute>
+            } />
+            <Route path="/diary/records" element={
+              <ProtectedRoute>
+                <DiaryRecords />
               </ProtectedRoute>
             } />
             <Route path="/lembretes" element={
