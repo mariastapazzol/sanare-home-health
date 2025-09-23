@@ -11,10 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 
 interface UserProfile {
   nome: string;
-  telefone?: string;
+  nascimento?: string;
   email?: string;
-  nome_usuario?: string;
-  tipo: 'cuidador' | 'paciente_autonomo' | 'paciente_dependente';
 }
 
 const Profile = () => {
@@ -27,8 +25,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     nome: '',
-    telefone: '',
-    nome_usuario: ''
+    nascimento: ''
   });
 
   useEffect(() => {
@@ -40,65 +37,22 @@ const Profile = () => {
   const fetchProfile = async () => {
     if (!user) return;
 
-    // Primeiro tenta buscar em cuidadores
-    let { data: caregiverData } = await supabase
-      .from('cuidadores')
-      .select('nome, telefone, nome_usuario')
-      .eq('user_id', user.id)
-      .single();
-
-    if (caregiverData) {
-      setProfile({
-        ...caregiverData,
-        email: user.email,
-        tipo: 'cuidador'
-      });
-      setFormData({
-        nome: caregiverData.nome,
-        telefone: caregiverData.telefone || '',
-        nome_usuario: caregiverData.nome_usuario
-      });
-      return;
-    }
-
-    // Depois tenta buscar em pacientes autônomos
-    let { data: autonomousData } = await supabase
+    // Busca dados do paciente autônomo
+    let { data: patientData } = await supabase
       .from('pacientes_autonomos')
-      .select('nome, nome_usuario')
+      .select('nome, nascimento')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (autonomousData) {
+    if (patientData) {
       setProfile({
-        ...autonomousData,
-        email: user.email,
-        tipo: 'paciente_autonomo'
+        nome: patientData.nome,
+        nascimento: patientData.nascimento,
+        email: user.email
       });
       setFormData({
-        nome: autonomousData.nome,
-        telefone: '',
-        nome_usuario: autonomousData.nome_usuario
-      });
-      return;
-    }
-
-    // Por último tenta buscar em pacientes dependentes
-    let { data: dependentData } = await supabase
-      .from('pacientes_dependentes')
-      .select('nome, nome_usuario')
-      .eq('user_id', user.id)
-      .single();
-
-    if (dependentData) {
-      setProfile({
-        ...dependentData,
-        email: user.email,
-        tipo: 'paciente_dependente'
-      });
-      setFormData({
-        nome: dependentData.nome,
-        telefone: '',
-        nome_usuario: dependentData.nome_usuario
+        nome: patientData.nome,
+        nascimento: patientData.nascimento || ''
       });
     }
   };
@@ -109,37 +63,13 @@ const Profile = () => {
     setLoading(true);
 
     try {
-      let error;
-
-      if (profile.tipo === 'cuidador') {
-        const { error: updateError } = await supabase
-          .from('cuidadores')
-          .update({
-            nome: formData.nome,
-            telefone: formData.telefone,
-            nome_usuario: formData.nome_usuario
-          })
-          .eq('user_id', user.id);
-        error = updateError;
-      } else if (profile.tipo === 'paciente_autonomo') {
-        const { error: updateError } = await supabase
-          .from('pacientes_autonomos')
-          .update({
-            nome: formData.nome,
-            nome_usuario: formData.nome_usuario
-          })
-          .eq('user_id', user.id);
-        error = updateError;
-      } else if (profile.tipo === 'paciente_dependente') {
-        const { error: updateError } = await supabase
-          .from('pacientes_dependentes')
-          .update({
-            nome: formData.nome,
-            nome_usuario: formData.nome_usuario
-          })
-          .eq('user_id', user.id);
-        error = updateError;
-      }
+      const { error } = await supabase
+        .from('pacientes_autonomos')
+        .update({
+          nome: formData.nome,
+          nascimento: formData.nascimento || null
+        })
+        .eq('user_id', user.id);
 
       if (error) {
         toast({
@@ -170,8 +100,7 @@ const Profile = () => {
     if (profile) {
       setFormData({
         nome: profile.nome,
-        telefone: profile.telefone || '',
-        nome_usuario: profile.nome_usuario || ''
+        nascimento: profile.nascimento || ''
       });
     }
     setEditing(false);
@@ -181,18 +110,6 @@ const Profile = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const getTipoLabel = (tipo: string) => {
-    switch (tipo) {
-      case 'cuidador':
-        return 'Cuidador';
-      case 'paciente_autonomo':
-        return 'Paciente Autônomo';
-      case 'paciente_dependente':
-        return 'Paciente Dependente';
-      default:
-        return 'Usuário';
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-health-light to-background flex items-center justify-center p-4">
@@ -212,11 +129,6 @@ const Profile = () => {
             </div>
           </div>
           <h1 className="text-mobile-2xl font-bold">Meu Perfil</h1>
-          {profile && (
-            <p className="text-mobile-base text-muted-foreground">
-              {getTipoLabel(profile.tipo)}
-            </p>
-          )}
         </div>
 
         {/* Profile Form */}
@@ -240,6 +152,22 @@ const Profile = () => {
               </div>
 
               <div className="space-y-2">
+                <Label>Data de nascimento</Label>
+                {editing ? (
+                  <Input
+                    type="date"
+                    value={formData.nascimento}
+                    onChange={(e) => handleChange('nascimento', e.target.value)}
+                    className="min-h-[44px]"
+                  />
+                ) : (
+                  <p className="px-3 py-2 bg-muted/50 rounded-md min-h-[44px] flex items-center">
+                    {profile.nascimento ? new Date(profile.nascimento).toLocaleDateString('pt-BR') : 'Não informado'}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
                 <Label>E-mail</Label>
                 <p className="px-3 py-2 bg-muted/30 rounded-md min-h-[44px] flex items-center text-muted-foreground">
                   {profile.email}
@@ -247,38 +175,11 @@ const Profile = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>Nome de usuário</Label>
-                {editing ? (
-                  <Input
-                    value={formData.nome_usuario}
-                    onChange={(e) => handleChange('nome_usuario', e.target.value)}
-                    placeholder="Seu nome de usuário"
-                    className="min-h-[44px]"
-                  />
-                ) : (
-                  <p className="px-3 py-2 bg-muted/50 rounded-md min-h-[44px] flex items-center">
-                    {profile.nome_usuario}
-                  </p>
-                )}
+                <Label>Senha</Label>
+                <p className="px-3 py-2 bg-muted/30 rounded-md min-h-[44px] flex items-center text-muted-foreground">
+                  ••••••••••
+                </p>
               </div>
-
-              {profile.tipo === 'cuidador' && (
-                <div className="space-y-2">
-                  <Label>Telefone</Label>
-                  {editing ? (
-                    <Input
-                      value={formData.telefone}
-                      onChange={(e) => handleChange('telefone', e.target.value)}
-                      placeholder="Seu telefone"
-                      className="min-h-[44px]"
-                    />
-                  ) : (
-                    <p className="px-3 py-2 bg-muted/50 rounded-md min-h-[44px] flex items-center">
-                      {profile.telefone || 'Não informado'}
-                    </p>
-                  )}
-                </div>
-              )}
 
               <div className="flex space-x-4">
                 {editing ? (
