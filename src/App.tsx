@@ -8,8 +8,6 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Welcome from "./pages/Welcome";
 import Auth from "./pages/Auth";
 import AuthSignup from "./pages/AuthSignup";
-import AuthSignupPersonal from "./pages/AuthSignupPersonal";
-import AuthSignupCaregiver from "./pages/AuthSignupCaregiver";
 import Profile from "./pages/Profile";
 import Medicamentos from "./pages/Medicamentos";
 import NovoMedicamento from "./pages/NovoMedicamento";
@@ -36,8 +34,6 @@ const App = () => (
             <Route path="/" element={<Welcome />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/signup" element={<AuthSignup />} />
-            <Route path="/auth/signup/personal" element={<AuthSignupPersonal />} />
-            <Route path="/auth/signup/caregiver" element={<AuthSignupCaregiver />} />
             
             <Route path="/home" element={
               <ProtectedRoute>

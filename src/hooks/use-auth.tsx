@@ -70,42 +70,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
-  const signIn = async (emailOrUsername: string, password: string) => {
-    // Verifica se é email ou usuário
-    const isEmail = emailOrUsername.includes('@');
-    
-    let error;
-    
-    if (isEmail) {
-      // Login com email
-      const result = await supabase.auth.signInWithPassword({
-        email: emailOrUsername,
-        password
-      });
-      error = result.error;
-    } else {
-      // Login com nome de usuário - busca o email nos profiles primeiro
-      try {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('user_id')
-          .eq('nome', emailOrUsername) // Assume que nome é usado como username nos profiles
-          .maybeSingle();
-        
-        if (profileData) {
-          // Para username, usa um email temporário baseado no username
-          const result = await supabase.auth.signInWithPassword({
-            email: `${emailOrUsername}@temp.system`,
-            password
-          });
-          error = result.error;
-        } else {
-          error = { message: "Usuário não encontrado" };
-        }
-      } catch (catchError) {
-        error = { message: "Erro ao buscar usuário" };
-      }
-    }
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
 
     if (error) {
       toast({
