@@ -11,7 +11,8 @@ import {
   Clock,
   Check,
   X,
-  BookOpen
+  BookOpen,
+  Activity
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -199,14 +200,24 @@ const Home = () => {
           </Button>
         </div>
 
-        {/* Diary Button */}
-        <Button
-          onClick={() => navigate('/diary')}
-          className="btn-health h-16 w-full flex items-center justify-center space-x-3 mb-6"
-        >
-          <BookOpen className="h-6 w-6" />
-          <span>Diário Emocional</span>
-        </Button>
+        {/* Diary Buttons */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <Button
+            onClick={() => navigate('/diary')}
+            className="btn-health h-20 flex-col space-y-2"
+          >
+            <BookOpen className="h-6 w-6" />
+            <span>Diário Emocional</span>
+          </Button>
+          
+          <Button
+            onClick={() => navigate('/sintomas')}
+            className="btn-health h-20 flex-col space-y-2"
+          >
+            <Activity className="h-6 w-6" />
+            <span>Sintomas e Sinais</span>
+          </Button>
+        </div>
 
         {/* Alerta de Estoque Baixo */}
         {medicamentosComEstoqueBaixo.length > 0 && (
