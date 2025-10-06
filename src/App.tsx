@@ -19,6 +19,9 @@ import DiaryRecords from "./pages/DiaryRecords";
 import Home from "./pages/Home";
 import Lembretes from "./pages/Lembretes";
 import NovoLembrete from "./pages/NovoLembrete";
+import Sintomas from "./pages/Sintomas";
+import NovoSintoma from "./pages/NovoSintoma";
+import NovoSinalVital from "./pages/NovoSinalVital";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -88,6 +91,21 @@ const App = () => (
             <Route path="/lembretes/editar/:id" element={
               <ProtectedRoute>
                 <NovoLembrete />
+              </ProtectedRoute>
+            } />
+            <Route path="/sintomas" element={
+              <ProtectedRoute>
+                <Sintomas />
+              </ProtectedRoute>
+            } />
+            <Route path="/sintomas/novo" element={
+              <ProtectedRoute>
+                <NovoSintoma />
+              </ProtectedRoute>
+            } />
+            <Route path="/sinais-vitais/novo" element={
+              <ProtectedRoute>
+                <NovoSinalVital />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
