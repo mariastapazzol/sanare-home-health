@@ -47,7 +47,7 @@ const Sintomas = () => {
       
       // Buscar sintomas
       const { data: sintomasData } = await supabase
-        .from('sintomas')
+        .from('sintomas' as any)
         .select('*')
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false })
@@ -55,14 +55,14 @@ const Sintomas = () => {
       
       // Buscar sinais vitais
       const { data: sinaisData } = await supabase
-        .from('sinais_vitais')
+        .from('sinais_vitais' as any)
         .select('*')
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false })
         .limit(5);
       
-      if (sintomasData) setSintomas(sintomasData);
-      if (sinaisData) setSinaisVitais(sinaisData);
+      if (sintomasData) setSintomas(sintomasData as any);
+      if (sinaisData) setSinaisVitais(sinaisData as any);
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
     } finally {
