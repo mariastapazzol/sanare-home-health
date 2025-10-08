@@ -15,6 +15,7 @@ import Estoque from "./pages/Estoque";
 import Diary from "./pages/Diary";
 import DiaryWrite from "./pages/DiaryWrite";
 import DiaryRecords from "./pages/DiaryRecords";
+import DiarySelectMood from "./pages/DiarySelectMood";
 
 import Home from "./pages/Home";
 import Lembretes from "./pages/Lembretes";
@@ -66,6 +67,11 @@ const App = () => (
             <Route path="/diary" element={
               <ProtectedRoute>
                 <Diary />
+              </ProtectedRoute>
+            } />
+            <Route path="/diary/select-mood" element={
+              <ProtectedRoute>
+                <DiarySelectMood />
               </ProtectedRoute>
             } />
             <Route path="/diary/write" element={

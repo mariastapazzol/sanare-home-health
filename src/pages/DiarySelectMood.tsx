@@ -1,53 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 
-const Diary = () => {
+const DiarySelectMood = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [selectedMood, setSelectedMood] = useState<string>('');
-  const [hasEntries, setHasEntries] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    if (user) {
-      checkExistingEntries();
-    }
-  }, [user]);
-
-  const checkExistingEntries = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('diary_entries')
-        .select('id')
-        .eq('user_id', user.id)
-        .limit(1);
-
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        navigate('/diary/records');
-      } else {
-        setHasEntries(false);
-      }
-    } catch (error) {
-      console.error('Erro ao verificar entradas:', error);
-      setHasEntries(false);
-    }
-  };
-
-  if (hasEntries === null) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Carregando...</p>
-      </div>
-    );
-  }
 
   const moods = [
     { value: 'very_happy', label: 'Muito Feliz', icon: '😄', color: 'text-green-500' },
@@ -70,7 +29,7 @@ const Diary = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/home')}
+            onClick={() => navigate('/diary')}
             className="text-primary-foreground"
           >
             <ArrowLeft className="h-6 w-6" />
@@ -105,4 +64,4 @@ const Diary = () => {
   );
 };
 
-export default Diary;
+export default DiarySelectMood;
