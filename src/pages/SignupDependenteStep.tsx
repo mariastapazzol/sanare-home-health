@@ -20,6 +20,21 @@ const SignupDependenteStep = () => {
   });
   const [loading, setLoading] = useState(false);
 
+  const toISODate = (d: string): string => {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) {
+      const [a, b, c] = d.split("/");
+      const dd = parseInt(a, 10);
+      const mm = parseInt(b, 10);
+      const yyyy = c;
+      const [month, day] = dd > 12 ? [mm, dd] : [dd, mm];
+      return `${yyyy}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    }
+    const dt = new Date(d);
+    if (!isNaN(+dt)) return dt.toISOString().slice(0, 10);
+    throw new Error("DATA_INVALIDA");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -42,11 +57,11 @@ const SignupDependenteStep = () => {
     }
 
     // Validate username
-    const usernameRegex = /^[a-z0-9._]{3,}$/;
+    const usernameRegex = /^[A-Za-z0-9._]{3,}$/;
     if (!usernameRegex.test(formData.username)) {
       toast({
         title: "Erro",
-        description: "Nome de usuário inválido. Use apenas letras minúsculas, números, pontos e underscores (mínimo 3 caracteres)",
+        description: "Nome de usuário inválido. Use apenas letras, números, pontos e underscores (mínimo 3 caracteres)",
         variant: "destructive"
       });
       return;
@@ -55,6 +70,20 @@ const SignupDependenteStep = () => {
     setLoading(true);
     
     try {
+      // Normalize date
+      let isoDate: string;
+      try {
+        isoDate = toISODate(formData.birthDate);
+      } catch {
+        toast({
+          title: "Erro",
+          description: "Data de nascimento inválida",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
       // Get current session (caregiver)
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -68,22 +97,29 @@ const SignupDependenteStep = () => {
         return;
       }
 
-      // Call edge function to create dependent user
-      const { data, error } = await supabase.functions.invoke('create-dependent-user', {
-        body: {
+      // Call edge function directly with fetch for better error handling
+      const supabaseUrl = "https://qcglxiuygxzxmbmajyxs.supabase.co";
+      const response = await fetch(`${supabaseUrl}/functions/v1/create-dependent-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
           name: formData.name,
           username: formData.username,
-          birth_date: formData.birthDate,
+          birth_date: isoDate,
           password: formData.password,
           observacoes: null,
-        }
+        })
       });
 
-      if (error) {
-        console.error('Error creating dependent:', error);
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
         toast({
           title: "Erro",
-          description: error.message || "Erro ao criar dependente",
+          description: result?.error || `Falha ao criar dependente (${response.status})`,
           variant: "destructive"
         });
         setLoading(false);
@@ -97,13 +133,12 @@ const SignupDependenteStep = () => {
 
       // Navigate to home
       navigate('/');
-      setLoading(false);
       
     } catch (error) {
       console.error('Signup error:', error);
       toast({
         title: "Erro",
-        description: "Erro ao criar dependente",
+        description: error instanceof Error ? error.message : "Erro ao criar dependente",
         variant: "destructive"
       });
       setLoading(false);

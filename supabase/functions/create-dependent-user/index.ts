@@ -5,6 +5,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+function toISODate(d: string): string | null {
+  if (!d) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) {
+    const [a, b, c] = d.split("/");
+    const dd = parseInt(a, 10);
+    const mm = parseInt(b, 10);
+    const yyyy = c;
+    const [month, day] = dd > 12 ? [mm, dd] : [dd, mm];
+    return `${yyyy}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  }
+  const dt = new Date(d);
+  if (!isNaN(+dt)) return dt.toISOString().slice(0, 10);
+  return null;
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -78,7 +94,7 @@ Deno.serve(async (req) => {
     if (!name || !username || !birth_date || !password) {
       return new Response(
         JSON.stringify({ error: 'Campos obrigatórios ausentes' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -86,8 +102,8 @@ Deno.serve(async (req) => {
     const usernameRegex = /^[A-Za-z0-9._]{3,}$/;
     if (!usernameRegex.test(username)) {
       return new Response(
-        JSON.stringify({ error: 'Username inválido. Use apenas letras, números, pontos e underscores (mínimo 3 caracteres)' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Username inválido. Use letras, números, ponto ou underline (mín. 3).' }),
+        { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -95,7 +111,30 @@ Deno.serve(async (req) => {
     if (password.length < 8) {
       return new Response(
         JSON.stringify({ error: 'A senha deve ter pelo menos 8 caracteres' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Normalize birth date
+    const isoBirth = toISODate(birth_date);
+    if (!isoBirth) {
+      return new Response(
+        JSON.stringify({ error: 'Data de nascimento inválida. Use YYYY-MM-DD.' }),
+        { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check username uniqueness (case-insensitive)
+    const { data: existing } = await supabaseAdmin
+      .from('pacientes_dependentes')
+      .select('id')
+      .ilike('nome_usuario', username)
+      .maybeSingle();
+
+    if (existing) {
+      return new Response(
+        JSON.stringify({ error: 'Nome de usuário já em uso.' }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -133,7 +172,7 @@ Deno.serve(async (req) => {
         cuidador_id: caregiver.id,
         nome: name,
         nome_usuario: username,
-        nascimento: birth_date,
+        nascimento: isoBirth,
         observacoes: observacoes ?? null
       });
 
