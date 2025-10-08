@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Package, AlertTriangle, Calendar } from "lucide-react";
+import { ArrowLeft, Package, AlertTriangle, Calendar, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface MedicamentoEstoque {
   id: string;
@@ -25,6 +27,9 @@ const Estoque = () => {
   const { user } = useAuth();
   const [medicamentos, setMedicamentos] = useState<MedicamentoEstoque[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedMedicamento, setSelectedMedicamento] = useState<MedicamentoEstoque | null>(null);
+  const [novaQuantidade, setNovaQuantidade] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -82,6 +87,50 @@ const Estoque = () => {
     if (dias <= 3) return { text: 'Crítico', variant: 'destructive' as const };
     if (dias <= 7) return { text: 'Atenção', variant: 'default' as const };
     return { text: 'Normal', variant: 'secondary' as const };
+  };
+
+  const handleRenovarEstoque = (medicamento: MedicamentoEstoque) => {
+    setSelectedMedicamento(medicamento);
+    setNovaQuantidade("");
+    setDialogOpen(true);
+  };
+
+  const handleConfirmarRenovacao = async () => {
+    if (!selectedMedicamento || !novaQuantidade || Number(novaQuantidade) <= 0) {
+      toast({
+        title: "Erro",
+        description: "Por favor, insira uma quantidade válida.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const quantidadeAtualizada = selectedMedicamento.quantidade_atual + Number(novaQuantidade);
+      
+      const { error } = await supabase
+        .from('medicamentos')
+        .update({ quantidade_atual: quantidadeAtualizada })
+        .eq('id', selectedMedicamento.id)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Estoque renovado!",
+        description: `${novaQuantidade} ${selectedMedicamento.unidade_dose} adicionados ao estoque.`,
+      });
+
+      setDialogOpen(false);
+      fetchMedicamentosEstoque();
+    } catch (error) {
+      console.error('Erro ao renovar estoque:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível renovar o estoque.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
@@ -211,6 +260,17 @@ const Estoque = () => {
                         </div>
                       </div>
                     )}
+                    
+                    <div className="mt-3">
+                      <Button 
+                        onClick={() => handleRenovarEstoque(medicamento)}
+                        className="w-full btn-health"
+                        size="sm"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Renovar meu estoque
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               );
@@ -218,6 +278,70 @@ const Estoque = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de renovação de estoque */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Renovar Estoque</DialogTitle>
+            <DialogDescription>
+              {selectedMedicamento && (
+                <span className="block mt-2">
+                  <strong>{selectedMedicamento.nome}</strong> - {selectedMedicamento.dosagem} {selectedMedicamento.unidade_dose}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Quantos {selectedMedicamento?.unidade_dose} você deseja adicionar ao seu estoque?
+              </label>
+              <Input
+                type="number"
+                placeholder="Digite a quantidade"
+                value={novaQuantidade}
+                onChange={(e) => setNovaQuantidade(e.target.value)}
+                min="1"
+              />
+            </div>
+
+            {selectedMedicamento && novaQuantidade && Number(novaQuantidade) > 0 && (
+              <div className="p-3 rounded-lg bg-muted">
+                <p className="text-sm text-muted-foreground mb-1">Resumo:</p>
+                <p className="text-sm">
+                  <span className="font-medium">Existentes:</span> {selectedMedicamento.quantidade_atual} {selectedMedicamento.unidade_dose}
+                </p>
+                <p className="text-sm">
+                  <span className="font-medium">Nova remessa:</span> {novaQuantidade} {selectedMedicamento.unidade_dose}
+                </p>
+                <div className="border-t border-border mt-2 pt-2">
+                  <p className="text-sm font-semibold">
+                    <span className="font-medium">Total:</span> {selectedMedicamento.quantidade_atual + Number(novaQuantidade)} {selectedMedicamento.unidade_dose}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setDialogOpen(false)}
+              className="flex-1"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConfirmarRenovacao}
+              className="flex-1 btn-health"
+            >
+              Confirmar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
