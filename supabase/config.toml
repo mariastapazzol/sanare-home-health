@@ -1,1 +1,4 @@
 project_id = "qcglxiuygxzxmbmajyxs"
+
+[functions.create-dependent-user]
+verify_jwt = true

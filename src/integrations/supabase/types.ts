@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      care_contexts: {
+        Row: {
+          caregiver_user_id: string | null
+          created_at: string
+          id: string
+          owner_user_id: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          caregiver_user_id?: string | null
+          created_at?: string
+          id?: string
+          owner_user_id: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          caregiver_user_id?: string | null
+          created_at?: string
+          id?: string
+          owner_user_id?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cuidadores: {
         Row: {
           created_at: string
@@ -50,6 +77,7 @@ export type Database = {
       diary_entries: {
         Row: {
           content: string | null
+          context_id: string | null
           created_at: string
           id: string
           mood: string
@@ -58,6 +86,7 @@ export type Database = {
         }
         Insert: {
           content?: string | null
+          context_id?: string | null
           created_at?: string
           id?: string
           mood: string
@@ -66,13 +95,22 @@ export type Database = {
         }
         Update: {
           content?: string | null
+          context_id?: string | null
           created_at?: string
           id?: string
           mood?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "diary_entries_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "care_contexts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lembretes: {
         Row: {
@@ -340,30 +378,46 @@ export type Database = {
       }
       profiles: {
         Row: {
+          birth_date: string
+          caregiver_user_id: string | null
           created_at: string
+          email: string
           id: string
-          nome: string
+          name: string
+          role: Database["public"]["Enums"]["user_role"]
           updated_at: string
           user_id: string
+          username: string | null
         }
         Insert: {
+          birth_date: string
+          caregiver_user_id?: string | null
           created_at?: string
+          email: string
           id?: string
-          nome: string
+          name: string
+          role: Database["public"]["Enums"]["user_role"]
           updated_at?: string
           user_id: string
+          username?: string | null
         }
         Update: {
+          birth_date?: string
+          caregiver_user_id?: string | null
           created_at?: string
+          email?: string
           id?: string
-          nome?: string
+          name?: string
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
           user_id?: string
+          username?: string | null
         }
         Relationships: []
       }
       sinais_vitais: {
         Row: {
+          context_id: string | null
           created_at: string
           frequencia_cardiaca: number | null
           id: string
@@ -374,6 +428,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          context_id?: string | null
           created_at?: string
           frequencia_cardiaca?: number | null
           id?: string
@@ -384,6 +439,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          context_id?: string | null
           created_at?: string
           frequencia_cardiaca?: number | null
           id?: string
@@ -393,10 +449,19 @@ export type Database = {
           temperatura?: number | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sinais_vitais_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "care_contexts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sintomas: {
         Row: {
+          context_id: string | null
           created_at: string
           duracao: string
           fatores_relacionados: Json
@@ -407,6 +472,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          context_id?: string | null
           created_at?: string
           duracao: string
           fatores_relacionados?: Json
@@ -417,6 +483,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          context_id?: string | null
           created_at?: string
           duracao?: string
           fatores_relacionados?: Json
@@ -426,11 +493,20 @@ export type Database = {
           tipo_sintoma?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sintomas_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "care_contexts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       task_status: {
         Row: {
           checked: boolean
+          context_id: string | null
           day: string
           id: number
           task_id: number
@@ -439,6 +515,7 @@ export type Database = {
         }
         Insert: {
           checked?: boolean
+          context_id?: string | null
           day: string
           id?: never
           task_id: number
@@ -447,6 +524,7 @@ export type Database = {
         }
         Update: {
           checked?: boolean
+          context_id?: string | null
           day?: string
           id?: never
           task_id?: number
@@ -454,6 +532,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "task_status_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "care_contexts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "task_status_task_id_fkey"
             columns: ["task_id"]
@@ -498,7 +583,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      user_role: "paciente_autonomo" | "cuidador" | "dependente"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -625,6 +710,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["paciente_autonomo", "cuidador", "dependente"],
+    },
   },
 } as const

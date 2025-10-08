@@ -23,7 +23,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 
 interface Profile {
-  nome: string;
+  name: string;
 }
 
 const Home = () => {
@@ -47,7 +47,7 @@ const Home = () => {
     try {
       const { data } = await supabase
         .from('profiles')
-        .select('nome')
+        .select('name')
         .eq('user_id', user.id)
         .maybeSingle();
       
@@ -156,7 +156,7 @@ const Home = () => {
       <div className="bg-primary text-primary-foreground p-4">
         <div className="flex items-center justify-between">
           <h1 className="text-mobile-xl font-semibold">
-            Olá, {profile?.nome || 'Usuário'}!
+            Olá, {profile?.name || 'Usuário'}!
           </h1>
           
           <DropdownMenu>

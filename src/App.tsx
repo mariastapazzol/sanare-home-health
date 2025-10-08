@@ -4,11 +4,16 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/use-auth";
+import { CareContextProvider } from "@/hooks/use-care-context";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Welcome from "./pages/Welcome";
 import Auth from "./pages/Auth";
-import AuthSignup from "./pages/AuthSignup";
+import AuthChoice from "./pages/AuthChoice";
+import SignupAutocuidado from "./pages/SignupAutocuidado";
+import SignupCuidador from "./pages/SignupCuidador";
+import SignupDependenteStep from "./pages/SignupDependenteStep";
 import Profile from "./pages/Profile";
+import MeusDependentes from "./pages/MeusDependentes";
 import Medicamentos from "./pages/Medicamentos";
 import NovoMedicamento from "./pages/NovoMedicamento";
 import Estoque from "./pages/Estoque";
@@ -32,25 +37,38 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Welcome />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/auth/signup" element={<AuthSignup />} />
-            
-            <Route path="/home" element={
-              <ProtectedRoute>
-                <Home />
-              </ProtectedRoute>
-            } />
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            } />
+      <CareContextProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Welcome />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/choice" element={<AuthChoice />} />
+              <Route path="/auth/signup-autocuidado" element={<SignupAutocuidado />} />
+              <Route path="/auth/signup-cuidador" element={<SignupCuidador />} />
+              <Route path="/auth/signup-dependente" element={
+                <ProtectedRoute>
+                  <SignupDependenteStep />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/home" element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
+              <Route path="/meus-dependentes" element={
+                <ProtectedRoute>
+                  <MeusDependentes />
+                </ProtectedRoute>
+              } />
             <Route path="/medicamentos" element={
               <ProtectedRoute>
                 <Medicamentos />
@@ -131,11 +149,12 @@ const App = () => (
                 <ChecklistHistorico />
               </ProtectedRoute>
             } />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </CareContextProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

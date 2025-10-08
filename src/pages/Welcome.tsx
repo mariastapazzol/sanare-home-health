@@ -59,7 +59,7 @@ const Welcome = () => {
           </Button>
           
           <Button 
-            onClick={() => navigate('/auth/signup')}
+            onClick={() => navigate('/auth/choice')}
             variant="outline"
             className="btn-health-outline w-full"
           >
