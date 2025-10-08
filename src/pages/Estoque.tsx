@@ -119,7 +119,7 @@ const Estoque = () => {
 
       toast({
         title: "Estoque renovado!",
-        description: `${novaQuantidade} ${selectedMedicamento.unidade_dose} adicionados ao estoque.`,
+        description: `${novaQuantidade} comprimidos adicionados ao estoque.`,
       });
 
       setDialogOpen(false);
@@ -310,11 +310,11 @@ const Estoque = () => {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">
-                Quantos {selectedMedicamento?.unidade_dose} você deseja adicionar ao seu estoque?
+                Quantos comprimidos você deseja adicionar ao seu estoque?
               </label>
               <Input
                 type="number"
-                placeholder="Digite a quantidade"
+                placeholder="Digite a quantidade de comprimidos"
                 value={novaQuantidade}
                 onChange={(e) => setNovaQuantidade(e.target.value)}
                 min="1"
@@ -325,15 +325,20 @@ const Estoque = () => {
               <div className="p-3 rounded-lg bg-muted">
                 <p className="text-sm text-muted-foreground mb-1">Resumo:</p>
                 <p className="text-sm">
-                  <span className="font-medium">Existentes:</span> {selectedMedicamento.quantidade_atual} {selectedMedicamento.unidade_dose}
-                </p>
-                <p className="text-sm">
-                  <span className="font-medium">Nova remessa:</span> {novaQuantidade} {selectedMedicamento.unidade_dose}
+                  <span className="font-medium">Dosagem:</span> {selectedMedicamento.dosagem} {selectedMedicamento.unidade_dose}
                 </p>
                 <div className="border-t border-border mt-2 pt-2">
-                  <p className="text-sm font-semibold">
-                    <span className="font-medium">Total:</span> {selectedMedicamento.quantidade_atual + Number(novaQuantidade)} {selectedMedicamento.unidade_dose}
+                  <p className="text-sm">
+                    <span className="font-medium">Comprimidos existentes:</span> {selectedMedicamento.quantidade_atual}
                   </p>
+                  <p className="text-sm">
+                    <span className="font-medium">Nova remessa:</span> {novaQuantidade} comprimidos
+                  </p>
+                  <div className="border-t border-border mt-2 pt-2">
+                    <p className="text-sm font-semibold">
+                      <span className="font-medium">Total de comprimidos:</span> {selectedMedicamento.quantidade_atual + Number(novaQuantidade)}
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
