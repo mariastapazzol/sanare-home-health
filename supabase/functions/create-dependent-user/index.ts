@@ -15,13 +15,25 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
+    if (!supabaseServiceRoleKey) {
+      return new Response(
+        JSON.stringify({ error: 'Missing SERVICE_ROLE' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Create admin client with service role key
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
     
     // Get the authorization header to verify the caregiver
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      throw new Error('Missing authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Verify the caregiver's JWT
@@ -31,29 +43,50 @@ Deno.serve(async (req) => {
     if (authError || !caregiver) {
       console.error('Auth error:', authError);
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Invalid session' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     console.log('Caregiver authenticated:', caregiver.id);
 
-    // Parse request body
-    const { name, username, birth_date, email, password } = await req.json();
+    // Verify user is actually a caregiver
+    const { data: cgRow, error: cgErr } = await supabaseAdmin
+      .from('cuidadores')
+      .select('id')
+      .eq('user_id', caregiver.id)
+      .maybeSingle();
+
+    if (cgErr) {
+      return new Response(
+        JSON.stringify({ error: cgErr.message }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!cgRow) {
+      return new Response(
+        JSON.stringify({ error: 'Apenas cuidadores podem criar dependentes' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Parse request body - NO EMAIL REQUIRED
+    const { name, username, birth_date, password, observacoes } = await req.json();
 
     // Validate required fields
-    if (!name || !username || !birth_date || !email || !password) {
+    if (!name || !username || !birth_date || !password) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
+        JSON.stringify({ error: 'Campos obrigatórios ausentes' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // Validate username format
-    const usernameRegex = /^[a-z0-9._]{3,}$/;
+    const usernameRegex = /^[A-Za-z0-9._]{3,}$/;
     if (!usernameRegex.test(username)) {
       return new Response(
-        JSON.stringify({ error: 'Nome de usuário inválido. Use apenas letras minúsculas, números, pontos e underscores (mínimo 3 caracteres)' }),
+        JSON.stringify({ error: 'Username inválido. Use apenas letras, números, pontos e underscores (mínimo 3 caracteres)' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -66,17 +99,19 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('Creating dependent user...');
+    // Generate shadow email for auth
+    const shadowEmail = `${username.toLowerCase()}@dep.sanare.local`;
 
-    // Create the dependent user account
+    console.log('Creating dependent user with shadow email:', shadowEmail);
+
+    // Create the dependent user account with shadow email
     const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
-      email,
+      email: shadowEmail,
       password,
       email_confirm: true,
       user_metadata: {
-        name,
-        username,
-        birth_date
+        role: 'paciente_dependente',
+        username
       }
     });
 
@@ -90,30 +125,29 @@ Deno.serve(async (req) => {
 
     console.log('User created:', newUser.user.id);
 
-    // Create the profile for the dependent
-    const { error: profileError } = await supabaseAdmin
-      .from('profiles')
+    // Insert into pacientes_dependentes table
+    const { error: depError } = await supabaseAdmin
+      .from('pacientes_dependentes')
       .insert({
         user_id: newUser.user.id,
-        role: 'dependente',
-        caregiver_user_id: caregiver.id,
-        name,
-        username,
-        birth_date,
-        email
+        cuidador_id: caregiver.id,
+        nome: name,
+        nome_usuario: username,
+        nascimento: birth_date,
+        observacoes: observacoes ?? null
       });
 
-    if (profileError) {
-      console.error('Error creating profile:', profileError);
-      // If profile creation fails, delete the user
+    if (depError) {
+      console.error('Error creating dependent record:', depError);
+      // If dependent creation fails, delete the user
       await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
       return new Response(
-        JSON.stringify({ error: 'Failed to create profile: ' + profileError.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Failed to create dependent: ' + depError.message }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Profile created');
+    console.log('Dependent record created');
 
     // Create the care context for the dependent
     const { error: contextError } = await supabaseAdmin

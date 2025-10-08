@@ -10,13 +10,18 @@ import { Label } from '@/components/ui/label';
 const Auth = () => {
   const navigate = useNavigate();
   const { signIn } = useAuth();
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    
+    // Convert username to shadow email if needed
+    const email = identifier.includes('@') 
+      ? identifier.trim() 
+      : `${identifier.trim().toLowerCase()}@dep.sanare.local`;
     
     const { error } = await signIn(email, password);
     
@@ -51,16 +56,18 @@ const Auth = () => {
         <Card className="card-health">
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
+              <Label htmlFor="identifier">E-mail ou usuário</Label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu@email.com"
+                id="identifier"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="E-mail (cuidador/autônomo) ou usuário (dependente)"
                 required
                 className="min-h-[44px]"
               />
+              <p className="text-xs text-muted-foreground">
+                Dependentes: use seu nome de usuário
+              </p>
             </div>
 
             <div className="space-y-2">

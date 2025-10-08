@@ -15,8 +15,7 @@ const SignupCuidador = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
-    username: '',
-    birth_date: '',
+    birthDate: '',
     email: '',
     password: '',
     confirmPassword: ''
@@ -43,73 +42,67 @@ const SignupCuidador = () => {
       });
       return;
     }
-
-    // Validate username
-    const usernameRegex = /^[a-z0-9._]{3,}$/;
-    if (!usernameRegex.test(formData.username)) {
-      toast({
-        title: "Erro",
-        description: "Nome de usuário inválido. Use apenas letras minúsculas, números, pontos e underscores (mínimo 3 caracteres)",
-        variant: "destructive"
-      });
-      return;
-    }
     
     setLoading(true);
     
     try {
-      // Create the auth user
-      const { error: authError } = await signUp(formData.email, formData.password, formData.name);
-      
-      if (authError) {
-        setLoading(false);
-        return;
+      // Sign up with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            name: formData.name,
+            birth_date: formData.birthDate,
+          }
+        }
+      });
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('Failed to create user');
+
+      // Create cuidador record (without nome_usuario)
+      const { error: cuidadorError } = await supabase
+        .from('cuidadores')
+        .insert({
+          user_id: authData.user.id,
+          nome: formData.name,
+          nascimento: formData.birthDate || null,
+        });
+
+      if (cuidadorError) {
+        console.error('Error creating cuidador:', cuidadorError);
+        throw new Error('Database error saving new user');
       }
 
-      // Wait for session
-      setTimeout(async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session?.user) {
-          // Create profile
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              user_id: session.user.id,
-              role: 'cuidador',
-              name: formData.name,
-              username: formData.username,
-              birth_date: formData.birth_date,
-              email: formData.email
-            });
+      toast({
+        title: "Conta criada com sucesso!",
+        description: "Agora vamos cadastrar o dependente.",
+      });
 
-          if (profileError) {
-            console.error('Error creating profile:', profileError);
-            toast({
-              title: "Erro",
-              description: "Erro ao criar perfil: " + profileError.message,
-              variant: "destructive"
-            });
-            setLoading(false);
-            return;
-          }
-
-          toast({
-            title: "Sucesso!",
-            description: "Conta de cuidador criada. Agora vamos cadastrar o dependente.",
-          });
-
-          // Navigate to dependent signup step
-          navigate('/auth/signup-dependente');
-        }
-        
-        setLoading(false);
-      }, 2000);
-      
-    } catch (error) {
+      navigate('/auth/signup-dependente');
+    } catch (error: any) {
       console.error('Signup error:', error);
-      setLoading(false);
+      
+      let errorMessage = 'Erro ao criar conta';
+      
+      if (error.message?.includes('already registered')) {
+        errorMessage = 'Este e-mail já está cadastrado';
+      } else if (error.message?.includes('Password')) {
+        errorMessage = 'A senha deve ter pelo menos 8 caracteres';
+      } else if (error.message?.includes('Database error')) {
+        errorMessage = 'Erro ao salvar dados. Verifique se o e-mail já está cadastrado.';
+      }
+
+      toast({
+        title: "Erro no cadastro",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
+    
+    setLoading(false);
   };
 
   const handleChange = (field: string, value: string) => {
@@ -154,28 +147,12 @@ const SignupCuidador = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="username">Nome de usuário</Label>
+              <Label htmlFor="birthDate">Data de nascimento</Label>
               <Input
-                id="username"
-                type="text"
-                value={formData.username}
-                onChange={(e) => handleChange('username', e.target.value.toLowerCase())}
-                placeholder="usuario123"
-                required
-                className="min-h-[44px]"
-              />
-              <p className="text-xs text-muted-foreground">
-                Mínimo 3 caracteres. Use apenas letras minúsculas, números, pontos e underscores
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="birth_date">Data de nascimento</Label>
-              <Input
-                id="birth_date"
+                id="birthDate"
                 type="date"
-                value={formData.birth_date}
-                onChange={(e) => handleChange('birth_date', e.target.value)}
+                value={formData.birthDate}
+                onChange={(e) => handleChange('birthDate', e.target.value)}
                 required
                 className="min-h-[44px]"
               />

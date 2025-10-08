@@ -45,8 +45,9 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          nascimento: string | null
           nome: string
-          nome_usuario: string
+          nome_usuario: string | null
           observacoes: string | null
           telefone: string | null
           updated_at: string
@@ -55,8 +56,9 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          nascimento?: string | null
           nome: string
-          nome_usuario: string
+          nome_usuario?: string | null
           observacoes?: string | null
           telefone?: string | null
           updated_at?: string
@@ -65,8 +67,9 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          nascimento?: string | null
           nome?: string
-          nome_usuario?: string
+          nome_usuario?: string | null
           observacoes?: string | null
           telefone?: string | null
           updated_at?: string

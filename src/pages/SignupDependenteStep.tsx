@@ -14,8 +14,7 @@ const SignupDependenteStep = () => {
   const [formData, setFormData] = useState({
     name: '',
     username: '',
-    birth_date: '',
-    email: '',
+    birthDate: '',
     password: '',
     confirmPassword: ''
   });
@@ -74,9 +73,9 @@ const SignupDependenteStep = () => {
         body: {
           name: formData.name,
           username: formData.username,
-          birth_date: formData.birth_date,
-          email: formData.email,
-          password: formData.password
+          birth_date: formData.birthDate,
+          password: formData.password,
+          observacoes: null,
         }
       });
 
@@ -157,30 +156,17 @@ const SignupDependenteStep = () => {
                 className="min-h-[44px]"
               />
               <p className="text-xs text-muted-foreground">
-                Mínimo 3 caracteres. Use apenas letras minúsculas, números, pontos e underscores
+                O usuário será usado para login. Não pode ser alterado depois.
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="birth_date">Data de nascimento</Label>
+              <Label htmlFor="birthDate">Data de nascimento</Label>
               <Input
-                id="birth_date"
+                id="birthDate"
                 type="date"
-                value={formData.birth_date}
-                onChange={(e) => handleChange('birth_date', e.target.value)}
-                required
-                className="min-h-[44px]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail do dependente</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleChange('email', e.target.value)}
-                placeholder="email@exemplo.com"
+                value={formData.birthDate}
+                onChange={(e) => handleChange('birthDate', e.target.value)}
                 required
                 className="min-h-[44px]"
               />
