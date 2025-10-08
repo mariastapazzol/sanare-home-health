@@ -72,13 +72,13 @@ export function ChecklistToday() {
         </div>
       </CardHeader>
       <CardContent>
-        {tasks.length === 0 ? (
+        {tasks.filter(t => !t.checked).length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            Nenhuma tarefa cadastrada
+            {tasks.length === 0 ? 'Nenhuma tarefa cadastrada' : '✅ Todas as tarefas concluídas hoje!'}
           </div>
         ) : (
           <div className="space-y-4">
-            {tasks.map((task) => (
+            {tasks.filter(t => !t.checked).map((task) => (
               <div
                 key={task.id}
                 className="flex items-center space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
@@ -91,9 +91,7 @@ export function ChecklistToday() {
                 />
                 <label
                   htmlFor={`task-${task.id}`}
-                  className={`flex-1 text-base cursor-pointer ${
-                    task.checked ? 'line-through text-muted-foreground' : ''
-                  }`}
+                  className="flex-1 text-base cursor-pointer"
                 >
                   {task.title}
                 </label>
