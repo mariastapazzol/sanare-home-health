@@ -59,6 +59,11 @@ const App = () => (
                 <NovoMedicamento />
               </ProtectedRoute>
             } />
+            <Route path="/medicamentos/editar/:id" element={
+              <ProtectedRoute>
+                <NovoMedicamento />
+              </ProtectedRoute>
+            } />
             <Route path="/stock" element={
               <ProtectedRoute>
                 <Estoque />

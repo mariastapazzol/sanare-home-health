@@ -184,7 +184,7 @@ const Home = () => {
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <Button
-            onClick={() => navigate('/medications')}
+            onClick={() => navigate('/medicamentos')}
             className="btn-health h-20 flex-col space-y-2"
           >
             <Pill className="h-6 w-6" />

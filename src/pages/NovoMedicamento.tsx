@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, Plus, X, Camera } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "@/hooks/use-toast";
@@ -28,6 +28,7 @@ type FormData = z.infer<typeof formSchema>;
 
 const NovoMedicamento = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const { user } = useAuth();
   const [horarios, setHorarios] = useState<string[]>(['']);
   const [imagemUrl, setImagemUrl] = useState<string>('');
@@ -44,6 +45,50 @@ const NovoMedicamento = () => {
       frequencia: '',
     },
   });
+
+  useEffect(() => {
+    if (id && user) {
+      loadMedicamento();
+    }
+  }, [id, user]);
+
+  const loadMedicamento = async () => {
+    if (!id || !user) return;
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('medicamentos')
+        .select('*')
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        form.reset({
+          nome: data.nome,
+          dosagem: data.dosagem,
+          unidade_dose: data.unidade_dose,
+          quantidade_por_embalagem: data.quantidade_por_embalagem,
+          precisa_receita: data.precisa_receita,
+          frequencia: data.frequencia,
+        });
+        setHorarios(Array.isArray(data.horarios) ? data.horarios.map(String) : ['']);
+        setImagemUrl(data.imagem_url || '');
+      }
+    } catch (error) {
+      console.error('Erro ao carregar medicamento:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar o medicamento.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const adicionarHorario = () => {
     setHorarios([...horarios, '']);
@@ -75,7 +120,6 @@ const NovoMedicamento = () => {
         dosagem: data.dosagem,
         unidade_dose: data.unidade_dose,
         quantidade_por_embalagem: data.quantidade_por_embalagem,
-        quantidade_atual: data.quantidade_por_embalagem, // Inicia com estoque completo
         precisa_receita: data.precisa_receita,
         frequencia: data.frequencia,
         horarios: horariosValidos,
@@ -84,16 +128,38 @@ const NovoMedicamento = () => {
         alerta_minimo: Math.floor(data.quantidade_por_embalagem * 0.2), // 20% da embalagem
       };
 
-      const { error } = await supabase
-        .from('medicamentos')
-        .insert(medicamentoData);
+      if (id) {
+        // Editar medicamento existente
+        const { error } = await supabase
+          .from('medicamentos')
+          .update(medicamentoData)
+          .eq('id', id)
+          .eq('user_id', user.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Sucesso!",
-        description: "Medicamento cadastrado com sucesso.",
-      });
+        toast({
+          title: "Sucesso!",
+          description: "Medicamento atualizado com sucesso.",
+        });
+      } else {
+        // Criar novo medicamento
+        const medicamentoDataComEstoque = {
+          ...medicamentoData,
+          quantidade_atual: data.quantidade_por_embalagem, // Inicia com estoque completo
+        };
+
+        const { error } = await supabase
+          .from('medicamentos')
+          .insert(medicamentoDataComEstoque);
+
+        if (error) throw error;
+
+        toast({
+          title: "Sucesso!",
+          description: "Medicamento cadastrado com sucesso.",
+        });
+      }
 
       navigate('/medicamentos');
     } catch (error) {
@@ -121,7 +187,7 @@ const NovoMedicamento = () => {
         <div className="pt-16 pb-8 px-4">
           <div className="mb-6">
             <h1 className="text-mobile-2xl font-bold text-foreground mb-2">
-              Novo Medicamento
+              {id ? 'Editar Medicamento' : 'Novo Medicamento'}
             </h1>
             <p className="text-muted-foreground">
               Preencha as informações do medicamento
