@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/use-auth";
 import { CareContextProvider } from "@/hooks/use-care-context";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { RoleRoute } from "@/navigation/RoleRoute";
 import Welcome from "./pages/Welcome";
 import Auth from "./pages/Auth";
 import AuthChoice from "./pages/AuthChoice";
@@ -61,7 +62,9 @@ const App = () => (
               } />
               <Route path="/profile" element={
                 <ProtectedRoute>
-                  <Profile />
+                  <RoleRoute allow={['cuidador', 'paciente_dependente']}>
+                    <Profile />
+                  </RoleRoute>
                 </ProtectedRoute>
               } />
               <Route path="/meus-dependentes" element={

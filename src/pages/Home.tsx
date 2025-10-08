@@ -13,8 +13,10 @@ import {
   Check,
   X,
   BookOpen,
-  Activity
+  Activity,
+  CheckSquare
 } from 'lucide-react';
+import { getHomeCardsForRole, getDropdownMenuForRole } from '@/navigation/menuByRole';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -128,6 +130,27 @@ const Home = () => {
     navigate('/');
   };
 
+  const menuItems = getDropdownMenuForRole(papel);
+  const homeCards = getHomeCardsForRole(papel);
+
+  // Mapear ícones para cada card
+  const getIconForCard = (key: string) => {
+    switch (key) {
+      case 'medicamentos':
+        return <Pill className="h-6 w-6" />;
+      case 'estoque':
+        return <Package className="h-6 w-6" />;
+      case 'diario':
+        return <BookOpen className="h-6 w-6" />;
+      case 'sintomas':
+        return <Activity className="h-6 w-6" />;
+      case 'checklist':
+        return <CheckSquare className="h-6 w-6" />;
+      default:
+        return <Activity className="h-6 w-6" />;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -144,63 +167,42 @@ const Home = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              {papel !== 'paciente_autonomo' && (
-                <DropdownMenuItem onClick={() => navigate('/profile')}>
-                  Perfil
+              {menuItems.map((item) => (
+                <DropdownMenuItem 
+                  key={item.key}
+                  onClick={() => {
+                    if (item.key === 'sair') {
+                      handleLogout();
+                    } else {
+                      navigate(item.path);
+                    }
+                  }}
+                >
+                  {item.label}
                 </DropdownMenuItem>
-              )}
-              <DropdownMenuItem onClick={() => navigate('/lembretes')}>
-                Lembretes
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleLogout}>
-                Sair
-              </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
 
       <div className="p-4 space-y-6">
-        {/* Action Buttons */}
+        {/* Action Buttons - Baseado no papel do usuário */}
         <div className="grid grid-cols-2 gap-4 mb-4">
-          <Button
-            onClick={() => navigate('/medicamentos')}
-            className="btn-health h-20 flex-col space-y-2"
-          >
-            <Pill className="h-6 w-6" />
-            <span>Medicamentos</span>
-          </Button>
-          
-          <Button
-            onClick={() => navigate('/stock')}
-            className="btn-health h-20 flex-col space-y-2"
-          >
-            <Package className="h-6 w-6" />
-            <span>Estoque</span>
-          </Button>
+          {homeCards.map((card) => (
+            <Button
+              key={card.key}
+              onClick={() => navigate(card.path)}
+              className="btn-health h-20 flex-col space-y-2"
+            >
+              {getIconForCard(card.key)}
+              <span>{card.label}</span>
+            </Button>
+          ))}
         </div>
 
-        {/* Diary Buttons */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <Button
-            onClick={() => navigate('/diary')}
-            className="btn-health h-20 flex-col space-y-2"
-          >
-            <BookOpen className="h-6 w-6" />
-            <span>Diário Emocional</span>
-          </Button>
-          
-          <Button
-            onClick={() => navigate('/sintomas')}
-            className="btn-health h-20 flex-col space-y-2"
-          >
-            <Activity className="h-6 w-6" />
-            <span>Sintomas e Sinais</span>
-          </Button>
-        </div>
-
-        {/* Alerta de Estoque Baixo */}
-        {medicamentosComEstoqueBaixo.length > 0 && (
+        {/* Alerta de Estoque Baixo - Apenas para cuidador e autônomo */}
+        {papel !== 'paciente_dependente' && medicamentosComEstoqueBaixo.length > 0 && (
           <Card className="card-health border-warning bg-warning/5">
             <div className="flex items-start space-x-3">
               <AlertTriangle className="h-5 w-5 text-warning mt-0.5" />
@@ -221,7 +223,8 @@ const Home = () => {
           </Card>
         )}
 
-        {/* Checklist Diário */}
+        {/* Checklist Diário - Apenas para cuidador e autônomo */}
+        {papel !== 'paciente_dependente' && (
         <Card className="card-health">
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
@@ -283,6 +286,7 @@ const Home = () => {
             )}
           </div>
         </Card>
+        )}
       </div>
     </div>
   );
