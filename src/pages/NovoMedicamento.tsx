@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Plus, X, Camera } from "lucide-react";
+import { ArrowLeft, Plus, X, Upload } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -33,6 +33,7 @@ const NovoMedicamento = () => {
   const [horarios, setHorarios] = useState<string[]>(['']);
   const [imagemUrl, setImagemUrl] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -104,6 +105,62 @@ const NovoMedicamento = () => {
     const novosHorarios = [...horarios];
     novosHorarios[index] = value;
     setHorarios(novosHorarios);
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validar tipo de arquivo
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Erro",
+        description: "Por favor, selecione um arquivo de imagem.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar tamanho (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Erro",
+        description: "A imagem deve ter no máximo 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError, data } = await supabase.storage
+        .from('medicamentos')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('medicamentos')
+        .getPublicUrl(fileName);
+
+      setImagemUrl(publicUrl);
+      toast({
+        title: "Sucesso!",
+        description: "Imagem enviada com sucesso.",
+      });
+    } catch (error) {
+      console.error('Erro ao fazer upload:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível enviar a imagem.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const onSubmit = async (data: FormData) => {
@@ -372,29 +429,45 @@ const NovoMedicamento = () => {
                   <CardTitle>Imagem (Opcional)</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-center border-2 border-dashed border-border rounded-lg p-6">
-                    <div className="text-center">
-                      <Camera className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Adicione uma foto do medicamento
-                      </p>
-                      <Input
-                        type="url"
-                        placeholder="URL da imagem"
-                        value={imagemUrl}
-                        onChange={(e) => setImagemUrl(e.target.value)}
-                        className="mt-2"
-                      />
+                  {imagemUrl ? (
+                    <div className="space-y-4">
+                      <div className="flex justify-center">
+                        <img
+                          src={imagemUrl}
+                          alt="Preview"
+                          className="w-32 h-32 rounded-lg object-cover"
+                          onError={() => setImagemUrl('')}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setImagemUrl('')}
+                        className="w-full"
+                      >
+                        Remover Imagem
+                      </Button>
                     </div>
-                  </div>
-                  {imagemUrl && (
-                    <div className="mt-4 flex justify-center">
-                      <img
-                        src={imagemUrl}
-                        alt="Preview"
-                        className="w-24 h-24 rounded-lg object-cover"
-                        onError={() => setImagemUrl('')}
-                      />
+                  ) : (
+                    <div className="flex items-center justify-center border-2 border-dashed border-border rounded-lg p-6">
+                      <div className="text-center w-full">
+                        <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Adicione uma foto do medicamento
+                        </p>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          disabled={uploading}
+                          className="cursor-pointer"
+                        />
+                        {uploading && (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Enviando imagem...
+                          </p>
+                        )}
+                      </div>
                     </div>
                   )}
                 </CardContent>

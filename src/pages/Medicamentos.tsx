@@ -181,21 +181,27 @@ const Medicamentos = () => {
               <Card key={medicamento.id} className="card-health">
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground">
-                        {medicamento.nome}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {medicamento.dosagem} {medicamento.unidade_dose}
-                      </p>
+                    <div className="flex items-center gap-3 flex-1">
+                      {medicamento.imagem_url ? (
+                        <img 
+                          src={medicamento.imagem_url} 
+                          alt={medicamento.nome}
+                          className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                          <Pill className="w-6 h-6 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-foreground truncate">
+                          {medicamento.nome}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {medicamento.dosagem} {medicamento.unidade_dose}
+                        </p>
+                      </div>
                     </div>
-                    {medicamento.imagem_url && (
-                      <img 
-                        src={medicamento.imagem_url} 
-                        alt={medicamento.nome}
-                        className="w-12 h-12 rounded-lg object-cover"
-                      />
-                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
