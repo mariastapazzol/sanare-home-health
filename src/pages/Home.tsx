@@ -132,6 +132,8 @@ const Home = () => {
 
   const menuItems = getSidebarForRole(papel);
   const homeCards = getHomeActionsForRole(papel);
+  
+  console.debug("HOME papel:", papel, "cards:", homeCards.map(c => c.key));
 
   // Mapear ícones para cada card
   const getIconForCard = (key: string) => {
@@ -216,7 +218,7 @@ const Home = () => {
                 <Button 
                   variant="link" 
                   className="text-warning hover:text-warning p-0 h-auto mt-1"
-                  onClick={() => navigate('/stock')}
+                  onClick={() => navigate('/estoque')}
                 >
                   Ver detalhes
                 </Button>
