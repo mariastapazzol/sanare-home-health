@@ -425,12 +425,74 @@ export type Database = {
         }
         Relationships: []
       }
+      task_status: {
+        Row: {
+          checked: boolean
+          day: string
+          id: number
+          task_id: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          checked?: boolean
+          day: string
+          id?: never
+          task_id: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          checked?: boolean
+          day?: string
+          id?: never
+          task_id?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_status_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: number
+          order: number
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: never
+          order?: number
+          title: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: never
+          order?: number
+          title?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      server_time_sampa: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

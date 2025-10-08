@@ -23,6 +23,8 @@ import NovoLembrete from "./pages/NovoLembrete";
 import Sintomas from "./pages/Sintomas";
 import NovoSintoma from "./pages/NovoSintoma";
 import NovoSinalVital from "./pages/NovoSinalVital";
+import ChecklistDiario from "./pages/ChecklistDiario";
+import ChecklistHistorico from "./pages/ChecklistHistorico";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -117,6 +119,16 @@ const App = () => (
             <Route path="/sinais-vitais/novo" element={
               <ProtectedRoute>
                 <NovoSinalVital />
+              </ProtectedRoute>
+            } />
+            <Route path="/checklist" element={
+              <ProtectedRoute>
+                <ChecklistDiario />
+              </ProtectedRoute>
+            } />
+            <Route path="/checklist/historico" element={
+              <ProtectedRoute>
+                <ChecklistHistorico />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
