@@ -34,10 +34,8 @@ export const menuByRole: Record<Papel, MenuItem[]> = {
   ],
   paciente_dependente: [
     { key: 'home', label: 'Início', path: '/home', showInHome: false, showInMenu: false },
-    { key: 'sintomas', label: 'Sintomas e Sinais', path: '/sintomas', showInHome: true, showInMenu: false },
-    { key: 'vitais', label: 'Sinais Vitais', path: '/sinais-vitais/novo', showInHome: true, showInMenu: false },
     { key: 'diario', label: 'Diário Emocional', path: '/diary', showInHome: true, showInMenu: false },
-    { key: 'checklist', label: 'Checklist', path: '/checklist', showInHome: true, showInMenu: false },
+    { key: 'sintomas', label: 'Sintomas e Sinais', path: '/sintomas', showInHome: true, showInMenu: false },
     { key: 'perfil', label: 'Perfil', path: '/profile', showInHome: false, showInMenu: true },
     { key: 'sair', label: 'Sair', path: '/logout', showInHome: false, showInMenu: true },
   ],
