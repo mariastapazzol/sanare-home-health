@@ -325,15 +325,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "pacientes_dependentes_cuidador_id_fkey"
-            columns: ["cuidador_id"]
-            isOneToOne: false
-            referencedRelation: "cuidadores"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       posologias: {
         Row: {
