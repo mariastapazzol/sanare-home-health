@@ -32,8 +32,11 @@ const NovoMedicamento = () => {
   const { user } = useAuth();
   const [horarios, setHorarios] = useState<string[]>(['']);
   const [imagemUrl, setImagemUrl] = useState<string>('');
+  const [receitaUrl, setReceitaUrl] = useState<string>('');
+  const [semReceita, setSemReceita] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingReceita, setUploadingReceita] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -78,6 +81,8 @@ const NovoMedicamento = () => {
         });
         setHorarios(Array.isArray(data.horarios) ? data.horarios.map(String) : ['']);
         setImagemUrl(data.imagem_url || '');
+        setReceitaUrl(data.receita_url || '');
+        setSemReceita(!data.receita_url && data.precisa_receita);
       }
     } catch (error) {
       console.error('Erro ao carregar medicamento:', error);
@@ -163,6 +168,63 @@ const NovoMedicamento = () => {
     }
   };
 
+  const handleReceitaUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validar tipo de arquivo
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Erro",
+        description: "Por favor, selecione um arquivo de imagem.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar tamanho (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Erro",
+        description: "A imagem deve ter no máximo 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingReceita(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `receitas/${user.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('medicamentos')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('medicamentos')
+        .getPublicUrl(fileName);
+
+      setReceitaUrl(publicUrl);
+      setSemReceita(false);
+      toast({
+        title: "Sucesso!",
+        description: "Receita enviada com sucesso.",
+      });
+    } catch (error) {
+      console.error('Erro ao fazer upload:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível enviar a receita.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingReceita(false);
+    }
+  };
+
   const onSubmit = async (data: FormData) => {
     if (!user) return;
 
@@ -181,6 +243,7 @@ const NovoMedicamento = () => {
         frequencia: data.frequencia,
         horarios: horariosValidos,
         imagem_url: imagemUrl || null,
+        receita_url: receitaUrl || null,
         quantidade_por_dose: 1, // Valor padrão
         alerta_minimo: Math.floor(data.quantidade_por_embalagem * 0.2), // 20% da embalagem
       };
@@ -345,12 +408,86 @@ const NovoMedicamento = () => {
                         <FormControl>
                           <Switch
                             checked={field.value}
-                            onCheckedChange={field.onChange}
+                            onCheckedChange={(checked) => {
+                              field.onChange(checked);
+                              if (!checked) {
+                                setReceitaUrl('');
+                                setSemReceita(false);
+                              }
+                            }}
                           />
                         </FormControl>
                       </FormItem>
                     )}
                   />
+
+                  {form.watch('precisa_receita') && (
+                    <Card className="border-2 border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-900">
+                      <CardContent className="pt-6 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-medium">Foto da Receita Médica</Label>
+                        </div>
+                        
+                        {receitaUrl ? (
+                          <div className="space-y-4">
+                            <div className="flex justify-center">
+                              <img
+                                src={receitaUrl}
+                                alt="Receita médica"
+                                className="max-w-full h-auto rounded-lg border-2 border-border"
+                                onError={() => setReceitaUrl('')}
+                              />
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => setReceitaUrl('')}
+                              className="w-full"
+                            >
+                              Remover Receita
+                            </Button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-center justify-center border-2 border-dashed border-border rounded-lg p-6">
+                              <div className="text-center w-full">
+                                <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                                <p className="text-sm text-muted-foreground mb-3">
+                                  Adicione uma foto da receita médica
+                                </p>
+                                <Input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleReceitaUpload}
+                                  disabled={uploadingReceita || semReceita}
+                                  className="cursor-pointer"
+                                />
+                                {uploadingReceita && (
+                                  <p className="text-xs text-muted-foreground mt-2">
+                                    Enviando receita...
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center space-x-2">
+                              <Switch
+                                id="sem-receita"
+                                checked={semReceita}
+                                onCheckedChange={setSemReceita}
+                              />
+                              <Label 
+                                htmlFor="sem-receita"
+                                className="text-sm cursor-pointer"
+                              >
+                                Ainda não possuo a receita
+                              </Label>
+                            </div>
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
                 </CardContent>
               </Card>
 

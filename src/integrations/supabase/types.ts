@@ -129,6 +129,7 @@ export type Database = {
           quantidade_atual: number
           quantidade_por_dose: number
           quantidade_por_embalagem: number
+          receita_url: string | null
           unidade_dose: string
           updated_at: string
           user_id: string
@@ -148,6 +149,7 @@ export type Database = {
           quantidade_atual?: number
           quantidade_por_dose: number
           quantidade_por_embalagem: number
+          receita_url?: string | null
           unidade_dose: string
           updated_at?: string
           user_id: string
@@ -167,6 +169,7 @@ export type Database = {
           quantidade_atual?: number
           quantidade_por_dose?: number
           quantidade_por_embalagem?: number
+          receita_url?: string | null
           unidade_dose?: string
           updated_at?: string
           user_id?: string
