@@ -29,7 +29,7 @@ export const menuByRole: Record<Papel, MenuItem[]> = {
     { key: 'diario', label: 'Diário Emocional', path: '/diary', showInHome: true, showInMenu: true },
     { key: 'sintomas', label: 'Sintomas e Sinais', path: '/sintomas', showInHome: true, showInMenu: true },
     { key: 'lembretes', label: 'Lembretes', path: '/lembretes', showInHome: false, showInMenu: true },
-    // *** Importante: NÃO incluir perfil aqui ***
+    { key: 'perfil', label: 'Perfil', path: '/profile', showInHome: false, showInMenu: true },
     { key: 'sair', label: 'Sair', path: '/logout', showInHome: false, showInMenu: true },
   ],
   paciente_dependente: [

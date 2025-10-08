@@ -62,9 +62,7 @@ const App = () => (
               } />
               <Route path="/profile" element={
                 <ProtectedRoute>
-                  <RoleRoute allow={['cuidador', 'paciente_dependente']}>
-                    <Profile />
-                  </RoleRoute>
+                  <Profile />
                 </ProtectedRoute>
               } />
               <Route path="/meus-dependentes" element={

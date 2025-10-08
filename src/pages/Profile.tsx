@@ -21,13 +21,6 @@ const Profile = () => {
     nascimento: ''
   });
 
-  // Redirect autonomous patients to home
-  useEffect(() => {
-    if (papel === 'paciente_autonomo') {
-      navigate('/home', { replace: true });
-    }
-  }, [papel, navigate]);
-
   const handleSave = async () => {
     if (!dados || !papel) return;
 
