@@ -102,7 +102,7 @@ const NovoSinalVital = () => {
 
     try {
       const { error } = await supabase
-        .from('sinais_vitais' as any)
+        .from('sinais_vitais')
         .insert({
           user_id: user?.id,
           pressao_sistolica: pressaoSistolica ? parseFloat(pressaoSistolica) : null,

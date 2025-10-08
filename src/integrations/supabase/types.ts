@@ -359,6 +359,72 @@ export type Database = {
         }
         Relationships: []
       }
+      sinais_vitais: {
+        Row: {
+          created_at: string
+          frequencia_cardiaca: number | null
+          id: string
+          pressao_diastolica: number | null
+          pressao_sistolica: number | null
+          saturacao_oxigenio: number | null
+          temperatura: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          frequencia_cardiaca?: number | null
+          id?: string
+          pressao_diastolica?: number | null
+          pressao_sistolica?: number | null
+          saturacao_oxigenio?: number | null
+          temperatura?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          frequencia_cardiaca?: number | null
+          id?: string
+          pressao_diastolica?: number | null
+          pressao_sistolica?: number | null
+          saturacao_oxigenio?: number | null
+          temperatura?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sintomas: {
+        Row: {
+          created_at: string
+          duracao: string
+          fatores_relacionados: Json
+          id: string
+          intensidade: number
+          observacoes: string | null
+          tipo_sintoma: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duracao: string
+          fatores_relacionados?: Json
+          id?: string
+          intensidade: number
+          observacoes?: string | null
+          tipo_sintoma: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duracao?: string
+          fatores_relacionados?: Json
+          id?: string
+          intensidade?: number
+          observacoes?: string | null
+          tipo_sintoma?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

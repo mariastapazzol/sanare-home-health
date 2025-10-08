@@ -10,16 +10,18 @@ import { ptBR } from 'date-fns/locale';
 
 interface Sintoma {
   id: string;
+  user_id: string;
   tipo_sintoma: string;
   intensidade: number;
   duracao: string;
-  fatores_relacionados: string[];
+  fatores_relacionados: any;
   observacoes: string | null;
   created_at: string;
 }
 
 interface SinalVital {
   id: string;
+  user_id: string;
   pressao_sistolica: number | null;
   pressao_diastolica: number | null;
   frequencia_cardiaca: number | null;
@@ -47,7 +49,7 @@ const Sintomas = () => {
       
       // Buscar sintomas
       const { data: sintomasData } = await supabase
-        .from('sintomas' as any)
+        .from('sintomas')
         .select('*')
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false })
@@ -55,14 +57,14 @@ const Sintomas = () => {
       
       // Buscar sinais vitais
       const { data: sinaisData } = await supabase
-        .from('sinais_vitais' as any)
+        .from('sinais_vitais')
         .select('*')
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false })
         .limit(5);
       
-      if (sintomasData) setSintomas(sintomasData as any);
-      if (sinaisData) setSinaisVitais(sinaisData as any);
+      if (sintomasData) setSintomas(sintomasData);
+      if (sinaisData) setSinaisVitais(sinaisData);
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
     } finally {

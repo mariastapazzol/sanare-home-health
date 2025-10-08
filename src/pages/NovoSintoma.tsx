@@ -94,7 +94,7 @@ const NovoSintoma = () => {
 
     try {
       const { error } = await supabase
-        .from('sintomas' as any)
+        .from('sintomas')
         .insert({
           user_id: user?.id,
           tipo_sintoma: sintomaCustom || sintoma,
