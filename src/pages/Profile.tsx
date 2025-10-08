@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,13 @@ const Profile = () => {
     nome: '',
     nascimento: ''
   });
+
+  // Redirect autonomous patients to home
+  useEffect(() => {
+    if (papel === 'paciente_autonomo') {
+      navigate('/home', { replace: true });
+    }
+  }, [papel, navigate]);
 
   const handleSave = async () => {
     if (!dados || !papel) return;
