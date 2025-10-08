@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './use-auth';
+import { useCareContext } from './use-care-context';
 import { toast } from '@/components/ui/use-toast';
 import { getTodayKeyFromServer, millisToNextMidnight, checklistCache } from '@/lib/checklist-utils';
 
@@ -27,16 +28,19 @@ export interface TaskWithStatus extends Task {
 
 export function useChecklist() {
   const { user } = useAuth();
+  const { currentContext } = useCareContext();
   const [tasks, setTasks] = useState<TaskWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [todayKey, setTodayKey] = useState<string>('');
   const midnightTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const activeContextId = currentContext?.id;
 
   /**
    * Carrega as tasks e seus estados para hoje
    */
   const loadToday = useCallback(async () => {
-    if (!user) return;
+    if (!user || !activeContextId) return;
 
     setLoading(true);
     try {
@@ -44,7 +48,7 @@ export function useChecklist() {
       const today = await getTodayKeyFromServer();
       setTodayKey(today);
 
-      // Buscar tasks ativas
+      // Buscar tasks ativas da tabela tasks
       const { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
         .select('*')
@@ -53,11 +57,37 @@ export function useChecklist() {
 
       if (tasksError) throw tasksError;
 
-      // Buscar status de hoje
+      let allTasks: Task[] = tasksData || [];
+
+      // Se o contexto atual for de um dependente, buscar medicamentos do cuidador
+      if (currentContext?.type === 'dependent' && currentContext.caregiver_user_id) {
+        const { data: medicamentos, error: medError } = await supabase
+          .from('medicamentos')
+          .select('id, nome, horarios')
+          .eq('user_id', currentContext.caregiver_user_id);
+
+        if (medError) {
+          console.error('Erro ao buscar medicamentos do cuidador:', medError);
+        } else if (medicamentos) {
+          // Converter medicamentos em tasks
+          const medicamentoTasks: Task[] = medicamentos.flatMap(med => {
+            const horarios = Array.isArray(med.horarios) ? med.horarios : [];
+            return horarios.map((horario: string, index: number) => ({
+              id: parseInt(`999${med.id}${index}`), // ID único para medicamentos
+              title: `💊 ${med.nome} - ${horario}`,
+              order: 1000 + index, // Ordem após as tasks normais
+              active: true
+            }));
+          });
+          allTasks = [...allTasks, ...medicamentoTasks];
+        }
+      }
+
+      // Buscar status de hoje para o contexto ativo
       const { data: statusData, error: statusError } = await supabase
         .from('task_status')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('context_id', activeContextId)
         .eq('day', today);
 
       if (statusError) throw statusError;
@@ -68,7 +98,7 @@ export function useChecklist() {
       );
 
       // Combinar tasks com status
-      const tasksWithStatus: TaskWithStatus[] = (tasksData || []).map(task => ({
+      const tasksWithStatus: TaskWithStatus[] = allTasks.map(task => ({
         ...task,
         checked: statusMap.get(task.id)?.checked || false,
         status_id: statusMap.get(task.id)?.id,
@@ -76,12 +106,13 @@ export function useChecklist() {
 
       // Se não existem registros de status para hoje, criar
       if (!statusData || statusData.length === 0) {
-        const initialStatuses = tasksData?.map(task => ({
+        const initialStatuses = allTasks.map(task => ({
           user_id: user.id,
           task_id: task.id,
           day: today,
           checked: false,
-        })) || [];
+          context_id: activeContextId,
+        }));
 
         if (initialStatuses.length > 0) {
           const { error: insertError } = await supabase
@@ -121,13 +152,13 @@ export function useChecklist() {
     } finally {
       setLoading(false);
     }
-  }, [user, todayKey]);
+  }, [user, activeContextId, todayKey]);
 
   /**
    * Marca/desmarca uma task
    */
   const toggle = useCallback(async (taskId: number) => {
-    if (!user || !todayKey) return;
+    if (!user || !todayKey || !activeContextId) return;
 
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
@@ -148,8 +179,9 @@ export function useChecklist() {
           task_id: taskId,
           day: todayKey,
           checked: newChecked,
+          context_id: activeContextId,
         }, {
-          onConflict: 'user_id,task_id,day'
+          onConflict: 'user_id,task_id,day,context_id'
         });
 
       if (error) throw error;
@@ -174,20 +206,20 @@ export function useChecklist() {
         variant: "destructive",
       });
     }
-  }, [user, todayKey, tasks]);
+  }, [user, activeContextId, todayKey, tasks]);
 
   /**
    * Reseta todas as tasks de hoje (desmarca todas)
    */
   const resetToday = useCallback(async () => {
-    if (!user || !todayKey) return;
+    if (!user || !todayKey || !activeContextId) return;
 
     try {
       // Atualizar todas as tasks de hoje para unchecked
       const { error } = await supabase
         .from('task_status')
         .update({ checked: false })
-        .eq('user_id', user.id)
+        .eq('context_id', activeContextId)
         .eq('day', todayKey);
 
       if (error) throw error;
@@ -212,7 +244,7 @@ export function useChecklist() {
         variant: "destructive",
       });
     }
-  }, [user, todayKey, tasks]);
+  }, [user, activeContextId, todayKey, tasks]);
 
   /**
    * Configura timer para reset automático à meia-noite

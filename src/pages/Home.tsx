@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
+import { usePerfil } from '@/hooks/use-perfil';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { 
@@ -22,42 +23,19 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 
-interface Profile {
-  name: string;
-}
-
 const Home = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const { dados: perfil, papel } = usePerfil();
   const [medicamentosComEstoqueBaixo, setMedicamentosComEstoqueBaixo] = useState([]);
   const [checklistDiario, setChecklistDiario] = useState([]);
 
   useEffect(() => {
     if (user) {
-      fetchProfile();
       fetchEstoqueBaixo();
       fetchChecklistDiario();
     }
   }, [user]);
-
-  const fetchProfile = async () => {
-    if (!user) return;
-    
-    try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('name')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (data) {
-        setProfile(data);
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    }
-  };
 
   const fetchEstoqueBaixo = async () => {
     if (!user) return;
@@ -156,7 +134,7 @@ const Home = () => {
       <div className="bg-primary text-primary-foreground p-4">
         <div className="flex items-center justify-between">
           <h1 className="text-mobile-xl font-semibold">
-            Olá, {profile?.name || 'Usuário'}!
+            Olá, {perfil?.nome || 'Usuário'}!
           </h1>
           
           <DropdownMenu>
@@ -166,9 +144,11 @@ const Home = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => navigate('/profile')}>
-                Perfil
-              </DropdownMenuItem>
+              {papel !== 'paciente_autonomo' && (
+                <DropdownMenuItem onClick={() => navigate('/profile')}>
+                  Perfil
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={() => navigate('/lembretes')}>
                 Lembretes
               </DropdownMenuItem>
