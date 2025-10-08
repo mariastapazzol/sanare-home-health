@@ -59,12 +59,23 @@ export function useChecklist() {
 
       let allTasks: Task[] = tasksData || [];
 
-      // Se o contexto atual for de um dependente, buscar medicamentos do cuidador
-      if (currentContext?.type === 'dependent' && currentContext.caregiver_user_id) {
+      // Buscar medicamentos do cuidador para o dependente
+      // Funciona tanto quando o cuidador visualiza o contexto do dependente
+      // quanto quando o próprio dependente está logado
+      const shouldFetchCaregiverMeds = 
+        (currentContext?.type === 'dependent' && currentContext.caregiver_user_id) ||
+        (currentContext?.type === 'self' && currentContext.caregiver_user_id);
+
+      if (shouldFetchCaregiverMeds && currentContext?.caregiver_user_id) {
+        const dependentUserId = currentContext.type === 'dependent' 
+          ? currentContext.owner_user_id 
+          : user.id;
+
         const { data: medicamentos, error: medError } = await supabase
           .from('medicamentos')
           .select('id, nome, horarios')
-          .eq('user_id', currentContext.caregiver_user_id);
+          .eq('user_id', currentContext.caregiver_user_id)
+          .eq('dependente_id', dependentUserId);
 
         if (medError) {
           console.error('Erro ao buscar medicamentos do cuidador:', medError);
