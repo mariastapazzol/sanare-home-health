@@ -144,6 +144,8 @@ const Home = () => {
         return <BookOpen className="h-6 w-6" />;
       case 'sintomas':
         return <Activity className="h-6 w-6" />;
+      case 'vitais':
+        return <Activity className="h-6 w-6" />;
       case 'checklist':
         return <CheckSquare className="h-6 w-6" />;
       default:
@@ -223,8 +225,7 @@ const Home = () => {
           </Card>
         )}
 
-        {/* Checklist Diário - Apenas para cuidador e autônomo */}
-        {papel !== 'paciente_dependente' && (
+        {/* Checklist Diário - Mostra para todos */}
         <Card className="card-health">
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
@@ -286,7 +287,6 @@ const Home = () => {
             )}
           </div>
         </Card>
-        )}
       </div>
     </div>
   );
