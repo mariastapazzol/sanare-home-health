@@ -130,6 +130,11 @@ const App = () => (
                 <Sintomas />
               </ProtectedRoute>
             } />
+            <Route path="/vitals" element={
+              <ProtectedRoute>
+                <Sintomas />
+              </ProtectedRoute>
+            } />
             <Route path="/sintomas/novo" element={
               <ProtectedRoute>
                 <NovoSintoma />
@@ -141,6 +146,11 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/checklist" element={
+              <ProtectedRoute>
+                <ChecklistDiario />
+              </ProtectedRoute>
+            } />
+            <Route path="/checklist-diario" element={
               <ProtectedRoute>
                 <ChecklistDiario />
               </ProtectedRoute>

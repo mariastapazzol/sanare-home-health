@@ -1,54 +1,61 @@
-import { ReactNode } from 'react';
-
 export type Papel = 'cuidador' | 'paciente_autonomo' | 'paciente_dependente';
 
-export type MenuItem = {
-  key: string;
-  label: string;
+export type MenuItem = { 
+  key: string; 
+  label: string; 
   path: string;
-  icon?: ReactNode;
-  showInHome?: boolean; // Se deve aparecer como card na Home
-  showInMenu?: boolean; // Se deve aparecer no menu dropdown
 };
 
-export const menuByRole: Record<Papel, MenuItem[]> = {
+// Menu lateral (sidebar/dropdown)
+export const sidebarByRole: Record<Papel, MenuItem[]> = {
   cuidador: [
-    { key: 'home', label: 'Início', path: '/home', showInHome: false, showInMenu: false },
-    { key: 'medicamentos', label: 'Medicamentos', path: '/medicamentos', showInHome: true, showInMenu: false },
-    { key: 'estoque', label: 'Estoque', path: '/stock', showInHome: true, showInMenu: false },
-    { key: 'diario', label: 'Diário Emocional', path: '/diary', showInHome: true, showInMenu: false },
-    { key: 'sintomas', label: 'Sintomas e Sinais', path: '/sintomas', showInHome: true, showInMenu: false },
-    { key: 'lembretes', label: 'Lembretes', path: '/lembretes', showInHome: false, showInMenu: true },
-    { key: 'perfil', label: 'Perfil', path: '/profile', showInHome: false, showInMenu: true },
-    { key: 'sair', label: 'Sair', path: '/logout', showInHome: false, showInMenu: true },
+    { key: 'perfil',    label: 'Perfil',     path: '/profile' },
+    { key: 'lembretes', label: 'Lembretes',  path: '/lembretes' },
+    { key: 'sair',      label: 'Sair',       path: '/logout' },
   ],
   paciente_autonomo: [
-    { key: 'home', label: 'Início', path: '/home', showInHome: false, showInMenu: false },
-    { key: 'medicamentos', label: 'Medicamentos', path: '/medicamentos', showInHome: true, showInMenu: false },
-    { key: 'estoque', label: 'Estoque', path: '/stock', showInHome: true, showInMenu: false },
-    { key: 'diario', label: 'Diário Emocional', path: '/diary', showInHome: true, showInMenu: false },
-    { key: 'sintomas', label: 'Sintomas e Sinais', path: '/sintomas', showInHome: true, showInMenu: false },
-    { key: 'lembretes', label: 'Lembretes', path: '/lembretes', showInHome: false, showInMenu: true },
-    { key: 'sair', label: 'Sair', path: '/logout', showInHome: false, showInMenu: true },
+    // apenas Lembretes e Sair (sem Perfil)
+    { key: 'lembretes', label: 'Lembretes',  path: '/lembretes' },
+    { key: 'sair',      label: 'Sair',       path: '/logout' },
   ],
   paciente_dependente: [
-    { key: 'home', label: 'Início', path: '/home', showInHome: false, showInMenu: false },
-    { key: 'diario', label: 'Diário Emocional', path: '/diary', showInHome: true, showInMenu: false },
-    { key: 'sintomas', label: 'Sintomas e Sinais', path: '/sintomas', showInHome: true, showInMenu: false },
-    { key: 'perfil', label: 'Perfil', path: '/profile', showInHome: false, showInMenu: true },
-    { key: 'sair', label: 'Sair', path: '/logout', showInHome: false, showInMenu: true },
+    { key: 'perfil',    label: 'Perfil',     path: '/profile' },
+    { key: 'sair',      label: 'Sair',       path: '/logout' },
   ],
 };
 
-export function getMenuForRole(papel: Papel | null): MenuItem[] {
+// Ações exibidas como cards na Home
+export const homeActionsByRole: Record<Papel, MenuItem[]> = {
+  cuidador: [
+    { key: 'meds',      label: 'Medicamentos',     path: '/medicamentos' },
+    { key: 'estoque',   label: 'Estoque',          path: '/stock' },
+    { key: 'diario',    label: 'Diário Emocional', path: '/diary' },
+    { key: 'sintomas',  label: 'Sintomas e Sinais',path: '/sintomas' },
+    { key: 'vitals',    label: 'Sinais Vitais',    path: '/vitals' },
+    { key: 'checklist', label: 'Checklist Diário', path: '/checklist-diario' },
+  ],
+  paciente_autonomo: [
+    // refeita como a do cuidador
+    { key: 'meds',      label: 'Medicamentos',     path: '/medicamentos' },
+    { key: 'estoque',   label: 'Estoque',          path: '/stock' },
+    { key: 'diario',    label: 'Diário Emocional', path: '/diary' },
+    { key: 'sintomas',  label: 'Sintomas e Sinais',path: '/sintomas' },
+    { key: 'vitals',    label: 'Sinais Vitais',    path: '/vitals' },
+    { key: 'checklist', label: 'Checklist Diário', path: '/checklist-diario' },
+  ],
+  paciente_dependente: [
+    // permanece como já implementado (botões/topo + checklist embutido na própria Home)
+    { key: 'diario',    label: 'Diário Emocional', path: '/diary' },
+    { key: 'sintomas',  label: 'Sintomas e Sinais',path: '/sintomas' },
+  ],
+};
+
+export function getSidebarForRole(papel: Papel | null): MenuItem[] {
   if (!papel) return [];
-  return menuByRole[papel] || [];
+  return sidebarByRole[papel] || [];
 }
 
-export function getHomeCardsForRole(papel: Papel | null): MenuItem[] {
-  return getMenuForRole(papel).filter(item => item.showInHome);
-}
-
-export function getDropdownMenuForRole(papel: Papel | null): MenuItem[] {
-  return getMenuForRole(papel).filter(item => item.showInMenu);
+export function getHomeActionsForRole(papel: Papel | null): MenuItem[] {
+  if (!papel) return [];
+  return homeActionsByRole[papel] || [];
 }

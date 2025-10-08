@@ -16,7 +16,7 @@ import {
   Activity,
   CheckSquare
 } from 'lucide-react';
-import { getHomeCardsForRole, getDropdownMenuForRole } from '@/navigation/menuByRole';
+import { getHomeActionsForRole, getSidebarForRole } from '@/navigation/menuByRole';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -130,13 +130,13 @@ const Home = () => {
     navigate('/');
   };
 
-  const menuItems = getDropdownMenuForRole(papel);
-  const homeCards = getHomeCardsForRole(papel);
+  const menuItems = getSidebarForRole(papel);
+  const homeCards = getHomeActionsForRole(papel);
 
   // Mapear ícones para cada card
   const getIconForCard = (key: string) => {
     switch (key) {
-      case 'medicamentos':
+      case 'meds':
         return <Pill className="h-6 w-6" />;
       case 'estoque':
         return <Package className="h-6 w-6" />;
@@ -144,7 +144,7 @@ const Home = () => {
         return <BookOpen className="h-6 w-6" />;
       case 'sintomas':
         return <Activity className="h-6 w-6" />;
-      case 'vitais':
+      case 'vitals':
         return <Activity className="h-6 w-6" />;
       case 'checklist':
         return <CheckSquare className="h-6 w-6" />;
