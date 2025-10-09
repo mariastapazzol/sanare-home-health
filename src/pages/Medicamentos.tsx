@@ -47,8 +47,7 @@ const Medicamentos = () => {
     try {
       const { data, error } = await supabase
         .from('medicamentos')
-        .select('id, nome, dosagem, unidade_dose, quantidade_atual, precisa_receita, imagem_url')
-        .eq('user_id', user?.id);
+        .select('id, nome, dosagem, unidade_dose, quantidade_atual, precisa_receita, imagem_url');
 
       if (error) throw error;
       setMedicamentos(data || []);

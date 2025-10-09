@@ -71,8 +71,7 @@ const NovoLembrete = () => {
         .from('lembretes')
         .select('*')
         .eq('id', lembreteId)
-        .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
@@ -246,8 +245,7 @@ const NovoLembrete = () => {
         const { error } = await supabase
           .from('lembretes')
           .update(lembreteData)
-          .eq('id', id)
-          .eq('user_id', user.id);
+          .eq('id', id);
 
         if (error) throw error;
 

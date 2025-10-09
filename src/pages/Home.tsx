@@ -6,6 +6,7 @@ import { useChecklistDaily } from '@/hooks/use-checklist-daily';
 import { useCareContext } from '@/hooks/use-care-context';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import ContextSwitcher from '@/components/ContextSwitcher';
 import { 
   Menu, 
   Pill, 
@@ -77,7 +78,6 @@ const Home = () => {
     const { data } = await supabase
       .from('medicamentos')
       .select('*')
-      .eq('user_id', user.id)
       .lte('quantidade_atual', 5);
     
     if (data) {
@@ -129,6 +129,11 @@ const Home = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+      </div>
+
+      {/* Context Switcher */}
+      <div className="px-4 pt-4">
+        <ContextSwitcher />
       </div>
 
       <div className="p-4 space-y-6">

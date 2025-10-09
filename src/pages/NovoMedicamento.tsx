@@ -67,8 +67,7 @@ const NovoMedicamento = () => {
         .from('medicamentos')
         .select('*')
         .eq('id', id)
-        .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
@@ -280,8 +279,7 @@ const NovoMedicamento = () => {
         const { error } = await supabase
           .from('medicamentos')
           .update(medicamentoData)
-          .eq('id', id)
-          .eq('user_id', user.id);
+          .eq('id', id);
 
         if (error) throw error;
 

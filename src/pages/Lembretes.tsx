@@ -66,7 +66,6 @@ const Lembretes = () => {
       const { data, error } = await supabase
         .from('lembretes')
         .select('*')
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -97,8 +96,7 @@ const Lembretes = () => {
       const { error } = await supabase
         .from('lembretes')
         .delete()
-        .eq('id', lembreteToDelete)
-        .eq('user_id', user?.id);
+        .eq('id', lembreteToDelete);
 
       if (error) throw error;
 

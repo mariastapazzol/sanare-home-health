@@ -42,8 +42,7 @@ const Estoque = () => {
     try {
       const { data, error } = await supabase
         .from('medicamentos')
-        .select('id, nome, dosagem, unidade_dose, quantidade_atual, quantidade_por_dose, horarios, precisa_receita, imagem_url')
-        .eq('user_id', user?.id);
+        .select('id, nome, dosagem, unidade_dose, quantidade_atual, quantidade_por_dose, horarios, precisa_receita, imagem_url');
 
       if (error) throw error;
 
