@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
-import { usePerfil } from '@/hooks/use-perfil';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { 
@@ -13,10 +12,8 @@ import {
   Check,
   X,
   BookOpen,
-  Activity,
-  CheckSquare
+  Activity
 } from 'lucide-react';
-import { getHomeActionsForRole, getSidebarForRole } from '@/navigation/menuByRole';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,19 +22,42 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 
+interface Profile {
+  name: string;
+}
+
 const Home = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { dados: perfil, papel } = usePerfil();
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [medicamentosComEstoqueBaixo, setMedicamentosComEstoqueBaixo] = useState([]);
   const [checklistDiario, setChecklistDiario] = useState([]);
 
   useEffect(() => {
-    if (user && papel) {
+    if (user) {
+      fetchProfile();
       fetchEstoqueBaixo();
       fetchChecklistDiario();
     }
-  }, [user, papel]);
+  }, [user]);
+
+  const fetchProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (data) {
+        setProfile(data);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
 
   const fetchEstoqueBaixo = async () => {
     if (!user) return;
@@ -57,49 +77,17 @@ const Home = () => {
   const fetchChecklistDiario = async () => {
     if (!user) return;
     
-    // Se for dependente, buscar o ID do registro de dependente
-    let dependenteId = null;
-    if (papel === 'paciente_dependente') {
-      const { data: dependenteData } = await supabase
-        .from('pacientes_dependentes')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (dependenteData) {
-        dependenteId = dependenteData.id;
-      }
-    }
-    
-    // Buscar medicamentos (próprios OU do cuidador se for dependente)
-    let medicamentosQuery = supabase
+    // Buscar medicamentos
+    const { data: medicamentos } = await supabase
       .from('medicamentos')
-      .select('id, nome, horarios');
+      .select('id, nome, horarios')
+      .eq('user_id', user.id);
     
-    if (papel === 'paciente_dependente' && dependenteId) {
-      // Buscar medicamentos criados pelo cuidador para este dependente
-      medicamentosQuery = medicamentosQuery.eq('dependente_id', dependenteId);
-    } else {
-      // Buscar medicamentos próprios do usuário
-      medicamentosQuery = medicamentosQuery.eq('user_id', user.id);
-    }
-    
-    const { data: medicamentos } = await medicamentosQuery;
-    
-    // Buscar lembretes (próprios OU do cuidador se for dependente)
-    let lembretesQuery = supabase
+    // Buscar lembretes personalizados
+    const { data: lembretes } = await supabase
       .from('lembretes')
-      .select('id, nome, horarios');
-    
-    if (papel === 'paciente_dependente' && dependenteId) {
-      // Buscar lembretes criados pelo cuidador para este dependente
-      lembretesQuery = lembretesQuery.eq('dependente_id', dependenteId);
-    } else {
-      // Buscar lembretes próprios do usuário
-      lembretesQuery = lembretesQuery.eq('user_id', user.id);
-    }
-    
-    const { data: lembretes } = await lembretesQuery;
+      .select('id, nome, horarios')
+      .eq('user_id', user.id);
     
     const checklist: any[] = [];
     
@@ -162,38 +150,13 @@ const Home = () => {
     navigate('/');
   };
 
-  const menuItems = getSidebarForRole(papel);
-  const homeCards = getHomeActionsForRole(papel);
-  
-  console.debug("HOME papel:", papel, "cards:", homeCards.map(c => c.key));
-
-  // Mapear ícones para cada card
-  const getIconForCard = (key: string) => {
-    switch (key) {
-      case 'meds':
-        return <Pill className="h-6 w-6" />;
-      case 'estoque':
-        return <Package className="h-6 w-6" />;
-      case 'diario':
-        return <BookOpen className="h-6 w-6" />;
-      case 'sintomas':
-        return <Activity className="h-6 w-6" />;
-      case 'vitals':
-        return <Activity className="h-6 w-6" />;
-      case 'checklist':
-        return <CheckSquare className="h-6 w-6" />;
-      default:
-        return <Activity className="h-6 w-6" />;
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="bg-primary text-primary-foreground p-4">
         <div className="flex items-center justify-between">
           <h1 className="text-mobile-xl font-semibold">
-            Olá, {perfil?.nome || 'Usuário'}!
+            Olá, {profile?.name || 'Usuário'}!
           </h1>
           
           <DropdownMenu>
@@ -203,42 +166,61 @@ const Home = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              {menuItems.map((item) => (
-                <DropdownMenuItem 
-                  key={item.key}
-                  onClick={() => {
-                    if (item.key === 'sair') {
-                      handleLogout();
-                    } else {
-                      navigate(item.path);
-                    }
-                  }}
-                >
-                  {item.label}
-                </DropdownMenuItem>
-              ))}
+              <DropdownMenuItem onClick={() => navigate('/profile')}>
+                Perfil
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/lembretes')}>
+                Lembretes
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
+                Sair
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
 
       <div className="p-4 space-y-6">
-        {/* Action Buttons - Baseado no papel do usuário */}
+        {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-4 mb-4">
-          {homeCards.map((card) => (
-            <Button
-              key={card.key}
-              onClick={() => navigate(card.path)}
-              className="btn-health h-20 flex-col space-y-2"
-            >
-              {getIconForCard(card.key)}
-              <span>{card.label}</span>
-            </Button>
-          ))}
+          <Button
+            onClick={() => navigate('/medicamentos')}
+            className="btn-health h-20 flex-col space-y-2"
+          >
+            <Pill className="h-6 w-6" />
+            <span>Medicamentos</span>
+          </Button>
+          
+          <Button
+            onClick={() => navigate('/stock')}
+            className="btn-health h-20 flex-col space-y-2"
+          >
+            <Package className="h-6 w-6" />
+            <span>Estoque</span>
+          </Button>
         </div>
 
-        {/* Alerta de Estoque Baixo - Apenas para cuidador e autônomo */}
-        {papel !== 'paciente_dependente' && medicamentosComEstoqueBaixo.length > 0 && (
+        {/* Diary Buttons */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <Button
+            onClick={() => navigate('/diary')}
+            className="btn-health h-20 flex-col space-y-2"
+          >
+            <BookOpen className="h-6 w-6" />
+            <span>Diário Emocional</span>
+          </Button>
+          
+          <Button
+            onClick={() => navigate('/sintomas')}
+            className="btn-health h-20 flex-col space-y-2"
+          >
+            <Activity className="h-6 w-6" />
+            <span>Sintomas e Sinais</span>
+          </Button>
+        </div>
+
+        {/* Alerta de Estoque Baixo */}
+        {medicamentosComEstoqueBaixo.length > 0 && (
           <Card className="card-health border-warning bg-warning/5">
             <div className="flex items-start space-x-3">
               <AlertTriangle className="h-5 w-5 text-warning mt-0.5" />
@@ -250,7 +232,7 @@ const Home = () => {
                 <Button 
                   variant="link" 
                   className="text-warning hover:text-warning p-0 h-auto mt-1"
-                  onClick={() => navigate('/estoque')}
+                  onClick={() => navigate('/stock')}
                 >
                   Ver detalhes
                 </Button>
@@ -259,7 +241,7 @@ const Home = () => {
           </Card>
         )}
 
-        {/* Checklist Diário - Mostra para todos */}
+        {/* Checklist Diário */}
         <Card className="card-health">
           <div className="space-y-4">
             <div className="flex items-center space-x-2">

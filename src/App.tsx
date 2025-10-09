@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/use-auth";
 import { CareContextProvider } from "@/hooks/use-care-context";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { RoleRoute } from "@/navigation/RoleRoute";
 import Welcome from "./pages/Welcome";
 import Auth from "./pages/Auth";
 import AuthChoice from "./pages/AuthChoice";
@@ -65,13 +64,6 @@ const App = () => (
                   <Profile />
                 </ProtectedRoute>
               } />
-              <Route path="/perfil" element={
-                <ProtectedRoute>
-                  <RoleRoute allow={['cuidador','paciente_dependente']}>
-                    <Profile />
-                  </RoleRoute>
-                </ProtectedRoute>
-              } />
               <Route path="/meus-dependentes" element={
                 <ProtectedRoute>
                   <MeusDependentes />
@@ -93,11 +85,6 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/stock" element={
-              <ProtectedRoute>
-                <Estoque />
-              </ProtectedRoute>
-            } />
-            <Route path="/estoque" element={
               <ProtectedRoute>
                 <Estoque />
               </ProtectedRoute>
@@ -142,11 +129,6 @@ const App = () => (
                 <Sintomas />
               </ProtectedRoute>
             } />
-            <Route path="/vitals" element={
-              <ProtectedRoute>
-                <Sintomas />
-              </ProtectedRoute>
-            } />
             <Route path="/sintomas/novo" element={
               <ProtectedRoute>
                 <NovoSintoma />
@@ -158,11 +140,6 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/checklist" element={
-              <ProtectedRoute>
-                <ChecklistDiario />
-              </ProtectedRoute>
-            } />
-            <Route path="/checklist-diario" element={
               <ProtectedRoute>
                 <ChecklistDiario />
               </ProtectedRoute>

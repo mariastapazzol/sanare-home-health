@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './use-auth';
-import { useCareContext } from './use-care-context';
 import { toast } from '@/components/ui/use-toast';
 import { getTodayKeyFromServer, millisToNextMidnight, checklistCache } from '@/lib/checklist-utils';
 
@@ -28,19 +27,16 @@ export interface TaskWithStatus extends Task {
 
 export function useChecklist() {
   const { user } = useAuth();
-  const { currentContext } = useCareContext();
   const [tasks, setTasks] = useState<TaskWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [todayKey, setTodayKey] = useState<string>('');
   const midnightTimerRef = useRef<NodeJS.Timeout | null>(null);
-  
-  const activeContextId = currentContext?.id;
 
   /**
    * Carrega as tasks e seus estados para hoje
    */
   const loadToday = useCallback(async () => {
-    if (!user || !activeContextId) return;
+    if (!user) return;
 
     setLoading(true);
     try {
@@ -48,7 +44,7 @@ export function useChecklist() {
       const today = await getTodayKeyFromServer();
       setTodayKey(today);
 
-      // Buscar tasks ativas da tabela tasks
+      // Buscar tasks ativas
       const { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
         .select('*')
@@ -57,48 +53,11 @@ export function useChecklist() {
 
       if (tasksError) throw tasksError;
 
-      let allTasks: Task[] = tasksData || [];
-
-      // Buscar medicamentos do cuidador para o dependente
-      // Funciona tanto quando o cuidador visualiza o contexto do dependente
-      // quanto quando o próprio dependente está logado
-      const shouldFetchCaregiverMeds = 
-        (currentContext?.type === 'dependent' && currentContext.caregiver_user_id) ||
-        (currentContext?.type === 'self' && currentContext.caregiver_user_id);
-
-      if (shouldFetchCaregiverMeds && currentContext?.caregiver_user_id) {
-        const dependentUserId = currentContext.type === 'dependent' 
-          ? currentContext.owner_user_id 
-          : user.id;
-
-        const { data: medicamentos, error: medError } = await supabase
-          .from('medicamentos')
-          .select('id, nome, horarios')
-          .eq('user_id', currentContext.caregiver_user_id)
-          .eq('dependente_id', dependentUserId);
-
-        if (medError) {
-          console.error('Erro ao buscar medicamentos do cuidador:', medError);
-        } else if (medicamentos) {
-          // Converter medicamentos em tasks
-          const medicamentoTasks: Task[] = medicamentos.flatMap(med => {
-            const horarios = Array.isArray(med.horarios) ? med.horarios : [];
-            return horarios.map((horario: string, index: number) => ({
-              id: parseInt(`999${med.id}${index}`), // ID único para medicamentos
-              title: `💊 ${med.nome} - ${horario}`,
-              order: 1000 + index, // Ordem após as tasks normais
-              active: true
-            }));
-          });
-          allTasks = [...allTasks, ...medicamentoTasks];
-        }
-      }
-
-      // Buscar status de hoje para o contexto ativo
+      // Buscar status de hoje
       const { data: statusData, error: statusError } = await supabase
         .from('task_status')
         .select('*')
-        .eq('context_id', activeContextId)
+        .eq('user_id', user.id)
         .eq('day', today);
 
       if (statusError) throw statusError;
@@ -109,7 +68,7 @@ export function useChecklist() {
       );
 
       // Combinar tasks com status
-      const tasksWithStatus: TaskWithStatus[] = allTasks.map(task => ({
+      const tasksWithStatus: TaskWithStatus[] = (tasksData || []).map(task => ({
         ...task,
         checked: statusMap.get(task.id)?.checked || false,
         status_id: statusMap.get(task.id)?.id,
@@ -117,13 +76,12 @@ export function useChecklist() {
 
       // Se não existem registros de status para hoje, criar
       if (!statusData || statusData.length === 0) {
-        const initialStatuses = allTasks.map(task => ({
+        const initialStatuses = tasksData?.map(task => ({
           user_id: user.id,
           task_id: task.id,
           day: today,
           checked: false,
-          context_id: activeContextId,
-        }));
+        })) || [];
 
         if (initialStatuses.length > 0) {
           const { error: insertError } = await supabase
@@ -163,13 +121,13 @@ export function useChecklist() {
     } finally {
       setLoading(false);
     }
-  }, [user, activeContextId, todayKey]);
+  }, [user, todayKey]);
 
   /**
    * Marca/desmarca uma task
    */
   const toggle = useCallback(async (taskId: number) => {
-    if (!user || !todayKey || !activeContextId) return;
+    if (!user || !todayKey) return;
 
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
@@ -190,9 +148,8 @@ export function useChecklist() {
           task_id: taskId,
           day: todayKey,
           checked: newChecked,
-          context_id: activeContextId,
         }, {
-          onConflict: 'user_id,task_id,day,context_id'
+          onConflict: 'user_id,task_id,day'
         });
 
       if (error) throw error;
@@ -217,20 +174,20 @@ export function useChecklist() {
         variant: "destructive",
       });
     }
-  }, [user, activeContextId, todayKey, tasks]);
+  }, [user, todayKey, tasks]);
 
   /**
    * Reseta todas as tasks de hoje (desmarca todas)
    */
   const resetToday = useCallback(async () => {
-    if (!user || !todayKey || !activeContextId) return;
+    if (!user || !todayKey) return;
 
     try {
       // Atualizar todas as tasks de hoje para unchecked
       const { error } = await supabase
         .from('task_status')
         .update({ checked: false })
-        .eq('context_id', activeContextId)
+        .eq('user_id', user.id)
         .eq('day', todayKey);
 
       if (error) throw error;
@@ -255,7 +212,7 @@ export function useChecklist() {
         variant: "destructive",
       });
     }
-  }, [user, activeContextId, todayKey, tasks]);
+  }, [user, todayKey, tasks]);
 
   /**
    * Configura timer para reset automático à meia-noite
