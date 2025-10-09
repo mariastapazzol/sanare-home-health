@@ -254,6 +254,7 @@ const NovoMedicamento = () => {
         
         dependenteId = depData.id;
       }
+      // Para 'self' (autônomo), dependente_id permanece null
 
       // Filtrar horários válidos (não vazios)
       const horariosValidos = horarios.filter(h => h.trim() !== '');

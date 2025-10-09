@@ -230,6 +230,7 @@ const NovoLembrete = () => {
         
         dependenteId = depData.id;
       }
+      // Para 'self' (autônomo), dependente_id permanece null
 
       const lembreteData = {
         nome: formData.nome.trim(),
