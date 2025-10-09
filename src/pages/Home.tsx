@@ -33,11 +33,11 @@ const Home = () => {
   const [checklistDiario, setChecklistDiario] = useState([]);
 
   useEffect(() => {
-    if (user) {
+    if (user && papel) {
       fetchEstoqueBaixo();
       fetchChecklistDiario();
     }
-  }, [user]);
+  }, [user, papel]);
 
   const fetchEstoqueBaixo = async () => {
     if (!user) return;
@@ -57,17 +57,49 @@ const Home = () => {
   const fetchChecklistDiario = async () => {
     if (!user) return;
     
-    // Buscar medicamentos
-    const { data: medicamentos } = await supabase
-      .from('medicamentos')
-      .select('id, nome, horarios')
-      .eq('user_id', user.id);
+    // Se for dependente, buscar o ID do registro de dependente
+    let dependenteId = null;
+    if (papel === 'paciente_dependente') {
+      const { data: dependenteData } = await supabase
+        .from('pacientes_dependentes')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (dependenteData) {
+        dependenteId = dependenteData.id;
+      }
+    }
     
-    // Buscar lembretes personalizados
-    const { data: lembretes } = await supabase
+    // Buscar medicamentos (próprios OU do cuidador se for dependente)
+    let medicamentosQuery = supabase
+      .from('medicamentos')
+      .select('id, nome, horarios');
+    
+    if (papel === 'paciente_dependente' && dependenteId) {
+      // Buscar medicamentos criados pelo cuidador para este dependente
+      medicamentosQuery = medicamentosQuery.eq('dependente_id', dependenteId);
+    } else {
+      // Buscar medicamentos próprios do usuário
+      medicamentosQuery = medicamentosQuery.eq('user_id', user.id);
+    }
+    
+    const { data: medicamentos } = await medicamentosQuery;
+    
+    // Buscar lembretes (próprios OU do cuidador se for dependente)
+    let lembretesQuery = supabase
       .from('lembretes')
-      .select('id, nome, horarios')
-      .eq('user_id', user.id);
+      .select('id, nome, horarios');
+    
+    if (papel === 'paciente_dependente' && dependenteId) {
+      // Buscar lembretes criados pelo cuidador para este dependente
+      lembretesQuery = lembretesQuery.eq('dependente_id', dependenteId);
+    } else {
+      // Buscar lembretes próprios do usuário
+      lembretesQuery = lembretesQuery.eq('user_id', user.id);
+    }
+    
+    const { data: lembretes } = await lembretesQuery;
     
     const checklist: any[] = [];
     
