@@ -74,7 +74,7 @@ const ForgotPassword = () => {
 
       // Enviar reset (mesmo que não exista, para evitar enumeração)
       const { error } = await supabase.auth.resetPasswordForEmail(emailToUse, {
-        redirectTo: `${window.location.origin}/auth/forgot-password`
+        redirectTo: `${window.location.origin}/auth/reset`
       });
 
       // Sempre mostrar mensagem neutra, mesmo com erro
@@ -164,7 +164,7 @@ const ForgotPassword = () => {
     
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/forgot-password`
+      redirectTo: `${window.location.origin}/auth/reset`
     });
 
     if (error) {
@@ -175,8 +175,8 @@ const ForgotPassword = () => {
       });
     } else {
       toast({
-        title: "Código reenviado",
-        description: "Um novo código foi enviado para seu e-mail."
+        title: "Link reenviado",
+        description: "Um novo link foi enviado para seu e-mail."
       });
     }
     setLoading(false);
@@ -261,67 +261,29 @@ const ForgotPassword = () => {
           </Card>
         )}
 
-        {/* Etapa 2: Redefinir senha */}
+        {/* Etapa 2: Aguardando confirmação */}
         {step === 'reset' && (
           <Card className="card-health">
-            <form onSubmit={handleResetPassword} className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="newPassword">Nova senha</Label>
-                  <Input
-                    id="newPassword"
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Digite sua nova senha"
-                    required
-                    className="min-h-[44px]"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Digite novamente a senha"
-                    required
-                    className="min-h-[44px]"
-                  />
-                </div>
-
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <p>A senha deve conter:</p>
-                  <ul className="list-disc list-inside space-y-1 ml-2">
-                    <li>Mínimo 8 caracteres</li>
-                    <li>Pelo menos 1 letra</li>
-                    <li>Pelo menos 1 número</li>
-                  </ul>
+            <div className="space-y-6">
+              <div className="text-center space-y-4">
+                <p className="text-muted-foreground">
+                  Enviamos um link para seu e-mail. Clique no link recebido para definir sua nova senha.
+                </p>
+                <div className="text-sm text-muted-foreground">
+                  <p>Não recebeu o link?</p>
                 </div>
               </div>
 
-              <Button 
-                type="submit" 
-                className="btn-health w-full"
-                disabled={loading || !newPassword || !confirmPassword}
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleResendCode}
+                disabled={loading}
+                className="w-full text-sm text-muted-foreground hover:text-primary"
               >
-                {loading ? 'Salvando...' : 'Salvar nova senha'}
+                {loading ? 'Reenviando...' : 'Reenviar link'}
               </Button>
-
-              {otpSent && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={handleResendCode}
-                  disabled={loading}
-                  className="w-full text-sm text-muted-foreground hover:text-primary"
-                >
-                  Reenviar código
-                </Button>
-              )}
-            </form>
+            </div>
           </Card>
         )}
 
