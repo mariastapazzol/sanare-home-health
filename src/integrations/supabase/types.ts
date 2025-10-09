@@ -41,6 +41,56 @@ export type Database = {
         }
         Relationships: []
       }
+      checklist_daily_status: {
+        Row: {
+          checked: boolean
+          context_id: string | null
+          created_at: string
+          day: string
+          horario: string
+          id: string
+          inactive: boolean
+          item_id: string
+          item_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          checked?: boolean
+          context_id?: string | null
+          created_at?: string
+          day: string
+          horario: string
+          id?: string
+          inactive?: boolean
+          item_id: string
+          item_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          checked?: boolean
+          context_id?: string | null
+          created_at?: string
+          day?: string
+          horario?: string
+          id?: string
+          inactive?: boolean
+          item_id?: string
+          item_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_daily_status_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "care_contexts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cuidadores: {
         Row: {
           created_at: string

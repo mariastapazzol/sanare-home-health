@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
 import { usePerfil } from '@/hooks/use-perfil';
+import { useChecklistDaily } from '@/hooks/use-checklist-daily';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { 
@@ -34,7 +35,9 @@ const Home = () => {
   const { status, papel, dados } = usePerfil();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [medicamentosComEstoqueBaixo, setMedicamentosComEstoqueBaixo] = useState([]);
-  const [checklistDiario, setChecklistDiario] = useState([]);
+  
+  // Usar hook de checklist diário com persistência
+  const { items: checklistItems, loading: checklistLoading, toggleChecked, toggleInactive } = useChecklistDaily({ papel, dados });
 
   const homeActions = getHomeActionsForRole(papel);
   const menuItems = getSidebarForRole(papel);
@@ -43,7 +46,6 @@ const Home = () => {
     if (user && papel) {
       fetchProfile();
       fetchEstoqueBaixo();
-      fetchChecklistDiario();
     }
   }, [user, papel]);
 
@@ -68,7 +70,6 @@ const Home = () => {
   const fetchEstoqueBaixo = async () => {
     if (!user) return;
     
-    // Simular medicamentos com estoque baixo (substituir pela lógica real)
     const { data } = await supabase
       .from('medicamentos')
       .select('*')
@@ -78,109 +79,6 @@ const Home = () => {
     if (data) {
       setMedicamentosComEstoqueBaixo(data);
     }
-  };
-
-  const fetchChecklistDiario = async () => {
-    if (!user) return;
-    
-    let medicamentos = null;
-    let lembretes = null;
-
-    // Se for paciente dependente, buscar dados cadastrados pelo cuidador
-    if (papel === 'paciente_dependente' && dados && 'cuidador' in dados) {
-      // Buscar o ID do registro do paciente dependente
-      const { data: dependenteData } = await supabase
-        .from('pacientes_dependentes')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (dependenteData) {
-        // Buscar medicamentos cadastrados para este dependente
-        const { data: medData } = await supabase
-          .from('medicamentos')
-          .select('id, nome, horarios')
-          .eq('dependente_id', dependenteData.id);
-        
-        // Buscar lembretes cadastrados para este dependente
-        const { data: lemData } = await supabase
-          .from('lembretes')
-          .select('id, nome, horarios')
-          .eq('dependente_id', dependenteData.id);
-        
-        medicamentos = medData;
-        lembretes = lemData;
-      }
-    } else {
-      // Para cuidador e paciente autônomo, buscar seus próprios dados
-      const { data: medData } = await supabase
-        .from('medicamentos')
-        .select('id, nome, horarios')
-        .eq('user_id', user.id);
-      
-      const { data: lemData } = await supabase
-        .from('lembretes')
-        .select('id, nome, horarios')
-        .eq('user_id', user.id);
-      
-      medicamentos = medData;
-      lembretes = lemData;
-    }
-    
-    const checklist: any[] = [];
-    
-    // Processar medicamentos
-    if (medicamentos) {
-      const medicamentosChecklist = medicamentos.flatMap(medicamento => {
-        const horarios = Array.isArray(medicamento.horarios) ? medicamento.horarios : [];
-        return horarios.map((horario: string) => ({
-          id: `med-${medicamento.id}-${horario}`,
-          item_id: medicamento.id,
-          nome: medicamento.nome,
-          horario,
-          tomado: false,
-          inativo: false,
-          tipo: 'medicamento'
-        }));
-      });
-      checklist.push(...medicamentosChecklist);
-    }
-    
-    // Processar lembretes
-    if (lembretes) {
-      const lembretesChecklist = lembretes.flatMap(lembrete => {
-        const horarios = Array.isArray(lembrete.horarios) ? lembrete.horarios : [];
-        return horarios.map((horario: string) => ({
-          id: `lem-${lembrete.id}-${horario}`,
-          item_id: lembrete.id,
-          nome: lembrete.nome,
-          horario,
-          tomado: false,
-          inativo: false,
-          tipo: 'lembrete'
-        }));
-      });
-      checklist.push(...lembretesChecklist);
-    }
-    
-    // Ordenar por horário
-    checklist.sort((a, b) => a.horario.localeCompare(b.horario));
-    
-    setChecklistDiario(checklist);
-  };
-
-  const toggleMedicamento = (id: string) => {
-    setChecklistDiario(prev => 
-      prev.filter(item => item.id !== id)
-    );
-  };
-
-  const marcarInativo = (id: string) => {
-    setChecklistDiario(prev => 
-      prev.map(item => 
-        item.id === id ? { ...item, inativo: true } : item
-      )
-    );
   };
 
   const handleLogout = async () => {
@@ -284,17 +182,21 @@ const Home = () => {
               <h3 className="font-semibold">CheckList Diário</h3>
             </div>
             
-            {checklistDiario.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">
-              Nenhum item para hoje
-            </p>
+            {checklistLoading ? (
+              <p className="text-muted-foreground text-center py-4">
+                Carregando...
+              </p>
+            ) : checklistItems.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">
+                Nenhum item para hoje
+              </p>
             ) : (
               <div className="space-y-3">
-                {checklistDiario.map((item) => (
+                {checklistItems.filter(item => !item.checked).map((item) => (
                   <div 
                     key={item.id}
                     className={`flex items-center justify-between p-3 bg-muted/50 rounded-lg ${
-                      item.inativo ? 'opacity-30' : ''
+                      item.inactive ? 'opacity-30' : ''
                     }`}
                   >
                     <div className="flex items-center space-x-3 flex-1">
@@ -317,8 +219,9 @@ const Home = () => {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => toggleMedicamento(item.id)}
+                        onClick={() => toggleChecked(item.id)}
                         className="w-10 h-10 p-0"
+                        disabled={item.inactive}
                       >
                         <Check className="h-4 w-4" />
                       </Button>
@@ -327,7 +230,8 @@ const Home = () => {
                         size="sm"
                         variant="outline"
                         className="w-10 h-10 p-0 text-muted-foreground"
-                        onClick={() => marcarInativo(item.id)}
+                        onClick={() => toggleInactive(item.id)}
+                        disabled={item.checked}
                       >
                         <X className="h-4 w-4" />
                       </Button>
