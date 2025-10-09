@@ -37,9 +37,8 @@ const ACTIONS: Record<Papel, MenuItem[]> = {
     { key: 'checklist', label: 'Checklist Diário',  path: '/checklist' },
   ],
   paciente_dependente: [
-    { key: 'checklist', label: 'Checklist Diário', path: '/checklist' },
-    { key: 'vitals',    label: 'Sinais Vitais',    path: '/vitals' },
-    { key: 'sintomas',  label: 'Sintomas',         path: '/sintomas' },
+    { key: 'diario',    label: 'Diário Emocional',  path: '/diario' },
+    { key: 'sintomas',  label: 'Sintomas e Sinais', path: '/sintomas' },
   ],
 };
 
