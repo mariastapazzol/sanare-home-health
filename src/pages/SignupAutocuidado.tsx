@@ -71,34 +71,54 @@ const SignupAutocuidado = () => {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
-          // Create profile
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              user_id: session.user.id,
-              role: 'paciente_autonomo',
-              name: formData.name,
-              username: formData.email.split('@')[0],
-              birth_date: formData.birth_date,
-              email: formData.email
-            });
+          // Verificar se já existe em outras tabelas (evitar duplicação)
+          const [{ data: existeCuidador }, { data: existeDependente }] = await Promise.all([
+            supabase.from('cuidadores').select('id').eq('user_id', session.user.id).maybeSingle(),
+            supabase.from('pacientes_dependentes').select('id').eq('user_id', session.user.id).maybeSingle()
+          ]);
 
-          if (profileError) {
-            console.error('Error creating profile:', profileError);
+          if (existeCuidador || existeDependente) {
             toast({
-              title: "Aviso",
-              description: "Conta criada, mas houve um problema ao salvar os dados.",
+              title: "Erro",
+              description: "Este usuário já possui um cadastro em outro papel.",
               variant: "destructive"
             });
-          } else {
-            toast({
-              title: "Sucesso!",
-              description: "Conta criada com sucesso.",
-            });
+            await supabase.auth.signOut();
+            navigate('/auth/choice');
+            setLoading(false);
+            return;
           }
+
+          // Criar registro em pacientes_autonomos (tabela correta)
+          const { error: autonomoError } = await supabase
+            .from('pacientes_autonomos')
+            .insert({
+              user_id: session.user.id,
+              nome: formData.name,
+              nome_usuario: formData.email.split('@')[0],
+              nascimento: formData.birth_date || null
+            });
+
+          if (autonomoError) {
+            console.error('Error creating paciente_autonomo:', autonomoError);
+            toast({
+              title: "Erro",
+              description: "Falha ao salvar dados do perfil.",
+              variant: "destructive"
+            });
+            await supabase.auth.signOut();
+            navigate('/auth/choice');
+            setLoading(false);
+            return;
+          }
+
+          toast({
+            title: "Sucesso!",
+            description: "Conta criada com sucesso.",
+          });
         }
         
-        navigate('/');
+        navigate('/home');
         setLoading(false);
       }, 2000);
       
