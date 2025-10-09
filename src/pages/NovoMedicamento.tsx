@@ -173,11 +173,12 @@ const NovoMedicamento = () => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
-    // Validar tipo de arquivo
-    if (!file.type.startsWith('image/')) {
+    // Validar tipo de arquivo (jpeg, png, pdf)
+    const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    if (!validTypes.includes(file.type)) {
       toast({
         title: "Erro",
-        description: "Por favor, selecione um arquivo de imagem.",
+        description: "Por favor, selecione um arquivo JPEG, PNG ou PDF.",
         variant: "destructive",
       });
       return;
@@ -187,7 +188,7 @@ const NovoMedicamento = () => {
     if (file.size > 5 * 1024 * 1024) {
       toast({
         title: "Erro",
-        description: "A imagem deve ter no máximo 5MB.",
+        description: "O arquivo deve ter no máximo 5MB.",
         variant: "destructive",
       });
       return;
@@ -196,7 +197,7 @@ const NovoMedicamento = () => {
     setUploadingReceita(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `receitas/${user.id}/${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/receita/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('medicamentos')
@@ -270,7 +271,8 @@ const NovoMedicamento = () => {
         frequencia: data.frequencia,
         horarios: horariosValidos,
         imagem_url: imagemUrl || null,
-        receita_url: receitaUrl || null,
+        receita_url: data.precisa_receita ? (receitaUrl || null) : null,
+        receita_pendente: data.precisa_receita && semReceita,
         quantidade_por_dose: 1, // Valor padrão
         alerta_minimo: Math.floor(data.quantidade_por_embalagem * 0.2), // 20% da embalagem
       };
@@ -475,15 +477,15 @@ const NovoMedicamento = () => {
                           </div>
                         ) : (
                           <>
-                            <div className="flex items-center justify-center border-2 border-dashed border-border rounded-lg p-6">
+                             <div className="flex items-center justify-center border-2 border-dashed border-border rounded-lg p-6">
                               <div className="text-center w-full">
                                 <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                                 <p className="text-sm text-muted-foreground mb-3">
-                                  Adicione uma foto da receita médica
+                                  Adicione uma foto da receita médica (JPEG, PNG ou PDF)
                                 </p>
                                 <Input
                                   type="file"
-                                  accept="image/*"
+                                  accept="image/jpeg,image/png,application/pdf"
                                   onChange={handleReceitaUpload}
                                   disabled={uploadingReceita || semReceita}
                                   className="cursor-pointer"
