@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Welcome from "./pages/Welcome";
 import Auth from "./pages/Auth";
 import AuthChoice from "./pages/AuthChoice";
+import ForgotPassword from "./pages/ForgotPassword";
 import SignupAutocuidado from "./pages/SignupAutocuidado";
 import SignupCuidador from "./pages/SignupCuidador";
 import SignupDependenteStep from "./pages/SignupDependenteStep";
@@ -46,6 +47,7 @@ const App = () => (
               <Route path="/" element={<Welcome />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/choice" element={<AuthChoice />} />
+              <Route path="/auth/forgot-password" element={<ForgotPassword />} />
               <Route path="/auth/signup-autocuidado" element={<SignupAutocuidado />} />
               <Route path="/auth/signup-cuidador" element={<SignupCuidador />} />
               <Route path="/auth/signup-dependente" element={
