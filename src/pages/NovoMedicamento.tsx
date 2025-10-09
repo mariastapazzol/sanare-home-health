@@ -9,6 +9,7 @@ import { ArrowLeft, Plus, X, Upload } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useCareContext } from "@/hooks/use-care-context";
 import { toast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,6 +31,7 @@ const NovoMedicamento = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useAuth();
+  const { currentContext } = useCareContext();
   const [horarios, setHorarios] = useState<string[]>(['']);
   const [imagemUrl, setImagemUrl] = useState<string>('');
   const [receitaUrl, setReceitaUrl] = useState<string>('');
@@ -226,15 +228,40 @@ const NovoMedicamento = () => {
   };
 
   const onSubmit = async (data: FormData) => {
-    if (!user) return;
+    if (!user || !currentContext) return;
 
     setLoading(true);
     try {
+      // Determinar dependente_id baseado no contexto atual
+      let dependenteId: string | null = null;
+      
+      if (currentContext.type === 'dependent') {
+        // Buscar o id do dependente na tabela pacientes_dependentes
+        const { data: depData } = await supabase
+          .from('pacientes_dependentes')
+          .select('id')
+          .eq('user_id', currentContext.owner_user_id)
+          .maybeSingle();
+        
+        if (!depData) {
+          toast({
+            title: "Erro",
+            description: "Dependente não encontrado.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+        
+        dependenteId = depData.id;
+      }
+
       // Filtrar horários válidos (não vazios)
       const horariosValidos = horarios.filter(h => h.trim() !== '');
       
       const medicamentoData = {
         user_id: user.id,
+        dependente_id: dependenteId,
         nome: data.nome,
         dosagem: data.dosagem,
         unidade_dose: data.unidade_dose,

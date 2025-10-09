@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
+import { useCareContext } from '@/hooks/use-care-context';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -40,6 +41,7 @@ const NovoLembrete = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useAuth();
+  const { currentContext } = useCareContext();
   const isEditing = Boolean(id);
 
   const [formData, setFormData] = useState({
@@ -174,7 +176,7 @@ const NovoLembrete = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) return;
+    if (!user || !currentContext) return;
 
     if (!formData.nome.trim()) {
       toast({
@@ -206,13 +208,38 @@ const NovoLembrete = () => {
     setLoading(true);
 
     try {
+      // Determinar dependente_id baseado no contexto atual
+      let dependenteId: string | null = null;
+      
+      if (currentContext.type === 'dependent') {
+        // Buscar o id do dependente na tabela pacientes_dependentes
+        const { data: depData } = await supabase
+          .from('pacientes_dependentes')
+          .select('id')
+          .eq('user_id', currentContext.owner_user_id)
+          .maybeSingle();
+        
+        if (!depData) {
+          toast({
+            title: "Erro",
+            description: "Dependente não encontrado.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+        
+        dependenteId = depData.id;
+      }
+
       const lembreteData = {
         nome: formData.nome.trim(),
         descricao: formData.descricao.trim() || null,
         datas: formData.datas,
         horarios: formData.horarios,
         icone: formData.icone,
-        user_id: user.id
+        user_id: user.id,
+        dependente_id: dependenteId
       };
 
       if (isEditing && id) {
