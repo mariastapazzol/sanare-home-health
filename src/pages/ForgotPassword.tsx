@@ -41,55 +41,50 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      let emailToUse = identifier.trim();
+      const normalizedInput = identifier.trim().toLowerCase();
 
-      // Se não for email, converter username para email shadow
-      if (!identifier.includes('@')) {
-        const username = identifier.trim().toLowerCase();
-        
-        // Verificar se o username existe em pacientes_dependentes
-        const { data: dependent, error: depError } = await supabase
-          .from('pacientes_dependentes')
-          .select('id')
-          .eq('nome_usuario', username)
-          .single();
-
-        if (depError || !dependent) {
-          toast({
-            title: "Conta não encontrada",
-            description: "Digite um e-mail válido ou nome de usuário.",
-            variant: "destructive"
-          });
-          setLoading(false);
-          return;
-        }
-
-        // Converter para email shadow (formato usado no cadastro de dependentes)
-        emailToUse = `${username}@dep.sanare.local`;
-      }
-
-      // Enviar email de reset usando Supabase Auth
-      const { error } = await supabase.auth.resetPasswordForEmail(emailToUse, {
-        redirectTo: `${window.location.origin}/auth/forgot-password`
-      });
-
-      if (error) {
+      // Validação de formato
+      if (!normalizedInput) {
         toast({
-          title: "Erro ao enviar código",
-          description: error.message,
+          title: "Campo obrigatório",
+          description: "Digite um e-mail válido ou nome de usuário.",
           variant: "destructive"
         });
         setLoading(false);
         return;
       }
 
+      let emailToUse = normalizedInput;
+
+      // Se não for email, buscar username em pacientes_dependentes
+      if (!normalizedInput.includes('@')) {
+        const { data: dependent } = await supabase
+          .from('pacientes_dependentes')
+          .select('user_id')
+          .ilike('nome_usuario', normalizedInput)
+          .maybeSingle();
+
+        if (dependent?.user_id) {
+          // Buscar o email do Auth via RPC ou consulta direta não é possível
+          // Usar email shadow (formato padrão de dependentes)
+          emailToUse = `${normalizedInput}@dep.sanare.local`;
+        }
+        // Não revelar se existe ou não - mensagem neutra
+      }
+
+      // Enviar reset (mesmo que não exista, para evitar enumeração)
+      const { error } = await supabase.auth.resetPasswordForEmail(emailToUse, {
+        redirectTo: `${window.location.origin}/auth/forgot-password`
+      });
+
+      // Sempre mostrar mensagem neutra, mesmo com erro
       setEmail(emailToUse);
       setOtpSent(true);
       setStep('reset');
       
       toast({
-        title: "Código enviado",
-        description: "Enviamos um código para seu e-mail cadastrado. Verifique sua caixa de entrada."
+        title: "Instruções enviadas",
+        description: "Se o e-mail/usuário existir, enviaremos instruções para redefinir sua senha."
       });
     } catch (error: any) {
       toast({
