@@ -31,7 +31,7 @@ interface Profile {
 const Home = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { papel, dados } = usePerfil();
+  const { status, papel, dados } = usePerfil();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [medicamentosComEstoqueBaixo, setMedicamentosComEstoqueBaixo] = useState([]);
   const [checklistDiario, setChecklistDiario] = useState([]);
@@ -187,6 +187,18 @@ const Home = () => {
     await signOut();
     navigate('/');
   };
+
+  // Só renderiza quando usePerfil estiver pronto
+  if (status !== "ready") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

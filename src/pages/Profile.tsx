@@ -13,6 +13,12 @@ const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { status, papel, dados, dependentes, erro } = usePerfil();
+
+  // Bloquear acesso para paciente_autonomo
+  if (status === "ready" && papel === "paciente_autonomo") {
+    navigate('/home', { replace: true });
+    return null;
+  }
   
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);

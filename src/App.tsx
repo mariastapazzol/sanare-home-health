@@ -84,27 +84,27 @@ const App = () => (
                 <NovoMedicamento />
               </ProtectedRoute>
             } />
-            <Route path="/stock" element={
+            <Route path="/estoque" element={
               <ProtectedRoute>
                 <Estoque />
               </ProtectedRoute>
             } />
-            <Route path="/diary" element={
+            <Route path="/diario" element={
               <ProtectedRoute>
                 <Diary />
               </ProtectedRoute>
             } />
-            <Route path="/diary/select-mood" element={
+            <Route path="/diario/select-mood" element={
               <ProtectedRoute>
                 <DiarySelectMood />
               </ProtectedRoute>
             } />
-            <Route path="/diary/write" element={
+            <Route path="/diario/write" element={
               <ProtectedRoute>
                 <DiaryWrite />
               </ProtectedRoute>
             } />
-            <Route path="/diary/records" element={
+            <Route path="/diario/records" element={
               <ProtectedRoute>
                 <DiaryRecords />
               </ProtectedRoute>

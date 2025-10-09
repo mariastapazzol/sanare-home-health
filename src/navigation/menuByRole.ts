@@ -18,11 +18,11 @@ const ACTIONS: Record<Papel, MenuItem[]> = {
   paciente_autonomo: [
     { key: 'medicamentos', label: 'Medicamentos', path: '/medicamentos' },
     { key: 'estoque', label: 'Estoque', path: '/estoque' },
-    { key: 'diary', label: 'Diário Emocional', path: '/diary' },
+    { key: 'diary', label: 'Diário Emocional', path: '/diario' },
     { key: 'sintomas', label: 'Sintomas e Sinais', path: '/sintomas' },
   ],
   paciente_dependente: [
-    { key: 'diary', label: 'Diário Emocional', path: '/diary' },
+    { key: 'diary', label: 'Diário Emocional', path: '/diario' },
     { key: 'sintomas', label: 'Sintomas e Sinais', path: '/sintomas' },
   ],
 };
