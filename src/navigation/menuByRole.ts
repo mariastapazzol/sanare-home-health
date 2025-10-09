@@ -1,4 +1,4 @@
-export type Papel = 'cuidador' | 'paciente_autonomo' | 'paciente_dependente';
+export type Papel = "cuidador" | "paciente_autonomo" | "paciente_dependente";
 
 export interface MenuItem {
   key: string;
@@ -10,35 +10,31 @@ export interface MenuItem {
 /** Ações (cards) da Home **/
 const ACTIONS: Record<Papel, MenuItem[]> = {
   cuidador: [
-    { key: 'medicamentos', label: 'Medicamentos', path: '/medicamentos' },
-    { key: 'estoque', label: 'Estoque', path: '/estoque' },
-    { key: 'diary', label: 'Diário Emocional', path: '/diary' },
-    { key: 'sintomas', label: 'Sintomas e Sinais', path: '/sintomas' },
+    { key: "medicamentos", label: "Medicamentos", path: "/medicamentos" },
+    { key: "estoque", label: "Estoque", path: "/estoque" },
+    { key: "diary", label: "Diário Emocional", path: "/diario" },
+    { key: "sintomas", label: "Sintomas e Sinais", path: "/sintomas" },
   ],
   paciente_autonomo: [
-    { key: 'medicamentos', label: 'Medicamentos', path: '/medicamentos' },
-    { key: 'estoque', label: 'Estoque', path: '/estoque' },
-    { key: 'diary', label: 'Diário Emocional', path: '/diario' },
-    { key: 'sintomas', label: 'Sintomas e Sinais', path: '/sintomas' },
+    { key: "medicamentos", label: "Medicamentos", path: "/medicamentos" },
+    { key: "estoque", label: "Estoque", path: "/estoque" },
+    { key: "diary", label: "Diário Emocional", path: "/diario" },
+    { key: "sintomas", label: "Sintomas e Sinais", path: "/sintomas" },
   ],
   paciente_dependente: [
-    { key: 'diary', label: 'Diário Emocional', path: '/diario' },
-    { key: 'sintomas', label: 'Sintomas e Sinais', path: '/sintomas' },
+    { key: "diary", label: "Diário Emocional", path: "/diario" },
+    { key: "sintomas", label: "Sintomas e Sinais", path: "/sintomas" },
   ],
 };
 
 /** Menu Sidebar/Dropdown **/
 const SIDEBAR: Record<Papel, MenuItem[]> = {
   cuidador: [
-    { key: 'profile', label: 'Perfil', path: '/profile' },
-    { key: 'lembretes', label: 'Lembretes', path: '/lembretes' },
+    { key: "profile", label: "Perfil", path: "/profile" },
+    { key: "lembretes", label: "Lembretes", path: "/lembretes" },
   ],
-  paciente_autonomo: [
-    { key: 'lembretes', label: 'Lembretes', path: '/lembretes' },
-  ],
-  paciente_dependente: [
-    { key: 'profile', label: 'Perfil', path: '/profile' },
-  ],
+  paciente_autonomo: [{ key: "lembretes", label: "Lembretes", path: "/lembretes" }],
+  paciente_dependente: [{ key: "profile", label: "Perfil", path: "/profile" }],
 };
 
 export function getHomeActionsForRole(papel?: Papel | null): MenuItem[] {
