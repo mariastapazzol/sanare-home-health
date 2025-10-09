@@ -34,7 +34,6 @@ const SIDEBAR: Record<Papel, MenuItem[]> = {
     { key: 'lembretes', label: 'Lembretes', path: '/lembretes' },
   ],
   paciente_autonomo: [
-    { key: 'profile', label: 'Perfil', path: '/profile' },
     { key: 'lembretes', label: 'Lembretes', path: '/lembretes' },
   ],
   paciente_dependente: [
