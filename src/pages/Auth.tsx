@@ -107,7 +107,7 @@ const Auth = () => {
             Não tem conta?{' '}
             <Button 
               variant="link" 
-              onClick={() => navigate('/auth/signup')}
+              onClick={() => navigate('/auth/choice')}
               className="text-primary hover:text-primary-dark p-0 h-auto"
             >
               Criar conta
