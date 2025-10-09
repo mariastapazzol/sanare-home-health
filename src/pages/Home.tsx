@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
+import { usePerfil } from '@/hooks/use-perfil';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { 
@@ -21,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
+import { getHomeActionsForRole, getSidebarForRole } from '@/navigation/menuByRole';
 
 interface Profile {
   name: string;
@@ -29,17 +31,21 @@ interface Profile {
 const Home = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { papel, dados } = usePerfil();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [medicamentosComEstoqueBaixo, setMedicamentosComEstoqueBaixo] = useState([]);
   const [checklistDiario, setChecklistDiario] = useState([]);
 
+  const homeActions = getHomeActionsForRole(papel);
+  const menuItems = getSidebarForRole(papel);
+
   useEffect(() => {
-    if (user) {
+    if (user && papel) {
       fetchProfile();
       fetchEstoqueBaixo();
       fetchChecklistDiario();
     }
-  }, [user]);
+  }, [user, papel]);
 
   const fetchProfile = async () => {
     if (!user) return;
@@ -77,17 +83,49 @@ const Home = () => {
   const fetchChecklistDiario = async () => {
     if (!user) return;
     
-    // Buscar medicamentos
-    const { data: medicamentos } = await supabase
-      .from('medicamentos')
-      .select('id, nome, horarios')
-      .eq('user_id', user.id);
-    
-    // Buscar lembretes personalizados
-    const { data: lembretes } = await supabase
-      .from('lembretes')
-      .select('id, nome, horarios')
-      .eq('user_id', user.id);
+    let medicamentos = null;
+    let lembretes = null;
+
+    // Se for paciente dependente, buscar dados cadastrados pelo cuidador
+    if (papel === 'paciente_dependente' && dados && 'cuidador' in dados) {
+      // Buscar o ID do registro do paciente dependente
+      const { data: dependenteData } = await supabase
+        .from('pacientes_dependentes')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (dependenteData) {
+        // Buscar medicamentos cadastrados para este dependente
+        const { data: medData } = await supabase
+          .from('medicamentos')
+          .select('id, nome, horarios')
+          .eq('dependente_id', dependenteData.id);
+        
+        // Buscar lembretes cadastrados para este dependente
+        const { data: lemData } = await supabase
+          .from('lembretes')
+          .select('id, nome, horarios')
+          .eq('dependente_id', dependenteData.id);
+        
+        medicamentos = medData;
+        lembretes = lemData;
+      }
+    } else {
+      // Para cuidador e paciente autônomo, buscar seus próprios dados
+      const { data: medData } = await supabase
+        .from('medicamentos')
+        .select('id, nome, horarios')
+        .eq('user_id', user.id);
+      
+      const { data: lemData } = await supabase
+        .from('lembretes')
+        .select('id, nome, horarios')
+        .eq('user_id', user.id);
+      
+      medicamentos = medData;
+      lembretes = lemData;
+    }
     
     const checklist: any[] = [];
     
@@ -156,7 +194,7 @@ const Home = () => {
       <div className="bg-primary text-primary-foreground p-4">
         <div className="flex items-center justify-between">
           <h1 className="text-mobile-xl font-semibold">
-            Olá, {profile?.name || 'Usuário'}!
+            Olá, {dados?.nome || profile?.name || 'Usuário'}!
           </h1>
           
           <DropdownMenu>
@@ -166,12 +204,11 @@ const Home = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => navigate('/profile')}>
-                Perfil
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/lembretes')}>
-                Lembretes
-              </DropdownMenuItem>
+              {menuItems.map((item) => (
+                <DropdownMenuItem key={item.key} onClick={() => navigate(item.path)}>
+                  {item.label}
+                </DropdownMenuItem>
+              ))}
               <DropdownMenuItem onClick={handleLogout}>
                 Sair
               </DropdownMenuItem>
@@ -183,44 +220,30 @@ const Home = () => {
       <div className="p-4 space-y-6">
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-4 mb-4">
-          <Button
-            onClick={() => navigate('/medicamentos')}
-            className="btn-health h-20 flex-col space-y-2"
-          >
-            <Pill className="h-6 w-6" />
-            <span>Medicamentos</span>
-          </Button>
-          
-          <Button
-            onClick={() => navigate('/stock')}
-            className="btn-health h-20 flex-col space-y-2"
-          >
-            <Package className="h-6 w-6" />
-            <span>Estoque</span>
-          </Button>
+          {homeActions.map((action) => {
+            const iconMap: Record<string, any> = {
+              medicamentos: Pill,
+              estoque: Package,
+              diary: BookOpen,
+              sintomas: Activity,
+            };
+            const Icon = iconMap[action.key] || Activity;
+            
+            return (
+              <Button
+                key={action.key}
+                onClick={() => navigate(action.path)}
+                className="btn-health h-20 flex-col space-y-2"
+              >
+                <Icon className="h-6 w-6" />
+                <span>{action.label}</span>
+              </Button>
+            );
+          })}
         </div>
 
-        {/* Diary Buttons */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <Button
-            onClick={() => navigate('/diary')}
-            className="btn-health h-20 flex-col space-y-2"
-          >
-            <BookOpen className="h-6 w-6" />
-            <span>Diário Emocional</span>
-          </Button>
-          
-          <Button
-            onClick={() => navigate('/sintomas')}
-            className="btn-health h-20 flex-col space-y-2"
-          >
-            <Activity className="h-6 w-6" />
-            <span>Sintomas e Sinais</span>
-          </Button>
-        </div>
-
-        {/* Alerta de Estoque Baixo */}
-        {medicamentosComEstoqueBaixo.length > 0 && (
+        {/* Alerta de Estoque Baixo - apenas para cuidador e autônomo */}
+        {papel !== 'paciente_dependente' && medicamentosComEstoqueBaixo.length > 0 && (
           <Card className="card-health border-warning bg-warning/5">
             <div className="flex items-start space-x-3">
               <AlertTriangle className="h-5 w-5 text-warning mt-0.5" />
@@ -232,7 +255,7 @@ const Home = () => {
                 <Button 
                   variant="link" 
                   className="text-warning hover:text-warning p-0 h-auto mt-1"
-                  onClick={() => navigate('/stock')}
+                  onClick={() => navigate('/estoque')}
                 >
                   Ver detalhes
                 </Button>
