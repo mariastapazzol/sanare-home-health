@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
-import { usePerfil } from '@/hooks/use-perfil';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { 
   Menu, 
+  Pill, 
+  Package, 
   AlertTriangle,
   Clock,
   Check,
   X,
-  Pill
+  BookOpen,
+  Activity
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -19,7 +21,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
-import { getHomeActionsForRole, getSidebarForRole } from '@/navigation/menuByRole';
 
 interface Profile {
   name: string;
@@ -28,21 +29,35 @@ interface Profile {
 const Home = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { status, papel, dados } = usePerfil();
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [medicamentosComEstoqueBaixo, setMedicamentosComEstoqueBaixo] = useState([]);
   const [checklistDiario, setChecklistDiario] = useState([]);
 
-  // Debug (remover depois)
-  const homeCards = getHomeActionsForRole(papel);
-  const menuItems = getSidebarForRole(papel);
-  console.debug('ROLE=', papel, 'HOME=', homeCards.map(i=>i.key), 'MENU=', menuItems.map(i=>i.key));
-
   useEffect(() => {
     if (user) {
+      fetchProfile();
       fetchEstoqueBaixo();
       fetchChecklistDiario();
     }
   }, [user]);
+
+  const fetchProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (data) {
+        setProfile(data);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
 
   const fetchEstoqueBaixo = async () => {
     if (!user) return;
@@ -135,16 +150,13 @@ const Home = () => {
     navigate('/');
   };
 
-  if (status === 'loading') return null;
-  if (!papel) return null;
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="bg-primary text-primary-foreground p-4">
         <div className="flex items-center justify-between">
           <h1 className="text-mobile-xl font-semibold">
-            Olá, {dados?.nome || 'Usuário'}!
+            Olá, {profile?.name || 'Usuário'}!
           </h1>
           
           <DropdownMenu>
@@ -154,34 +166,62 @@ const Home = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              {menuItems.map(item => (
-                <DropdownMenuItem 
-                  key={item.key} 
-                  onClick={() => item.key === 'sair' ? handleLogout() : navigate(item.path)}
-                >
-                  {item.label}
-                </DropdownMenuItem>
-              ))}
+              <DropdownMenuItem onClick={() => navigate('/profile')}>
+                Perfil
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/lembretes')}>
+                Lembretes
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
+                Sair
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
 
       <div className="p-4 space-y-6">
-        {/* Action Cards */}
-        <div className="grid grid-cols-2 gap-4">
-          {homeCards.map(card => (
-            <Link key={card.key} to={card.path}>
-              <Card className="card-health p-6 text-center font-semibold hover:shadow-lg transition-shadow">
-                {card.label}
-              </Card>
-            </Link>
-          ))}
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <Button
+            onClick={() => navigate('/medicamentos')}
+            className="btn-health h-20 flex-col space-y-2"
+          >
+            <Pill className="h-6 w-6" />
+            <span>Medicamentos</span>
+          </Button>
+          
+          <Button
+            onClick={() => navigate('/stock')}
+            className="btn-health h-20 flex-col space-y-2"
+          >
+            <Package className="h-6 w-6" />
+            <span>Estoque</span>
+          </Button>
+        </div>
+
+        {/* Diary Buttons */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <Button
+            onClick={() => navigate('/diary')}
+            className="btn-health h-20 flex-col space-y-2"
+          >
+            <BookOpen className="h-6 w-6" />
+            <span>Diário Emocional</span>
+          </Button>
+          
+          <Button
+            onClick={() => navigate('/sintomas')}
+            className="btn-health h-20 flex-col space-y-2"
+          >
+            <Activity className="h-6 w-6" />
+            <span>Sintomas e Sinais</span>
+          </Button>
         </div>
 
         {/* Alerta de Estoque Baixo */}
         {medicamentosComEstoqueBaixo.length > 0 && (
-          <Card className="card-health border-warning bg-warning/5 p-4">
+          <Card className="card-health border-warning bg-warning/5">
             <div className="flex items-start space-x-3">
               <AlertTriangle className="h-5 w-5 text-warning mt-0.5" />
               <div className="flex-1">
@@ -192,7 +232,7 @@ const Home = () => {
                 <Button 
                   variant="link" 
                   className="text-warning hover:text-warning p-0 h-auto mt-1"
-                  onClick={() => navigate('/estoque')}
+                  onClick={() => navigate('/stock')}
                 >
                   Ver detalhes
                 </Button>
@@ -202,7 +242,7 @@ const Home = () => {
         )}
 
         {/* Checklist Diário */}
-        <Card className="card-health p-4">
+        <Card className="card-health">
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <Clock className="h-5 w-5 text-primary" />
