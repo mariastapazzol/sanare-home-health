@@ -44,7 +44,7 @@ export type Database = {
       checklist_daily_status: {
         Row: {
           checked: boolean
-          context_id: string | null
+          context_id: string
           created_at: string
           day: string
           horario: string
@@ -57,7 +57,7 @@ export type Database = {
         }
         Insert: {
           checked?: boolean
-          context_id?: string | null
+          context_id: string
           created_at?: string
           day: string
           horario: string
@@ -70,7 +70,7 @@ export type Database = {
         }
         Update: {
           checked?: boolean
-          context_id?: string | null
+          context_id?: string
           created_at?: string
           day?: string
           horario?: string

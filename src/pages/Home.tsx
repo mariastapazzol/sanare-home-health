@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
 import { usePerfil } from '@/hooks/use-perfil';
 import { useChecklistDaily } from '@/hooks/use-checklist-daily';
+import { useCareContext } from '@/hooks/use-care-context';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { 
@@ -33,11 +34,14 @@ const Home = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { status, papel, dados } = usePerfil();
+  const { currentContext } = useCareContext();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [medicamentosComEstoqueBaixo, setMedicamentosComEstoqueBaixo] = useState([]);
   
-  // Usar hook de checklist diário com persistência
-  const { items: checklistItems, loading: checklistLoading, toggleChecked, toggleInactive } = useChecklistDaily({ papel, dados });
+  // Usar hook de checklist diário com persistência usando context_id
+  const { items: checklistItems, loading: checklistLoading, toggleChecked, toggleInactive } = useChecklistDaily({ 
+    contextId: currentContext?.id 
+  });
 
   const homeActions = getHomeActionsForRole(papel);
   const menuItems = getSidebarForRole(papel);

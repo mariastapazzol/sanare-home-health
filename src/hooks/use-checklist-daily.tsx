@@ -14,11 +14,10 @@ export interface ChecklistItem {
 }
 
 interface UseChecklistDailyProps {
-  papel?: string;
-  dados?: any;
+  contextId?: string;
 }
 
-export function useChecklistDaily({ papel, dados }: UseChecklistDailyProps = {}) {
+export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
   const { user } = useAuth();
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +25,7 @@ export function useChecklistDaily({ papel, dados }: UseChecklistDailyProps = {})
 
   // Carregar checklist do dia
   const loadChecklist = useCallback(async () => {
-    if (!user) return;
+    if (!user || !contextId) return;
 
     setLoading(true);
     try {
@@ -34,31 +33,48 @@ export function useChecklistDaily({ papel, dados }: UseChecklistDailyProps = {})
       const serverDate = await getTodayKeyFromServer();
       setTodayKey(serverDate);
 
+      // Buscar care_context para determinar tipo e owner
+      const { data: contextData } = await supabase
+        .from('care_contexts')
+        .select('*')
+        .eq('id', contextId)
+        .maybeSingle();
+
+      if (!contextData) {
+        console.error('Context não encontrado');
+        setLoading(false);
+        return;
+      }
+
       let medicamentos: any[] | null = null;
       let lembretes: any[] | null = null;
-      let contextId: string | null = null;
 
-      // Buscar medicamentos e lembretes baseado no papel
-      if (papel === 'paciente_dependente' && dados && 'cuidador' in dados) {
-        // Buscar ID do dependente
+      // Para contexto 'self', buscar itens do próprio usuário
+      if (contextData.type === 'self') {
+        const [{ data: medData }, { data: lemData }] = await Promise.all([
+          supabase
+            .from('medicamentos')
+            .select('id, nome, horarios')
+            .eq('user_id', contextData.owner_user_id)
+            .is('dependente_id', null),
+          supabase
+            .from('lembretes')
+            .select('id, nome, horarios')
+            .eq('user_id', contextData.owner_user_id)
+            .is('dependente_id', null)
+        ]);
+
+        medicamentos = medData;
+        lembretes = lemData;
+      } else if (contextData.type === 'dependent') {
+        // Para contexto de dependente, buscar itens vinculados ao dependente
         const { data: dependenteData } = await supabase
           .from('pacientes_dependentes')
           .select('id')
-          .eq('user_id', user.id)
+          .eq('user_id', contextData.owner_user_id)
           .maybeSingle();
 
         if (dependenteData) {
-          // Buscar context_id do dependente
-          const { data: contextData } = await supabase
-            .from('care_contexts')
-            .select('id')
-            .eq('owner_user_id', user.id)
-            .eq('type', 'self')
-            .maybeSingle();
-
-          contextId = contextData?.id || null;
-
-          // Buscar medicamentos e lembretes do dependente
           const [{ data: medData }, { data: lemData }] = await Promise.all([
             supabase
               .from('medicamentos')
@@ -73,32 +89,6 @@ export function useChecklistDaily({ papel, dados }: UseChecklistDailyProps = {})
           medicamentos = medData;
           lembretes = lemData;
         }
-      } else {
-        // Para cuidador e paciente autônomo
-        const { data: contextData } = await supabase
-          .from('care_contexts')
-          .select('id')
-          .eq('owner_user_id', user.id)
-          .eq('type', 'self')
-          .maybeSingle();
-
-        contextId = contextData?.id || null;
-
-        const [{ data: medData }, { data: lemData }] = await Promise.all([
-          supabase
-            .from('medicamentos')
-            .select('id, nome, horarios')
-            .eq('user_id', user.id)
-            .is('dependente_id', null),
-          supabase
-            .from('lembretes')
-            .select('id, nome, horarios')
-            .eq('user_id', user.id)
-            .is('dependente_id', null)
-        ]);
-
-        medicamentos = medData;
-        lembretes = lemData;
       }
 
       // Construir lista de itens
@@ -138,11 +128,11 @@ export function useChecklistDaily({ papel, dados }: UseChecklistDailyProps = {})
         });
       }
 
-      // Carregar estado persistido do dia
+      // Carregar estado persistido do dia usando context_id
       const { data: statusData } = await supabase
         .from('checklist_daily_status')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('context_id', contextId)
         .eq('day', serverDate);
 
       // Aplicar estado persistido
@@ -169,11 +159,11 @@ export function useChecklistDaily({ papel, dados }: UseChecklistDailyProps = {})
     } finally {
       setLoading(false);
     }
-  }, [user, papel, dados]);
+  }, [user, contextId]);
 
   // Atualizar estado de um item
   const updateItemStatus = useCallback(async (itemId: string, updates: Partial<Pick<ChecklistItem, 'checked' | 'inactive'>>) => {
-    if (!user || !todayKey) return;
+    if (!user || !todayKey || !contextId) return;
 
     const item = items.find(i => i.id === itemId);
     if (!item) return;
@@ -183,12 +173,13 @@ export function useChecklistDaily({ papel, dados }: UseChecklistDailyProps = {})
       i.id === itemId ? { ...i, ...updates } : i
     ));
 
-    // Persistir no banco
+    // Persistir no banco usando context_id
     try {
       const { error } = await supabase
         .from('checklist_daily_status')
         .upsert({
           user_id: user.id,
+          context_id: contextId,
           day: todayKey,
           item_type: item.tipo,
           item_id: item.item_id,
@@ -196,7 +187,7 @@ export function useChecklistDaily({ papel, dados }: UseChecklistDailyProps = {})
           checked: updates.checked !== undefined ? updates.checked : item.checked,
           inactive: updates.inactive !== undefined ? updates.inactive : item.inactive
         }, {
-          onConflict: 'user_id,day,item_type,item_id,horario'
+          onConflict: 'context_id,day,item_type,item_id,horario'
         });
 
       if (error) {
@@ -213,7 +204,7 @@ export function useChecklistDaily({ papel, dados }: UseChecklistDailyProps = {})
         i.id === itemId ? item : i
       ));
     }
-  }, [user, todayKey, items]);
+  }, [user, todayKey, contextId, items]);
 
   // Marcar item como concluído (checked)
   const toggleChecked = useCallback((itemId: string) => {
@@ -263,12 +254,12 @@ export function useChecklistDaily({ papel, dados }: UseChecklistDailyProps = {})
 
   // Carregar checklist inicial e configurar timer
   useEffect(() => {
-    if (user && papel) {
+    if (user && contextId) {
       loadChecklist();
       const cleanup = setupMidnightTimer();
       return cleanup;
     }
-  }, [user, papel, loadChecklist, setupMidnightTimer]);
+  }, [user, contextId, loadChecklist, setupMidnightTimer]);
 
   return {
     items,
