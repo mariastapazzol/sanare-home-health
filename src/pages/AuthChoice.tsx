@@ -12,7 +12,7 @@ const AuthChoice = () => {
         {/* Header */}
         <div className="text-center space-y-4">
           <button 
-            onClick={() => navigate('/welcome')}
+            onClick={() => navigate('/')}
             className="back-btn"
           >
             <ArrowLeft className="h-5 w-5" />
