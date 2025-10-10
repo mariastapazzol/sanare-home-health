@@ -270,13 +270,16 @@ const NovoMedicamento = () => {
 
       if (id) {
         // EDITAR medicamento (não envia undefined)
-        const { error: upErr } = await supabase.from("medicamentos").update(medicamentoPayload).eq("id", id);
-
+        // === EDITAR MEDICAMENTO ===
+        const { error: upErr } = await supabase
+          .from("medicamentos")
+          // ignora types antigos do client
+          .update(medicamentoPayload as any)
+          .eq("id", id);
         if (upErr) throw upErr;
 
-        // upsert de posologia (se tiver frequência/horários)
+        // UP SERT POSOLOGIA (se houver frequência/horários)
         if (data.frequencia && horariosValidos.length > 0) {
-          // apensa uma nova posologia ativa (você pode fazer update se já existir)
           const { error: posoErr } = await supabase.from("posologias").insert([
             {
               medicamento_id: id,
@@ -284,9 +287,11 @@ const NovoMedicamento = () => {
               horarios: horariosValidos,
               duracao_tipo: "indefinido",
               duracao_valor: 0,
-              active: true,
+              // atenda aos types antigos (alguns projetos exigem user_id)
+              user_id: user.id,
+              // não enviar 'active' enquanto os types não forem regenerados
             },
-          ]);
+          ] as any);
           if (posoErr) throw posoErr;
         }
 
