@@ -32,9 +32,9 @@ const NovoMedicamento = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const { currentContext } = useCareContext();
-  const [horarios, setHorarios] = useState<string[]>(['']);
-  const [imagemUrl, setImagemUrl] = useState<string>('');
-  const [receitaUrl, setReceitaUrl] = useState<string>('');
+  const [horarios, setHorarios] = useState<string[]>([""]);
+  const [imagemUrl, setImagemUrl] = useState<string>("");
+  const [receitaUrl, setReceitaUrl] = useState<string>("");
   const [semReceita, setSemReceita] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -43,12 +43,12 @@ const NovoMedicamento = () => {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nome: '',
-      dosagem: '',
-      unidade_dose: 'mg',
+      nome: "",
+      dosagem: "",
+      unidade_dose: "mg",
       quantidade_por_embalagem: 0,
       precisa_receita: false,
-      frequencia: '',
+      frequencia: "",
     },
   });
 
@@ -63,11 +63,7 @@ const NovoMedicamento = () => {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('medicamentos')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
+      const { data, error } = await supabase.from("medicamentos").select("*").eq("id", id).maybeSingle();
 
       if (error) throw error;
 
@@ -80,13 +76,13 @@ const NovoMedicamento = () => {
           precisa_receita: data.precisa_receita,
           frequencia: data.frequencia,
         });
-        setHorarios(Array.isArray(data.horarios) ? data.horarios.map(String) : ['']);
-        setImagemUrl(data.imagem_url || '');
-        setReceitaUrl(data.receita_url || '');
+        setHorarios(Array.isArray(data.horarios) ? data.horarios.map(String) : [""]);
+        setImagemUrl(data.imagem_url || "");
+        setReceitaUrl(data.receita_url || "");
         setSemReceita(!data.receita_url && data.precisa_receita);
       }
     } catch (error) {
-      console.error('Erro ao carregar medicamento:', error);
+      console.error("Erro ao carregar medicamento:", error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar o medicamento.",
@@ -98,7 +94,7 @@ const NovoMedicamento = () => {
   };
 
   const adicionarHorario = () => {
-    setHorarios([...horarios, '']);
+    setHorarios([...horarios, ""]);
   };
 
   const removerHorario = (index: number) => {
@@ -118,7 +114,7 @@ const NovoMedicamento = () => {
     if (!file || !user) return;
 
     // Validar tipo de arquivo
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith("image/")) {
       toast({
         title: "Erro",
         description: "Por favor, selecione um arquivo de imagem.",
@@ -139,18 +135,16 @@ const NovoMedicamento = () => {
 
     setUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split(".").pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
 
-      const { error: uploadError, data } = await supabase.storage
-        .from('medicamentos')
-        .upload(fileName, file);
+      const { error: uploadError, data } = await supabase.storage.from("medicamentos").upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('medicamentos')
-        .getPublicUrl(fileName);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("medicamentos").getPublicUrl(fileName);
 
       setImagemUrl(publicUrl);
       toast({
@@ -158,7 +152,7 @@ const NovoMedicamento = () => {
         description: "Imagem enviada com sucesso.",
       });
     } catch (error) {
-      console.error('Erro ao fazer upload:', error);
+      console.error("Erro ao fazer upload:", error);
       toast({
         title: "Erro",
         description: "Não foi possível enviar a imagem.",
@@ -174,7 +168,7 @@ const NovoMedicamento = () => {
     if (!file || !user) return;
 
     // Validar tipo de arquivo (jpeg, png, pdf)
-    const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    const validTypes = ["image/jpeg", "image/png", "application/pdf"];
     if (!validTypes.includes(file.type)) {
       toast({
         title: "Erro",
@@ -196,18 +190,16 @@ const NovoMedicamento = () => {
 
     setUploadingReceita(true);
     try {
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split(".").pop();
       const fileName = `${user.id}/receita/${Date.now()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('medicamentos')
-        .upload(fileName, file);
+      const { error: uploadError } = await supabase.storage.from("medicamentos").upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('medicamentos')
-        .getPublicUrl(fileName);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("medicamentos").getPublicUrl(fileName);
 
       setReceitaUrl(publicUrl);
       setSemReceita(false);
@@ -216,7 +208,7 @@ const NovoMedicamento = () => {
         description: "Receita enviada com sucesso.",
       });
     } catch (error) {
-      console.error('Erro ao fazer upload:', error);
+      console.error("Erro ao fazer upload:", error);
       toast({
         title: "Erro",
         description: "Não foi possível enviar a receita.",
@@ -228,10 +220,14 @@ const NovoMedicamento = () => {
   };
 
   const onSubmit = async (data: FormData) => {
-    if (!user || !currentContext) {
+    if (!user) {
+      toast({ title: "Erro", description: "Você não está logado.", variant: "destructive" });
+      return;
+    }
+    if (!currentContext?.id) {
       toast({
         title: "Erro",
-        description: "Contexto não disponível. Por favor, faça login novamente.",
+        description: "Selecione um paciente (contexto) antes de salvar.",
         variant: "destructive",
       });
       return;
@@ -239,64 +235,96 @@ const NovoMedicamento = () => {
 
     setLoading(true);
     try {
-      // Filtrar horários válidos (não vazios)
-      const horariosValidos = horarios.filter(h => h.trim() !== '');
-      
-      const medicamentoData = {
+      // normaliza horários (array de string HH:mm)
+      const horariosValidos = (horarios || []).map((h) => (h || "").trim()).filter(Boolean);
+
+      // mapear campos do schema novo
+      const requires_prescription = !!data.precisa_receita;
+      const prescription_image_url = requires_prescription ? receitaUrl || null : null;
+      const prescription_status: "valid" | "missing" | "used" = requires_prescription
+        ? prescription_image_url
+          ? "valid"
+          : semReceita
+            ? "missing"
+            : "missing"
+        : "missing";
+
+      const medicamentoPayload = {
         context_id: currentContext.id,
         user_id: user.id,
         nome: data.nome,
         dosagem: data.dosagem,
         unidade_dose: data.unidade_dose,
+        quantidade_por_dose: 1, // padrão
         quantidade_por_embalagem: data.quantidade_por_embalagem,
-        precisa_receita: data.precisa_receita,
-        frequencia: data.frequencia,
-        horarios: horariosValidos,
         imagem_url: imagemUrl || null,
-        receita_url: data.precisa_receita ? (receitaUrl || null) : null,
-        receita_pendente: data.precisa_receita && semReceita,
-        quantidade_por_dose: 1, // Valor padrão
-        alerta_minimo: Math.floor(data.quantidade_por_embalagem * 0.2), // 20% da embalagem
-      };
+
+        requires_prescription,
+        prescription_status,
+        prescription_image_url,
+
+        quantidade_atual: id ? undefined : data.quantidade_por_embalagem, // no create inicia com estoque cheio
+        alerta_minimo: Math.max(0, Math.floor(data.quantidade_por_embalagem * 0.2)),
+        data_inicio: new Date().toISOString().slice(0, 10),
+      } as const;
 
       if (id) {
-        // Editar medicamento existente
-        const { error } = await supabase
-          .from('medicamentos')
-          .update(medicamentoData)
-          .eq('id', id);
+        // EDITAR medicamento (não envia undefined)
+        const { error: upErr } = await supabase.from("medicamentos").update(medicamentoPayload).eq("id", id);
 
-        if (error) throw error;
+        if (upErr) throw upErr;
 
-        toast({
-          title: "Sucesso!",
-          description: "Medicamento atualizado com sucesso.",
-        });
+        // upsert de posologia (se tiver frequência/horários)
+        if (data.frequencia && horariosValidos.length > 0) {
+          // apensa uma nova posologia ativa (você pode fazer update se já existir)
+          const { error: posoErr } = await supabase.from("posologias").insert([
+            {
+              medicamento_id: id,
+              frequencia: data.frequencia,
+              horarios: horariosValidos,
+              duracao_tipo: "indefinido",
+              duracao_valor: 0,
+              active: true,
+            },
+          ]);
+          if (posoErr) throw posoErr;
+        }
+
+        toast({ title: "Sucesso!", description: "Medicamento atualizado com sucesso." });
       } else {
-        // Criar novo medicamento
-        const medicamentoDataComEstoque = {
-          ...medicamentoData,
-          quantidade_atual: data.quantidade_por_embalagem, // Inicia com estoque completo
-        };
+        // CRIAR medicamento e depois criar 1 posologia (se houver)
+        const { data: created, error: insErr } = await supabase
+          .from("medicamentos")
+          .insert([medicamentoPayload])
+          .select("id")
+          .single();
 
-        const { error } = await supabase
-          .from('medicamentos')
-          .insert(medicamentoDataComEstoque);
+        if (insErr) throw insErr;
 
-        if (error) throw error;
+        if (created?.id && data.frequencia && horariosValidos.length > 0) {
+          const { error: posoErr } = await supabase.from("posologias").insert([
+            {
+              medicamento_id: created.id,
+              frequencia: data.frequencia,
+              horarios: horariosValidos,
+              duracao_tipo: "indefinido",
+              duracao_valor: 0,
+              active: true,
+            },
+          ]);
+          if (posoErr) throw posoErr;
+        }
 
-        toast({
-          title: "Sucesso!",
-          description: "Medicamento cadastrado com sucesso.",
-        });
+        toast({ title: "Sucesso!", description: "Medicamento cadastrado com sucesso." });
       }
 
-      navigate('/medicamentos');
-    } catch (error) {
-      console.error('Erro ao salvar medicamento:', error);
+      navigate("/medicamentos");
+    } catch (error: any) {
+      console.error("Erro ao salvar medicamento:", error);
+      // mostra a mensagem real do supabase se vier
       toast({
         title: "Erro",
-        description: "Não foi possível salvar o medicamento.",
+        description: error?.message || "Não foi possível salvar o medicamento.",
         variant: "destructive",
       });
     } finally {
@@ -307,21 +335,16 @@ const NovoMedicamento = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="relative">
-        <button
-          onClick={() => navigate('/medicamentos')}
-          className="back-btn"
-        >
+        <button onClick={() => navigate("/medicamentos")} className="back-btn">
           <ArrowLeft className="w-5 h-5" />
         </button>
 
         <div className="pt-16 pb-8 px-4">
           <div className="mb-6">
             <h1 className="text-mobile-2xl font-bold text-foreground mb-2">
-              {id ? 'Editar Medicamento' : 'Novo Medicamento'}
+              {id ? "Editar Medicamento" : "Novo Medicamento"}
             </h1>
-            <p className="text-muted-foreground">
-              Preencha as informações do medicamento
-            </p>
+            <p className="text-muted-foreground">Preencha as informações do medicamento</p>
           </div>
 
           <Form {...form}>
@@ -421,7 +444,7 @@ const NovoMedicamento = () => {
                             onCheckedChange={(checked) => {
                               field.onChange(checked);
                               if (!checked) {
-                                setReceitaUrl('');
+                                setReceitaUrl("");
                                 setSemReceita(false);
                               }
                             }}
@@ -431,13 +454,13 @@ const NovoMedicamento = () => {
                     )}
                   />
 
-                  {form.watch('precisa_receita') && (
+                  {form.watch("precisa_receita") && (
                     <Card className="border-2 border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-900">
                       <CardContent className="pt-6 space-y-4">
                         <div className="flex items-center justify-between">
                           <Label className="text-sm font-medium">Foto da Receita Médica</Label>
                         </div>
-                        
+
                         {receitaUrl ? (
                           <div className="space-y-4">
                             <div className="flex justify-center">
@@ -445,13 +468,13 @@ const NovoMedicamento = () => {
                                 src={receitaUrl}
                                 alt="Receita médica"
                                 className="max-w-full h-auto rounded-lg border-2 border-border"
-                                onError={() => setReceitaUrl('')}
+                                onError={() => setReceitaUrl("")}
                               />
                             </div>
                             <Button
                               type="button"
                               variant="outline"
-                              onClick={() => setReceitaUrl('')}
+                              onClick={() => setReceitaUrl("")}
                               className="w-full"
                             >
                               Remover Receita
@@ -459,7 +482,7 @@ const NovoMedicamento = () => {
                           </div>
                         ) : (
                           <>
-                             <div className="flex items-center justify-center border-2 border-dashed border-border rounded-lg p-6">
+                            <div className="flex items-center justify-center border-2 border-dashed border-border rounded-lg p-6">
                               <div className="text-center w-full">
                                 <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                                 <p className="text-sm text-muted-foreground mb-3">
@@ -473,23 +496,14 @@ const NovoMedicamento = () => {
                                   className="cursor-pointer"
                                 />
                                 {uploadingReceita && (
-                                  <p className="text-xs text-muted-foreground mt-2">
-                                    Enviando receita...
-                                  </p>
+                                  <p className="text-xs text-muted-foreground mt-2">Enviando receita...</p>
                                 )}
                               </div>
                             </div>
-                            
+
                             <div className="flex items-center space-x-2">
-                              <Switch
-                                id="sem-receita"
-                                checked={semReceita}
-                                onCheckedChange={setSemReceita}
-                              />
-                              <Label 
-                                htmlFor="sem-receita"
-                                className="text-sm cursor-pointer"
-                              >
+                              <Switch id="sem-receita" checked={semReceita} onCheckedChange={setSemReceita} />
+                              <Label htmlFor="sem-receita" className="text-sm cursor-pointer">
                                 Ainda não possuo a receita
                               </Label>
                             </div>
@@ -545,24 +559,14 @@ const NovoMedicamento = () => {
                             className="flex-1"
                           />
                           {horarios.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              onClick={() => removerHorario(index)}
-                            >
+                            <Button type="button" variant="outline" size="icon" onClick={() => removerHorario(index)}>
                               <X className="w-4 h-4" />
                             </Button>
                           )}
                         </div>
                       ))}
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={adicionarHorario}
-                      className="mt-2 w-full"
-                    >
+                    <Button type="button" variant="outline" onClick={adicionarHorario} className="mt-2 w-full">
                       <Plus className="w-4 h-4 mr-2" />
                       Adicionar Horário
                     </Button>
@@ -583,15 +587,10 @@ const NovoMedicamento = () => {
                           src={imagemUrl}
                           alt="Preview"
                           className="w-32 h-32 rounded-lg object-cover"
-                          onError={() => setImagemUrl('')}
+                          onError={() => setImagemUrl("")}
                         />
                       </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setImagemUrl('')}
-                        className="w-full"
-                      >
+                      <Button type="button" variant="outline" onClick={() => setImagemUrl("")} className="w-full">
                         Remover Imagem
                       </Button>
                     </div>
@@ -599,9 +598,7 @@ const NovoMedicamento = () => {
                     <div className="flex items-center justify-center border-2 border-dashed border-border rounded-lg p-6">
                       <div className="text-center w-full">
                         <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                        <p className="text-sm text-muted-foreground mb-3">
-                          Adicione uma foto do medicamento
-                        </p>
+                        <p className="text-sm text-muted-foreground mb-3">Adicione uma foto do medicamento</p>
                         <Input
                           type="file"
                           accept="image/*"
@@ -609,23 +606,15 @@ const NovoMedicamento = () => {
                           disabled={uploading}
                           className="cursor-pointer"
                         />
-                        {uploading && (
-                          <p className="text-xs text-muted-foreground mt-2">
-                            Enviando imagem...
-                          </p>
-                        )}
+                        {uploading && <p className="text-xs text-muted-foreground mt-2">Enviando imagem...</p>}
                       </div>
                     </div>
                   )}
                 </CardContent>
               </Card>
 
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full btn-health"
-              >
-                {loading ? 'Salvando...' : 'Salvar Medicamento'}
+              <Button type="submit" disabled={loading} className="w-full btn-health">
+                {loading ? "Salvando..." : "Salvar Medicamento"}
               </Button>
             </form>
           </Form>
