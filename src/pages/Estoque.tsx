@@ -9,7 +9,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { ReceitaModal } from "@/components/ReceitaModal";
 
 interface MedicamentoEstoque {
   id: string;
@@ -22,9 +21,6 @@ interface MedicamentoEstoque {
   precisa_receita: boolean;
   diasRestantes: number;
   imagem_url?: string;
-  requires_prescription: boolean;
-  prescription_status: 'valid' | 'missing' | 'used';
-  prescription_image_url: string | null;
 }
 
 const Estoque = () => {
@@ -35,8 +31,6 @@ const Estoque = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedMedicamento, setSelectedMedicamento] = useState<MedicamentoEstoque | null>(null);
   const [novaQuantidade, setNovaQuantidade] = useState("");
-  const [receitaModalOpen, setReceitaModalOpen] = useState(false);
-  const [selectedReceitaMedicamento, setSelectedReceitaMedicamento] = useState<MedicamentoEstoque | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -48,7 +42,7 @@ const Estoque = () => {
     try {
       const { data, error } = await supabase
         .from('medicamentos')
-        .select('id, nome, dosagem, unidade_dose, quantidade_atual, quantidade_por_dose, horarios, precisa_receita, imagem_url, requires_prescription, prescription_status, prescription_image_url');
+        .select('id, nome, dosagem, unidade_dose, quantidade_atual, quantidade_por_dose, horarios, precisa_receita, imagem_url');
 
       if (error) throw error;
 
@@ -63,9 +57,7 @@ const Estoque = () => {
         return {
           ...med,
           horarios,
-          diasRestantes,
-          prescription_status: (med.prescription_status || 'missing') as 'valid' | 'missing' | 'used',
-          prescription_image_url: med.prescription_image_url || null,
+          diasRestantes
         };
       }) || [];
 
@@ -139,40 +131,6 @@ const Estoque = () => {
         variant: "destructive",
       });
     }
-  };
-
-  const handleOpenReceitaModal = (medicamento: MedicamentoEstoque) => {
-    setSelectedReceitaMedicamento(medicamento);
-    setReceitaModalOpen(true);
-  };
-
-  const getReceitaBadge = (medicamento: MedicamentoEstoque) => {
-    if (!medicamento.requires_prescription) return null;
-
-    const hasImage = !!medicamento.prescription_image_url;
-    const statusValidOrUsed = medicamento.prescription_status === 'valid' || 
-                               medicamento.prescription_status === 'used';
-
-    if (hasImage && statusValidOrUsed) {
-      return (
-        <Badge 
-          variant="outline" 
-          className="text-xs cursor-pointer hover:bg-primary/10 transition-colors"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleOpenReceitaModal(medicamento);
-          }}
-        >
-          Receita
-        </Badge>
-      );
-    }
-
-    return (
-      <Badge variant="outline" className="text-xs border-muted-foreground/30 text-muted-foreground cursor-not-allowed">
-        Sem receita
-      </Badge>
-    );
   };
 
   if (loading) {
@@ -276,7 +234,11 @@ const Estoque = () => {
                         <Badge variant={status.variant} className="text-xs">
                           {status.text}
                         </Badge>
-                        {getReceitaBadge(medicamento)}
+                        {medicamento.precisa_receita && (
+                          <Badge variant="outline" className="text-xs">
+                            Receita
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </CardHeader>
@@ -398,23 +360,6 @@ const Estoque = () => {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Modal de visualização/gestão de receita */}
-      {selectedReceitaMedicamento && (
-        <ReceitaModal
-          open={receitaModalOpen}
-          onClose={() => {
-            setReceitaModalOpen(false);
-            setSelectedReceitaMedicamento(null);
-          }}
-          medicamentoId={selectedReceitaMedicamento.id}
-          medicamentoNome={selectedReceitaMedicamento.nome}
-          prescriptionImageUrl={selectedReceitaMedicamento.prescription_image_url}
-          prescriptionStatus={selectedReceitaMedicamento.prescription_status}
-          userId={user?.id || ''}
-          onUpdate={fetchMedicamentosEstoque}
-        />
-      )}
     </div>
   );
 };
