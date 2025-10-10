@@ -22,10 +22,10 @@ const Diary = () => {
     if (!user) return;
 
     try {
+      // RLS filtra automaticamente por contexto
       const { data, error } = await supabase
         .from('diary_entries')
         .select('id')
-        .eq('user_id', user.id)
         .limit(1);
 
       if (error) throw error;

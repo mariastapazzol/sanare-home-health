@@ -175,7 +175,14 @@ const NovoLembrete = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user || !currentContext) return;
+    if (!user || !currentContext) {
+      toast({
+        title: "Erro",
+        description: "Contexto não disponível. Por favor, faça login novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     if (!formData.nome.trim()) {
       toast({
@@ -207,39 +214,14 @@ const NovoLembrete = () => {
     setLoading(true);
 
     try {
-      // Determinar dependente_id baseado no contexto atual
-      let dependenteId: string | null = null;
-      
-      if (currentContext.type === 'dependent') {
-        // Buscar o id do dependente na tabela pacientes_dependentes
-        const { data: depData } = await supabase
-          .from('pacientes_dependentes')
-          .select('id')
-          .eq('user_id', currentContext.owner_user_id)
-          .maybeSingle();
-        
-        if (!depData) {
-          toast({
-            title: "Erro",
-            description: "Dependente não encontrado.",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
-        
-        dependenteId = depData.id;
-      }
-      // Para 'self' (autônomo), dependente_id permanece null
-
       const lembreteData = {
+        context_id: currentContext.id,
         nome: formData.nome.trim(),
         descricao: formData.descricao.trim() || null,
         datas: formData.datas,
         horarios: formData.horarios,
         icone: formData.icone,
-        user_id: user.id,
-        dependente_id: dependenteId
+        user_id: user.id
       };
 
       if (isEditing && id) {

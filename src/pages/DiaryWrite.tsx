@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
+import { useCareContext } from '@/hooks/use-care-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,6 +13,7 @@ const DiaryWrite = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { currentContext } = useCareContext();
   const { toast } = useToast();
   const [content, setContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -30,7 +32,15 @@ const DiaryWrite = () => {
   };
 
   const handleSave = async () => {
-    if (!user) return;
+    if (!user || !currentContext) {
+      toast({
+        title: "Erro",
+        description: "Contexto não disponível. Por favor, faça login novamente.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (!content.trim()) {
       toast({
         title: "Erro",
@@ -45,6 +55,7 @@ const DiaryWrite = () => {
       const { error } = await supabase
         .from('diary_entries')
         .insert({
+          context_id: currentContext.id,
           user_id: user.id,
           mood,
           content: content.trim()

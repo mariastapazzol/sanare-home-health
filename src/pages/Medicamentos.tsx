@@ -45,6 +45,7 @@ const Medicamentos = () => {
 
   const fetchMedicamentos = async () => {
     try {
+      // RLS já filtra por contexto, não precisa filtrar por context_id explicitamente
       const { data, error } = await supabase
         .from('medicamentos')
         .select('id, nome, dosagem, unidade_dose, quantidade_atual, precisa_receita, imagem_url');

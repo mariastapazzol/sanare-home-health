@@ -47,19 +47,17 @@ const Sintomas = () => {
     try {
       setLoading(true);
       
-      // Buscar sintomas
+      // Buscar sintomas - RLS filtra automaticamente por contexto
       const { data: sintomasData } = await supabase
         .from('sintomas')
         .select('*')
-        .eq('user_id', user?.id)
         .order('created_at', { ascending: false })
         .limit(5);
       
-      // Buscar sinais vitais
+      // Buscar sinais vitais - RLS filtra automaticamente por contexto
       const { data: sinaisData } = await supabase
         .from('sinais_vitais')
         .select('*')
-        .eq('user_id', user?.id)
         .order('created_at', { ascending: false })
         .limit(5);
       

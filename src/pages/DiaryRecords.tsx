@@ -31,10 +31,10 @@ const DiaryRecords = () => {
     if (!user) return;
 
     try {
+      // RLS filtra automaticamente por contexto
       const { data, error } = await supabase
         .from('diary_entries')
         .select('*')
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

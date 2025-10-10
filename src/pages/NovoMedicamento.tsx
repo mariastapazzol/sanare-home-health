@@ -228,41 +228,23 @@ const NovoMedicamento = () => {
   };
 
   const onSubmit = async (data: FormData) => {
-    if (!user || !currentContext) return;
+    if (!user || !currentContext) {
+      toast({
+        title: "Erro",
+        description: "Contexto não disponível. Por favor, faça login novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setLoading(true);
     try {
-      // Determinar dependente_id baseado no contexto atual
-      let dependenteId: string | null = null;
-      
-      if (currentContext.type === 'dependent') {
-        // Buscar o id do dependente na tabela pacientes_dependentes
-        const { data: depData } = await supabase
-          .from('pacientes_dependentes')
-          .select('id')
-          .eq('user_id', currentContext.owner_user_id)
-          .maybeSingle();
-        
-        if (!depData) {
-          toast({
-            title: "Erro",
-            description: "Dependente não encontrado.",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
-        
-        dependenteId = depData.id;
-      }
-      // Para 'self' (autônomo), dependente_id permanece null
-
       // Filtrar horários válidos (não vazios)
       const horariosValidos = horarios.filter(h => h.trim() !== '');
       
       const medicamentoData = {
+        context_id: currentContext.id,
         user_id: user.id,
-        dependente_id: dependenteId,
         nome: data.nome,
         dosagem: data.dosagem,
         unidade_dose: data.unidade_dose,

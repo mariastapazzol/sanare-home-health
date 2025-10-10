@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
+import { useCareContext } from '@/hooks/use-care-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +18,7 @@ interface ValidacaoSinal {
 const NovoSinalVital = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { currentContext } = useCareContext();
   const [loading, setLoading] = useState(false);
   const [pressaoSistolica, setPressaoSistolica] = useState('');
   const [pressaoDiastolica, setPressaoDiastolica] = useState('');
@@ -93,6 +95,11 @@ const NovoSinalVital = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!user || !currentContext) {
+      toast.error('Contexto não disponível. Por favor, faça login novamente.');
+      return;
+    }
+    
     if (!pressaoSistolica && !pressaoDiastolica && !frequenciaCardiaca && !saturacaoOxigenio && !temperatura) {
       toast.error('Por favor, preencha pelo menos um sinal vital');
       return;
@@ -104,7 +111,8 @@ const NovoSinalVital = () => {
       const { error } = await supabase
         .from('sinais_vitais')
         .insert({
-          user_id: user?.id,
+          context_id: currentContext.id,
+          user_id: user.id,
           pressao_sistolica: pressaoSistolica ? parseFloat(pressaoSistolica) : null,
           pressao_diastolica: pressaoDiastolica ? parseFloat(pressaoDiastolica) : null,
           frequencia_cardiaca: frequenciaCardiaca ? parseFloat(frequenciaCardiaca) : null,

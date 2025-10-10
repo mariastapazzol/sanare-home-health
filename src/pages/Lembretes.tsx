@@ -63,6 +63,7 @@ const Lembretes = () => {
     if (!user) return;
 
     try {
+      // RLS já filtra por contexto, não precisa filtrar por context_id explicitamente
       const { data, error } = await supabase
         .from('lembretes')
         .select('*')

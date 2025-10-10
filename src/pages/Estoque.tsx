@@ -40,6 +40,7 @@ const Estoque = () => {
 
   const fetchMedicamentosEstoque = async () => {
     try {
+      // RLS filtra automaticamente por contexto
       const { data, error } = await supabase
         .from('medicamentos')
         .select('id, nome, dosagem, unidade_dose, quantidade_atual, quantidade_por_dose, horarios, precisa_receita, imagem_url');

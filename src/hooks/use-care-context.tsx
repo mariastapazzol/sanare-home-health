@@ -67,9 +67,35 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      let contexts = contextsData || [];
+
+      // Auto-create self context for paciente_autonomo and cuidador if not exists
+      if (profile && (profile.role === 'paciente_autonomo' || profile.role === 'cuidador')) {
+        const hasSelfContext = contexts.some(c => c.type === 'self' && c.owner_user_id === user.id);
+        
+        if (!hasSelfContext) {
+          console.log('Creating self context for user:', user.id);
+          const { data: newContext, error: createError } = await supabase
+            .from('care_contexts')
+            .insert([{ 
+              type: 'self', 
+              owner_user_id: user.id,
+              caregiver_user_id: null
+            }])
+            .select()
+            .single();
+
+          if (createError) {
+            console.error('Error creating self context:', createError);
+          } else if (newContext) {
+            contexts = [newContext, ...contexts];
+          }
+        }
+      }
+
       // Load owner names for dependent contexts
       const contextsWithNames: CareContext[] = await Promise.all(
-        (contextsData || []).map(async (ctx) => {
+        contexts.map(async (ctx) => {
           if (ctx.type === 'dependent') {
             const { data: ownerProfile } = await supabase
               .from('profiles')

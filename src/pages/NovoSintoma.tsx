@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
+import { useCareContext } from '@/hooks/use-care-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -49,6 +50,7 @@ const DURACOES = [
 const NovoSintoma = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { currentContext } = useCareContext();
   const [loading, setLoading] = useState(false);
   const [sintoma, setSintoma] = useState('');
   const [sintomaCustom, setSintomaCustom] = useState('');
@@ -80,6 +82,11 @@ const NovoSintoma = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!user || !currentContext) {
+      toast.error('Contexto não disponível. Por favor, faça login novamente.');
+      return;
+    }
+    
     if (!sintoma && !sintomaCustom) {
       toast.error('Por favor, selecione ou digite um sintoma');
       return;
@@ -96,7 +103,8 @@ const NovoSintoma = () => {
       const { error } = await supabase
         .from('sintomas')
         .insert({
-          user_id: user?.id,
+          context_id: currentContext.id,
+          user_id: user.id,
           tipo_sintoma: sintomaCustom || sintoma,
           intensidade: intensidade[0],
           duracao,
