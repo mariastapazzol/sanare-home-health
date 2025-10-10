@@ -266,6 +266,8 @@ const NovoMedicamento = () => {
         quantidade_atual: id ? undefined : data.quantidade_por_embalagem, // no create inicia com estoque cheio
         alerta_minimo: Math.max(0, Math.floor(data.quantidade_por_embalagem * 0.2)),
         data_inicio: new Date().toISOString().slice(0, 10),
+        frequencia: data.frequencia,
+        horarios: horariosValidos,
       } as const;
 
       if (id) {
@@ -314,7 +316,7 @@ const NovoMedicamento = () => {
               horarios: horariosValidos,
               duracao_tipo: "indefinido",
               duracao_valor: 0,
-              active: true,
+              user_id: user.id,
             },
           ]);
           if (posoErr) throw posoErr;
