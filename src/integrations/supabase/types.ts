@@ -91,6 +91,118 @@ export type Database = {
           },
         ]
       }
+      checklist_lembretes: {
+        Row: {
+          checked: boolean
+          context_id: string
+          created_at: string
+          day: string
+          horario: string
+          id: string
+          inactive: boolean
+          lembrete_id: string
+          updated_at: string
+        }
+        Insert: {
+          checked?: boolean
+          context_id: string
+          created_at?: string
+          day: string
+          horario: string
+          id?: string
+          inactive?: boolean
+          lembrete_id: string
+          updated_at?: string
+        }
+        Update: {
+          checked?: boolean
+          context_id?: string
+          created_at?: string
+          day?: string
+          horario?: string
+          id?: string
+          inactive?: boolean
+          lembrete_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_lembretes_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "care_contexts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_lembretes_lembrete_id_fkey"
+            columns: ["lembrete_id"]
+            isOneToOne: false
+            referencedRelation: "lembretes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_meds: {
+        Row: {
+          checked: boolean
+          context_id: string
+          created_at: string
+          day: string
+          horario: string
+          id: string
+          inactive: boolean
+          medicamento_id: string
+          posologia_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          checked?: boolean
+          context_id: string
+          created_at?: string
+          day: string
+          horario: string
+          id?: string
+          inactive?: boolean
+          medicamento_id: string
+          posologia_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          checked?: boolean
+          context_id?: string
+          created_at?: string
+          day?: string
+          horario?: string
+          id?: string
+          inactive?: boolean
+          medicamento_id?: string
+          posologia_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_meds_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "care_contexts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_meds_medicamento_id_fkey"
+            columns: ["medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "medicamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_meds_posologia_id_fkey"
+            columns: ["posologia_id"]
+            isOneToOne: false
+            referencedRelation: "posologias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cuidadores: {
         Row: {
           created_at: string
@@ -167,6 +279,7 @@ export type Database = {
       }
       lembretes: {
         Row: {
+          context_id: string
           created_at: string
           datas: Json
           dependente_id: string | null
@@ -179,6 +292,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          context_id: string
           created_at?: string
           datas?: Json
           dependente_id?: string | null
@@ -191,6 +305,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          context_id?: string
           created_at?: string
           datas?: Json
           dependente_id?: string | null
@@ -202,11 +317,20 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "lembretes_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "care_contexts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       medicamentos: {
         Row: {
           alerta_minimo: number
+          context_id: string
           created_at: string
           data_inicio: string
           dependente_id: string | null
@@ -231,6 +355,7 @@ export type Database = {
         }
         Insert: {
           alerta_minimo?: number
+          context_id: string
           created_at?: string
           data_inicio?: string
           dependente_id?: string | null
@@ -255,6 +380,7 @@ export type Database = {
         }
         Update: {
           alerta_minimo?: number
+          context_id?: string
           created_at?: string
           data_inicio?: string
           dependente_id?: string | null
@@ -277,7 +403,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "medicamentos_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "care_contexts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       movimentacoes_estoque: {
         Row: {
@@ -634,6 +768,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_context: {
+        Args: { ctx: string }
+        Returns: boolean
+      }
       server_time_sampa: {
         Args: Record<PropertyKey, never>
         Returns: string
