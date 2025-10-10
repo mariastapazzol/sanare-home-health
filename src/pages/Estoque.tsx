@@ -149,39 +149,30 @@ const Estoque = () => {
   const getReceitaBadge = (medicamento: MedicamentoEstoque) => {
     if (!medicamento.requires_prescription) return null;
 
-    if (medicamento.prescription_status === 'missing') {
-      return (
-        <Badge variant="outline" className="text-xs border-muted-foreground/30 text-muted-foreground cursor-not-allowed">
-          Sem receita
-        </Badge>
-      );
-    }
+    const hasImage = !!medicamento.prescription_image_url;
+    const statusValidOrUsed = medicamento.prescription_status === 'valid' || 
+                               medicamento.prescription_status === 'used';
 
-    if (medicamento.prescription_status === 'valid' && medicamento.prescription_image_url) {
+    if (hasImage && statusValidOrUsed) {
       return (
         <Badge 
           variant="outline" 
           className="text-xs cursor-pointer hover:bg-primary/10 transition-colors"
-          onClick={() => handleOpenReceitaModal(medicamento)}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleOpenReceitaModal(medicamento);
+          }}
         >
           Receita
         </Badge>
       );
     }
 
-    if (medicamento.prescription_status === 'used' && medicamento.prescription_image_url) {
-      return (
-        <Badge 
-          variant="outline" 
-          className="text-xs cursor-pointer hover:bg-primary/10 transition-colors"
-          onClick={() => handleOpenReceitaModal(medicamento)}
-        >
-          Receita
-        </Badge>
-      );
-    }
-
-    return null;
+    return (
+      <Badge variant="outline" className="text-xs border-muted-foreground/30 text-muted-foreground cursor-not-allowed">
+        Sem receita
+      </Badge>
+    );
   };
 
   if (loading) {

@@ -23,6 +23,8 @@ interface ReceitaModalProps {
   onUpdate: () => void;
 }
 
+type ModalState = 'view' | 'confirmUse' | 'postUse';
+
 export const ReceitaModal = ({
   open,
   onClose,
@@ -33,14 +35,18 @@ export const ReceitaModal = ({
   userId,
   onUpdate,
 }: ReceitaModalProps) => {
-  const [showReplaceDialog, setShowReplaceDialog] = useState(false);
+  const [modalState, setModalState] = useState<ModalState>('view');
   const [uploading, setUploading] = useState(false);
 
-  const handleMarcarUsada = () => {
-    setShowReplaceDialog(true);
+  const handleUsarReceita = () => {
+    setModalState('confirmUse');
   };
 
-  const handleNaoCadastrarNova = async () => {
+  const handleCancelarUso = () => {
+    setModalState('view');
+  };
+
+  const handleConfirmarUso = async () => {
     try {
       const { error } = await supabase
         .from('medicamentos')
@@ -57,8 +63,7 @@ export const ReceitaModal = ({
         description: "A receita foi marcada como usada.",
       });
 
-      setShowReplaceDialog(false);
-      onClose();
+      setModalState('postUse');
       onUpdate();
     } catch (error) {
       console.error('Erro ao marcar receita como usada:', error);
@@ -70,7 +75,7 @@ export const ReceitaModal = ({
     }
   };
 
-  const handleSimCadastrarNova = () => {
+  const handleCadastrarOutraReceita = () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/jpeg,image/png,image/jpg';
@@ -147,7 +152,7 @@ export const ReceitaModal = ({
           description: "A nova receita foi cadastrada com sucesso.",
         });
 
-        setShowReplaceDialog(false);
+        setModalState('view');
         onClose();
         onUpdate();
       } catch (error) {
@@ -165,57 +170,26 @@ export const ReceitaModal = ({
     input.click();
   };
 
-  if (showReplaceDialog) {
-    return (
-      <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cadastrar nova receita?</DialogTitle>
-            <DialogDescription>
-              Você marcou a receita de <strong>{medicamentoNome}</strong> como usada.
-              Deseja cadastrar uma nova receita agora?
-            </DialogDescription>
-          </DialogHeader>
+  const handleSair = () => {
+    setModalState('view');
+    onClose();
+  };
 
-          <DialogFooter className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={handleNaoCadastrarNova}
-              disabled={uploading}
-              className="flex-1"
-            >
-              Não
-            </Button>
-            <Button
-              onClick={handleSimCadastrarNova}
-              disabled={uploading}
-              className="flex-1 btn-health"
-            >
-              {uploading ? (
-                <>
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                  Enviando...
-                </>
-              ) : (
-                <>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Sim
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+  // Reset state when modal closes
+  const handleClose = () => {
+    setModalState('view');
+    onClose();
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Receita - {medicamentoNome}</DialogTitle>
           <DialogDescription>
-            Visualize a receita do medicamento
+            {modalState === 'view' && 'Visualize a receita do medicamento'}
+            {modalState === 'confirmUse' && 'Tem certeza que deseja usar?'}
+            {modalState === 'postUse' && 'Cadastrar outra receita desse medicamento?'}
           </DialogDescription>
         </DialogHeader>
 
@@ -232,20 +206,71 @@ export const ReceitaModal = ({
         )}
 
         <DialogFooter className="flex gap-3">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="flex-1"
-          >
-            <X className="w-4 h-4 mr-2" />
-            Fechar
-          </Button>
-          <Button
-            onClick={handleMarcarUsada}
-            className="flex-1 btn-health"
-          >
-            Receita usada
-          </Button>
+          {modalState === 'view' && (
+            <>
+              <Button
+                variant="outline"
+                onClick={handleClose}
+                className="flex-1"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Fechar
+              </Button>
+              <Button
+                onClick={handleUsarReceita}
+                className="flex-1 btn-health"
+              >
+                Usar receita
+              </Button>
+            </>
+          )}
+
+          {modalState === 'confirmUse' && (
+            <>
+              <Button
+                variant="outline"
+                onClick={handleCancelarUso}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleConfirmarUso}
+                className="flex-1 btn-health"
+              >
+                Confirmar
+              </Button>
+            </>
+          )}
+
+          {modalState === 'postUse' && (
+            <>
+              <Button
+                variant="outline"
+                onClick={handleSair}
+                className="flex-1"
+              >
+                Sair
+              </Button>
+              <Button
+                onClick={handleCadastrarOutraReceita}
+                disabled={uploading}
+                className="flex-1 btn-health"
+              >
+                {uploading ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Cadastrar outra receita
+                  </>
+                )}
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
