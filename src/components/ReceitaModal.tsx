@@ -48,8 +48,7 @@ export const ReceitaModal = ({
           prescription_status: 'used',
           updated_at: new Date().toISOString()
         })
-        .eq('id', medicamentoId)
-        .eq('user_id', userId);
+        .eq('id', medicamentoId);
 
       if (error) throw error;
 
@@ -139,8 +138,7 @@ export const ReceitaModal = ({
             prescription_status: 'valid',
             updated_at: new Date().toISOString()
           })
-          .eq('id', medicamentoId)
-          .eq('user_id', userId);
+          .eq('id', medicamentoId);
 
         if (updateError) throw updateError;
 
