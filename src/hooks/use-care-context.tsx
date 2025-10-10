@@ -95,10 +95,11 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
 
       let contextsList = (ctxs ?? []) as CareContextRow[];
 
-      // 3) Garante SELF somente para paciente_autonomo (não cria para cuidador)
-      if (role === "paciente_autonomo") {
+      // 3) Garante SELF somente para paciente_autonomo ou paciente_dependente (não cria para cuidador)
+      if (role === "paciente_autonomo" || role === "paciente_dependente") {
         const hasSelf = contextsList.some((c) => c.type === "self" && c.owner_user_id === user.id);
-        if (!hasSelf) {
+        if (!hasSelf && role === "paciente_autonomo") {
+          // Só cria contexto self para autônomo
           const { data: created, error: createErr } = await supabase
             .from("care_contexts")
             .insert([{ type: "self", owner_user_id: user.id }])

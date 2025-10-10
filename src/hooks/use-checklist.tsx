@@ -121,7 +121,7 @@ export function useChecklist() {
     } finally {
       setLoading(false);
     }
-  }, [user, todayKey]);
+  }, [user]);
 
   /**
    * Marca/desmarca uma task

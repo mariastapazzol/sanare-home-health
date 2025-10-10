@@ -25,7 +25,10 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
 
   // Carregar checklist do dia
   const loadChecklist = useCallback(async () => {
-    if (!user || !contextId) return;
+    if (!user || !contextId) {
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -33,71 +36,27 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
       const serverDate = await getTodayKeyFromServer();
       setTodayKey(serverDate);
 
-      // Buscar care_context para determinar tipo e owner
-      const { data: contextData } = await supabase
-        .from('care_contexts')
-        .select('*')
-        .eq('id', contextId)
-        .maybeSingle();
+      // Buscar medicamentos pelo context_id
+      // @ts-ignore - Evita erro de inferência de tipo profunda do Supabase
+      const { data: medicamentos } = await supabase
+        .from('medicamentos')
+        .select('id, nome, horarios')
+        .eq('context_id', contextId);
 
-      if (!contextData) {
-        console.error('Context não encontrado');
-        setLoading(false);
-        return;
-      }
-
-      let medicamentos: any[] | null = null;
-      let lembretes: any[] | null = null;
-
-      // Para contexto 'self', buscar itens do próprio usuário
-      if (contextData.type === 'self') {
-        const [{ data: medData }, { data: lemData }] = await Promise.all([
-          supabase
-            .from('medicamentos')
-            .select('id, nome, horarios')
-            .eq('user_id', contextData.owner_user_id)
-            .is('dependente_id', null),
-          supabase
-            .from('lembretes')
-            .select('id, nome, horarios')
-            .eq('user_id', contextData.owner_user_id)
-            .is('dependente_id', null)
-        ]);
-
-        medicamentos = medData;
-        lembretes = lemData;
-      } else if (contextData.type === 'dependent') {
-        // Para contexto de dependente, buscar itens vinculados ao dependente
-        const { data: dependenteData } = await supabase
-          .from('pacientes_dependentes')
-          .select('id')
-          .eq('user_id', contextData.owner_user_id)
-          .maybeSingle();
-
-        if (dependenteData) {
-          const [{ data: medData }, { data: lemData }] = await Promise.all([
-            supabase
-              .from('medicamentos')
-              .select('id, nome, horarios')
-              .eq('dependente_id', dependenteData.id),
-            supabase
-              .from('lembretes')
-              .select('id, nome, horarios')
-              .eq('dependente_id', dependenteData.id)
-          ]);
-
-          medicamentos = medData;
-          lembretes = lemData;
-        }
-      }
+      // Buscar lembretes pelo context_id
+      // @ts-ignore - Evita erro de inferência de tipo profunda do Supabase
+      const { data: lembretes } = await supabase
+        .from('lembretes')
+        .select('id, nome, horarios')
+        .eq('context_id', contextId);
 
       // Construir lista de itens
       const checklistItems: ChecklistItem[] = [];
 
       if (medicamentos) {
-        medicamentos.forEach(med => {
+        medicamentos.forEach((med: any) => {
           const horarios = Array.isArray(med.horarios) ? med.horarios : [];
-          horarios.forEach(horario => {
+          horarios.forEach((horario: string) => {
             checklistItems.push({
               id: `med-${med.id}-${horario}`,
               item_id: med.id,
@@ -112,9 +71,9 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
       }
 
       if (lembretes) {
-        lembretes.forEach(lem => {
+        lembretes.forEach((lem: any) => {
           const horarios = Array.isArray(lem.horarios) ? lem.horarios : [];
-          horarios.forEach(horario => {
+          horarios.forEach((horario: string) => {
             checklistItems.push({
               id: `lem-${lem.id}-${horario}`,
               item_id: lem.id,
@@ -221,20 +180,23 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
   }, [items, updateItemStatus]);
 
   // Configurar timer para reset à meia-noite
-  const setupMidnightTimer = useCallback(() => {
+  useEffect(() => {
+    if (!user || !contextId) return;
+    
     const msUntilMidnight = millisToNextMidnight();
     
     const timerId = setTimeout(() => {
       console.log('[Checklist] Meia-noite detectada, recarregando checklist');
       loadChecklist();
-      setupMidnightTimer(); // Reagendar para a próxima meia-noite
     }, msUntilMidnight);
 
     return () => clearTimeout(timerId);
-  }, [loadChecklist]);
+  }, [user, contextId, loadChecklist]);
 
   // Detectar mudança de data quando app volta do segundo plano
   useEffect(() => {
+    if (!user || !contextId) return;
+    
     let lastDate = todayKey;
 
     const handleVisibilityChange = async () => {
@@ -250,16 +212,14 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [todayKey, loadChecklist]);
+  }, [user, contextId, todayKey, loadChecklist]);
 
-  // Carregar checklist inicial e configurar timer
+  // Carregar checklist inicial
   useEffect(() => {
     if (user && contextId) {
       loadChecklist();
-      const cleanup = setupMidnightTimer();
-      return cleanup;
     }
-  }, [user, contextId, loadChecklist, setupMidnightTimer]);
+  }, [user, contextId, loadChecklist]);
 
   return {
     items,
