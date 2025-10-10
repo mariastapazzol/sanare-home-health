@@ -217,11 +217,14 @@ export type Database = {
           imagem_url: string | null
           nome: string
           precisa_receita: boolean
+          prescription_image_url: string | null
+          prescription_status: string
           quantidade_atual: number
           quantidade_por_dose: number
           quantidade_por_embalagem: number
           receita_pendente: boolean | null
           receita_url: string | null
+          requires_prescription: boolean
           unidade_dose: string
           updated_at: string
           user_id: string
@@ -238,11 +241,14 @@ export type Database = {
           imagem_url?: string | null
           nome: string
           precisa_receita?: boolean
+          prescription_image_url?: string | null
+          prescription_status?: string
           quantidade_atual?: number
           quantidade_por_dose: number
           quantidade_por_embalagem: number
           receita_pendente?: boolean | null
           receita_url?: string | null
+          requires_prescription?: boolean
           unidade_dose: string
           updated_at?: string
           user_id: string
@@ -259,11 +265,14 @@ export type Database = {
           imagem_url?: string | null
           nome?: string
           precisa_receita?: boolean
+          prescription_image_url?: string | null
+          prescription_status?: string
           quantidade_atual?: number
           quantidade_por_dose?: number
           quantidade_por_embalagem?: number
           receita_pendente?: boolean | null
           receita_url?: string | null
+          requires_prescription?: boolean
           unidade_dose?: string
           updated_at?: string
           user_id?: string
