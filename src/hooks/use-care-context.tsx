@@ -74,7 +74,7 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
         .from("profiles")
         .select("role,name")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (profileErr) console.warn("profiles error", profileErr);
       const role = (profile?.role ?? null) as Role | null;
@@ -104,7 +104,7 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
             .from("care_contexts")
             .insert([{ type: "self", owner_user_id: user.id }])
             .select()
-            .single();
+            .maybeSingle();
           if (!createErr && created) {
             contextsList = [created as CareContextRow, ...contextsList];
           } else if (createErr) {
@@ -121,7 +121,7 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
               .from("profiles")
               .select("name")
               .eq("user_id", ctx.owner_user_id)
-              .single();
+              .maybeSingle();
             return { ...ctx, owner_name: ownerProfile?.name ?? undefined };
           }
           return ctx as CareContextView;
