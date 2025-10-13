@@ -18,7 +18,7 @@ const DiarySelectMood = () => {
 
   const handleMoodSelect = (mood: string) => {
     setSelectedMood(mood);
-    navigate('/diary/write', { state: { mood } });
+    navigate('/diario/write', { state: { mood } });
   };
 
   return (
@@ -29,7 +29,7 @@ const DiarySelectMood = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/diary')}
+            onClick={() => navigate('/diario')}
             className="text-primary-foreground"
           >
             <ArrowLeft className="h-6 w-6" />

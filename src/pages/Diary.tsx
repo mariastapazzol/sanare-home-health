@@ -31,7 +31,7 @@ const Diary = () => {
       if (error) throw error;
       
       if (data && data.length > 0) {
-        navigate('/diary/records');
+        navigate('/diario/records');
       } else {
         setHasEntries(false);
       }
@@ -59,7 +59,7 @@ const Diary = () => {
 
   const handleMoodSelect = (mood: string) => {
     setSelectedMood(mood);
-    navigate('/diary/write', { state: { mood } });
+    navigate('/diario/write', { state: { mood } });
   };
 
   return (

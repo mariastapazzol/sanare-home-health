@@ -68,7 +68,7 @@ const DiaryWrite = () => {
         description: "Entrada do diário salva com sucesso!"
       });
 
-      navigate('/diary/records');
+      navigate('/diario/records');
     } catch (error) {
       console.error('Erro ao salvar entrada:', error);
       toast({
@@ -91,7 +91,7 @@ const DiaryWrite = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/diary')}
+            onClick={() => navigate('/diario')}
             className="text-primary-foreground"
           >
             <ArrowLeft className="h-6 w-6" />
@@ -125,7 +125,7 @@ const DiaryWrite = () => {
               
               <div className="flex space-x-2">
                 <Button
-                  onClick={() => navigate('/diary')}
+                  onClick={() => navigate('/diario')}
                   variant="outline"
                   className="flex-1"
                 >

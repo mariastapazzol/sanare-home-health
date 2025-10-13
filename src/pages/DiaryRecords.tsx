@@ -80,7 +80,7 @@ const DiaryRecords = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/diary/select-mood')}
+            onClick={() => navigate('/diario/select-mood')}
             className="text-primary-foreground"
           >
             <Plus className="h-6 w-6" />
@@ -96,7 +96,7 @@ const DiaryRecords = () => {
         ) : entries.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground mb-4">Nenhum registro encontrado</p>
-            <Button onClick={() => navigate('/diary/select-mood')}>
+            <Button onClick={() => navigate('/diario/select-mood')}>
               Criar primeira entrada
             </Button>
           </div>
