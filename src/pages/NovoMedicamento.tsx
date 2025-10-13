@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Plus, X, Upload } from "lucide-react";
+import { ArrowLeft, Plus, X, Upload, Clock } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,6 +15,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Badge } from "@/components/ui/badge";
 
 const formSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
@@ -32,7 +33,8 @@ const NovoMedicamento = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const { currentContext } = useCareContext();
-  const [horarios, setHorarios] = useState<string[]>([""]);
+  const [horarios, setHorarios] = useState<string[]>([]);
+  const [novoHorario, setNovoHorario] = useState('');
   const [imagemUrl, setImagemUrl] = useState<string>("");
   const [receitaUrl, setReceitaUrl] = useState<string>("");
   const [semReceita, setSemReceita] = useState(false);
@@ -76,7 +78,7 @@ const NovoMedicamento = () => {
           precisa_receita: data.precisa_receita,
           frequencia: data.frequencia,
         });
-        setHorarios(Array.isArray(data.horarios) ? data.horarios.map(String) : [""]);
+        setHorarios(Array.isArray(data.horarios) ? data.horarios.map(String) : []);
         setImagemUrl(data.imagem_url || "");
         setReceitaUrl(data.receita_url || "");
         setSemReceita(!data.receita_url && data.precisa_receita);
@@ -94,19 +96,14 @@ const NovoMedicamento = () => {
   };
 
   const adicionarHorario = () => {
-    setHorarios([...horarios, ""]);
-  };
-
-  const removerHorario = (index: number) => {
-    if (horarios.length > 1) {
-      setHorarios(horarios.filter((_, i) => i !== index));
+    if (novoHorario && !horarios.includes(novoHorario)) {
+      setHorarios([...horarios, novoHorario].sort());
+      setNovoHorario('');
     }
   };
 
-  const updateHorario = (index: number, value: string) => {
-    const novosHorarios = [...horarios];
-    novosHorarios[index] = value;
-    setHorarios(novosHorarios);
+  const removerHorario = (horario: string) => {
+    setHorarios(horarios.filter(h => h !== horario));
   };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -555,28 +552,56 @@ const NovoMedicamento = () => {
                   />
 
                   <div>
-                    <Label className="text-sm font-medium">Horários</Label>
-                    <div className="mt-2 space-y-2">
-                      {horarios.map((horario, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <Input
-                            type="time"
-                            value={horario}
-                            onChange={(e) => updateHorario(index, e.target.value)}
-                            className="flex-1"
-                          />
-                          {horarios.length > 1 && (
-                            <Button type="button" variant="outline" size="icon" onClick={() => removerHorario(index)}>
-                              <X className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </div>
-                      ))}
+                    <Label className="text-sm font-medium flex items-center space-x-2">
+                      <Clock className="h-4 w-4" />
+                      <span>Horários</span>
+                    </Label>
+
+                    {/* Adicionar horário */}
+                    <div className="flex space-x-2 mt-2">
+                      <Input
+                        type="time"
+                        value={novoHorario}
+                        onChange={(e) => setNovoHorario(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        onClick={adicionarHorario}
+                        disabled={!novoHorario}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <Button type="button" variant="outline" onClick={adicionarHorario} className="mt-2 w-full">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Adicionar Horário
-                    </Button>
+
+                    {/* Lista de horários */}
+                    {horarios.length > 0 && (
+                      <div className="space-y-2 mt-4">
+                        <Label className="text-sm text-muted-foreground">
+                          Horários adicionados:
+                        </Label>
+                        <div className="flex flex-wrap gap-2">
+                          {horarios.map((horario) => (
+                            <Badge
+                              key={horario}
+                              variant="secondary"
+                              className="flex items-center space-x-1"
+                            >
+                              <span>{horario}</span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                                onClick={() => removerHorario(horario)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
