@@ -257,7 +257,7 @@ export default function Receitas() {
             <p className="text-lg text-muted-foreground mb-6">
               Nenhuma receita cadastrada ainda.
             </p>
-            <Button onClick={() => navigate("/medicamentos")}>
+            <Button onClick={() => navigate("/medicamentos/novo")}>
               Cadastrar Medicamento com Receita
             </Button>
           </div>
