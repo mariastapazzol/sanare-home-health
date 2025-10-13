@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useCareContext } from "@/hooks/use-care-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Search, X, Plus, Upload } from "lucide-react";
+import { ArrowLeft, Search, X, Plus, Upload, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -104,12 +104,51 @@ export default function Receitas() {
       });
 
       fetchReceitas();
-      setDialogOpen(false);
+      setSelectedReceita({ ...selectedReceita, prescription_status: "used" });
     } catch (error) {
       console.error("Erro ao marcar receita como usada:", error);
       toast({
         title: "Erro",
         description: "Não foi possível marcar a receita como usada.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExcluirReceita = async () => {
+    if (!selectedReceita) return;
+
+    try {
+      // Excluir imagem do storage se existir
+      if (selectedReceita.prescription_image_url) {
+        const urlParts = selectedReceita.prescription_image_url.split('/');
+        const filePath = urlParts.slice(-2).join('/'); // context_id/filename
+        
+        await supabase.storage
+          .from('prescricoes')
+          .remove([filePath]);
+      }
+
+      // Excluir registro do banco
+      const { error } = await supabase
+        .from("medicamentos")
+        .delete()
+        .eq("id", selectedReceita.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Receita excluída com sucesso.",
+      });
+
+      fetchReceitas();
+      setDialogOpen(false);
+    } catch (error) {
+      console.error("Erro ao excluir receita:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir a receita.",
         variant: "destructive",
       });
     }
@@ -317,13 +356,21 @@ export default function Receitas() {
               />
             </div>
 
-            {selectedReceita?.prescription_status !== "used" && (
-              <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              {selectedReceita?.prescription_status !== "used" ? (
                 <Button onClick={handleMarcarComoUsada}>
                   Marcar como Usada
                 </Button>
-              </div>
-            )}
+              ) : (
+                <Button 
+                  variant="destructive" 
+                  onClick={handleExcluirReceita}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir Receita
+                </Button>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
