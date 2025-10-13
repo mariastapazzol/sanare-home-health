@@ -129,17 +129,20 @@ export default function Receitas() {
           .remove([filePath]);
       }
 
-      // Excluir registro do banco
+      // Apenas remover a referência da receita, mantendo o medicamento
       const { error } = await supabase
         .from("medicamentos")
-        .delete()
+        .update({ 
+          prescription_image_url: null,
+          prescription_status: "missing"
+        })
         .eq("id", selectedReceita.id);
 
       if (error) throw error;
 
       toast({
         title: "Sucesso",
-        description: "Receita excluída com sucesso.",
+        description: "Receita excluída. O medicamento continua cadastrado.",
       });
 
       fetchReceitas();
