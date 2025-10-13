@@ -148,8 +148,14 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
         } else if (role === "paciente_dependente") {
           chosen = withNames.find((c) => c.type === "dependent" && c.owner_user_id === user.id) ?? null;
         } else if (role === "cuidador") {
-          // cuidador precisa escolher um dependente explicitamente; não seleciona self.
-          chosen = null;
+          // Se o cuidador tiver apenas 1 dependente, seleciona automaticamente
+          const dependentContexts = withNames.filter((c) => c.type === "dependent" && c.caregiver_user_id === user.id);
+          if (dependentContexts.length === 1) {
+            chosen = dependentContexts[0];
+          } else {
+            // Se tiver mais de 1 ou nenhum, não seleciona automaticamente
+            chosen = null;
+          }
         }
       }
 

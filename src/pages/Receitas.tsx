@@ -139,13 +139,13 @@ export default function Receitas() {
       const filePath = `${selectedContextId}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('prescriptions')
+        .from('prescricoes')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('prescriptions')
+        .from('prescricoes')
         .getPublicUrl(filePath);
 
       const { error: insertError } = await supabase
