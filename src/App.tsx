@@ -27,6 +27,7 @@ import DiarySelectMood from "./pages/DiarySelectMood";
 import Home from "./pages/Home";
 import Lembretes from "./pages/Lembretes";
 import NovoLembrete from "./pages/NovoLembrete";
+import Receitas from "./pages/Receitas";
 import Sintomas from "./pages/Sintomas";
 import NovoSintoma from "./pages/NovoSintoma";
 import NovoSinalVital from "./pages/NovoSinalVital";
@@ -126,6 +127,11 @@ const App = () => (
             <Route path="/lembretes/editar/:id" element={
               <ProtectedRoute>
                 <NovoLembrete />
+              </ProtectedRoute>
+            } />
+            <Route path="/receitas" element={
+              <ProtectedRoute>
+                <Receitas />
               </ProtectedRoute>
             } />
             <Route path="/sintomas" element={
