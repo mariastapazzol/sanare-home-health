@@ -611,6 +611,7 @@ export type Database = {
           context_id: string | null
           created_at: string
           frequencia_cardiaca: number | null
+          glicose: number | null
           id: string
           pressao_diastolica: number | null
           pressao_sistolica: number | null
@@ -622,6 +623,7 @@ export type Database = {
           context_id?: string | null
           created_at?: string
           frequencia_cardiaca?: number | null
+          glicose?: number | null
           id?: string
           pressao_diastolica?: number | null
           pressao_sistolica?: number | null
@@ -633,6 +635,7 @@ export type Database = {
           context_id?: string | null
           created_at?: string
           frequencia_cardiaca?: number | null
+          glicose?: number | null
           id?: string
           pressao_diastolica?: number | null
           pressao_sistolica?: number | null

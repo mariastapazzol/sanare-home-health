@@ -27,6 +27,7 @@ interface SinalVital {
   frequencia_cardiaca: number | null;
   saturacao_oxigenio: number | null;
   temperatura: number | null;
+  glicose: number | null;
   created_at: string;
 }
 
@@ -99,6 +100,10 @@ const Sintomas = () => {
       case 'fc':
         if (valor >= 60 && valor <= 100) return 'text-success';
         if (valor >= 50 && valor <= 110) return 'text-warning';
+        return 'text-destructive';
+      case 'glicose':
+        if (valor >= 70 && valor <= 100) return 'text-success';
+        if ((valor >= 100 && valor <= 125) || valor < 70) return 'text-warning';
         return 'text-destructive';
       default:
         return 'text-muted-foreground';
@@ -240,6 +245,14 @@ const Sintomas = () => {
                           <span className="text-muted-foreground">Temp: </span>
                           <span className={getSinalVitalStatus('temperatura', sinal.temperatura)}>
                             {sinal.temperatura}°C
+                          </span>
+                        </div>
+                      )}
+                      {sinal.glicose && (
+                        <div>
+                          <span className="text-muted-foreground">Glicose: </span>
+                          <span className={getSinalVitalStatus('glicose', sinal.glicose)}>
+                            {sinal.glicose} mg/dL
                           </span>
                         </div>
                       )}

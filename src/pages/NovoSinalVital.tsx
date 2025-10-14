@@ -25,6 +25,7 @@ const NovoSinalVital = () => {
   const [frequenciaCardiaca, setFrequenciaCardiaca] = useState('');
   const [saturacaoOxigenio, setSaturacaoOxigenio] = useState('');
   const [temperatura, setTemperatura] = useState('');
+  const [glicose, setGlicose] = useState('');
 
   const validarPressaoSistolica = (valor: string): ValidacaoSinal | null => {
     if (!valor) return null;
@@ -66,6 +67,15 @@ const NovoSinalVital = () => {
     return { status: 'critico', mensagem: 'Crítico - Febre alta' };
   };
 
+  const validarGlicose = (valor: string): ValidacaoSinal | null => {
+    if (!valor) return null;
+    const num = parseFloat(valor);
+    if (num >= 70 && num <= 100) return { status: 'normal', mensagem: 'Normal (em jejum)' };
+    if (num >= 100 && num <= 125) return { status: 'atencao', mensagem: 'Atenção - Pré-diabetes' };
+    if (num < 70) return { status: 'atencao', mensagem: 'Atenção - Hipoglicemia' };
+    return { status: 'critico', mensagem: 'Crítico - Hiperglicemia' };
+  };
+
   const getStatusColor = (status: string | undefined) => {
     switch (status) {
       case 'normal':
@@ -100,7 +110,7 @@ const NovoSinalVital = () => {
       return;
     }
     
-    if (!pressaoSistolica && !pressaoDiastolica && !frequenciaCardiaca && !saturacaoOxigenio && !temperatura) {
+    if (!pressaoSistolica && !pressaoDiastolica && !frequenciaCardiaca && !saturacaoOxigenio && !temperatura && !glicose) {
       toast.error('Por favor, preencha pelo menos um sinal vital');
       return;
     }
@@ -118,6 +128,7 @@ const NovoSinalVital = () => {
           frequencia_cardiaca: frequenciaCardiaca ? parseFloat(frequenciaCardiaca) : null,
           saturacao_oxigenio: saturacaoOxigenio ? parseFloat(saturacaoOxigenio) : null,
           temperatura: temperatura ? parseFloat(temperatura) : null,
+          glicose: glicose ? parseFloat(glicose) : null,
         });
 
       if (error) throw error;
@@ -137,6 +148,7 @@ const NovoSinalVital = () => {
   const validacaoFC = validarFrequenciaCardiaca(frequenciaCardiaca);
   const validacaoSat = validarSaturacao(saturacaoOxigenio);
   const validacaoTemp = validarTemperatura(temperatura);
+  const validacaoGlic = validarGlicose(glicose);
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -257,12 +269,34 @@ const NovoSinalVital = () => {
           </div>
         </Card>
 
+        {/* Glicose */}
+        <Card className={`card-health border-2 ${getStatusBgColor(validacaoGlic?.status)}`}>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="glicose" className="text-base font-semibold">Glicose (mg/dL)</Label>
+              {validacaoGlic && (
+                <span className={`text-sm font-medium ${getStatusColor(validacaoGlic.status)}`}>
+                  {validacaoGlic.mensagem}
+                </span>
+              )}
+            </div>
+            <Input
+              id="glicose"
+              type="number"
+              placeholder="90"
+              value={glicose}
+              onChange={(e) => setGlicose(e.target.value)}
+            />
+          </div>
+        </Card>
+
         {/* Alerta de Valores Críticos */}
         {(validacaoPA?.status === 'critico' || 
           validacaoPAD?.status === 'critico' || 
           validacaoFC?.status === 'critico' || 
           validacaoSat?.status === 'critico' || 
-          validacaoTemp?.status === 'critico') && (
+          validacaoTemp?.status === 'critico' ||
+          validacaoGlic?.status === 'critico') && (
           <Card className="bg-destructive/10 border-destructive border-2">
             <div className="flex items-start space-x-3">
               <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
