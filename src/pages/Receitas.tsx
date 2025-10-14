@@ -159,9 +159,28 @@ export default function Receitas() {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      handleUploadReceita(file);
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Erro",
+        description: "Formato não suportado. Use JPG, PNG, WEBP ou PDF.",
+        variant: "destructive",
+      });
+      return;
     }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Erro",
+        description: "O arquivo deve ter no máximo 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    handleUploadReceita(file);
   };
 
   const handleUploadReceita = async (file: File) => {
@@ -177,18 +196,29 @@ export default function Receitas() {
     setUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${selectedContextId}/${fileName}`;
+      const fileName = `${selectedContextId}/${crypto.randomUUID()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('prescricoes')
-        .upload(filePath, file);
+        .upload(fileName, file, {
+          contentType: file.type,
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        toast({
+          title: "Erro no upload",
+          description: uploadError.message,
+          variant: "destructive",
+        });
+        return;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('prescricoes')
-        .getPublicUrl(filePath);
+        .getPublicUrl(fileName);
 
       const { error: insertError } = await supabase
         .from("medicamentos")
@@ -209,7 +239,15 @@ export default function Receitas() {
           horarios: [],
         });
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Medicamento insert error:', insertError);
+        toast({
+          title: "Erro ao criar medicamento",
+          description: insertError.message,
+          variant: "destructive",
+        });
+        return;
+      }
 
       toast({
         title: "Sucesso",
@@ -219,11 +257,11 @@ export default function Receitas() {
       setNomeMedicamento("");
       setUploadDialogOpen(false);
       fetchReceitas();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao fazer upload da receita:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível adicionar a receita.",
+        description: error.message || "Não foi possível adicionar a receita.",
         variant: "destructive",
       });
     } finally {
