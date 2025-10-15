@@ -155,6 +155,79 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
         setItems(prev => prev.map(i => 
           i.id === itemId ? item : i
         ));
+        return;
+      }
+
+      // Se é um medicamento e está sendo marcado como tomado, reduzir estoque
+      if (item.tipo === 'medicamento' && updates.checked === true && !item.checked) {
+        // Buscar informações do medicamento
+        const { data: medicamento, error: medError } = await supabase
+          .from('medicamentos')
+          .select('quantidade_atual, quantidade_por_dose')
+          .eq('id', item.item_id)
+          .single();
+
+        if (medError) {
+          console.error('Erro ao buscar medicamento:', medError);
+          return;
+        }
+
+        if (medicamento) {
+          const novaQuantidade = medicamento.quantidade_atual - medicamento.quantidade_por_dose;
+
+          // Atualizar quantidade em estoque
+          await supabase
+            .from('medicamentos')
+            .update({ quantidade_atual: novaQuantidade })
+            .eq('id', item.item_id);
+
+          // Registrar movimentação no estoque
+          await supabase
+            .from('movimentacoes_estoque')
+            .insert({
+              user_id: user.id,
+              medicamento_id: item.item_id,
+              tipo: 'saida',
+              quantidade: medicamento.quantidade_por_dose,
+              nota: `Medicamento tomado às ${item.horario}`
+            });
+        }
+      }
+
+      // Se está sendo desmarcado, reverter a saída do estoque
+      if (item.tipo === 'medicamento' && updates.checked === false && item.checked) {
+        // Buscar informações do medicamento
+        const { data: medicamento, error: medError } = await supabase
+          .from('medicamentos')
+          .select('quantidade_atual, quantidade_por_dose')
+          .eq('id', item.item_id)
+          .single();
+
+        if (medError) {
+          console.error('Erro ao buscar medicamento:', medError);
+          return;
+        }
+
+        if (medicamento) {
+          const novaQuantidade = medicamento.quantidade_atual + medicamento.quantidade_por_dose;
+
+          // Atualizar quantidade em estoque
+          await supabase
+            .from('medicamentos')
+            .update({ quantidade_atual: novaQuantidade })
+            .eq('id', item.item_id);
+
+          // Registrar movimentação no estoque
+          await supabase
+            .from('movimentacoes_estoque')
+            .insert({
+              user_id: user.id,
+              medicamento_id: item.item_id,
+              tipo: 'entrada',
+              quantidade: medicamento.quantidade_por_dose,
+              nota: `Reversão de medicamento às ${item.horario}`
+            });
+        }
       }
     } catch (error) {
       console.error('Erro ao salvar estado:', error);
