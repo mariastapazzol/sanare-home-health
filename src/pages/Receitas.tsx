@@ -18,9 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 interface Receita {
   id: string;
   nome: string;
-  prescription_image_url: string | null;
-  receita_url: string | null;
-  prescription_status: string;
+  imagem_url: string;
 }
 
 export default function Receitas() {
@@ -60,10 +58,9 @@ export default function Receitas() {
   const fetchReceitas = async () => {
     try {
       const { data, error } = await supabase
-        .from("medicamentos")
-        .select("id, nome, prescription_image_url, receita_url, prescription_status")
+        .from("receitas")
+        .select("id, nome, imagem_url")
         .eq("context_id", selectedContextId)
-        .not("prescription_image_url", "is", null)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -87,62 +84,30 @@ export default function Receitas() {
     setDialogOpen(true);
   };
 
-  const handleMarcarComoUsada = async () => {
-    if (!selectedReceita) return;
-
-    try {
-      const { error } = await supabase
-        .from("medicamentos")
-        .update({ prescription_status: "used" })
-        .eq("id", selectedReceita.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Sucesso",
-        description: "Receita marcada como usada.",
-      });
-
-      fetchReceitas();
-      setSelectedReceita({ ...selectedReceita, prescription_status: "used" });
-    } catch (error) {
-      console.error("Erro ao marcar receita como usada:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível marcar a receita como usada.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleExcluirReceita = async () => {
     if (!selectedReceita) return;
 
     try {
-      // Excluir imagem do storage se existir
-      if (selectedReceita.prescription_image_url) {
-        const urlParts = selectedReceita.prescription_image_url.split('/');
-        const filePath = urlParts.slice(-2).join('/'); // context_id/filename
-        
-        await supabase.storage
-          .from('prescricoes')
-          .remove([filePath]);
-      }
+      // Excluir imagem do storage
+      const urlParts = selectedReceita.imagem_url.split('/');
+      const filePath = urlParts.slice(-2).join('/'); // context_id/filename
+      
+      await supabase.storage
+        .from('prescricoes')
+        .remove([filePath]);
 
-      // Apenas remover a referência da receita, mantendo o medicamento
+      // Excluir receita do banco
       const { error } = await supabase
-        .from("medicamentos")
-        .update({ 
-          prescription_image_url: null,
-          prescription_status: "missing"
-        })
+        .from("receitas")
+        .delete()
         .eq("id", selectedReceita.id);
 
       if (error) throw error;
 
       toast({
         title: "Sucesso",
-        description: "Receita excluída. O medicamento continua cadastrado.",
+        description: "Receita excluída com sucesso.",
       });
 
       fetchReceitas();
@@ -187,7 +152,7 @@ export default function Receitas() {
     if (!nomeMedicamento.trim()) {
       toast({
         title: "Erro",
-        description: "Digite o nome do medicamento.",
+        description: "Digite o nome da receita.",
         variant: "destructive",
       });
       return;
@@ -221,28 +186,18 @@ export default function Receitas() {
         .getPublicUrl(fileName);
 
       const { error: insertError } = await supabase
-        .from("medicamentos")
+        .from("receitas")
         .insert({
           nome: nomeMedicamento,
+          imagem_url: publicUrl,
           context_id: selectedContextId,
           user_id: user?.id,
-          prescription_image_url: publicUrl,
-          prescription_status: "active",
-          dosagem: "-",
-          unidade_dose: "unidade",
-          frequencia: "conforme necessário",
-          quantidade_por_dose: 0,
-          quantidade_por_embalagem: 0,
-          quantidade_atual: 0,
-          alerta_minimo: 0,
-          data_inicio: new Date().toISOString().split('T')[0],
-          horarios: [],
         });
 
       if (insertError) {
-        console.error('Medicamento insert error:', insertError);
+        console.error('Receita insert error:', insertError);
         toast({
-          title: "Erro ao criar medicamento",
+          title: "Erro ao adicionar receita",
           description: insertError.message,
           variant: "destructive",
         });
@@ -298,8 +253,9 @@ export default function Receitas() {
             <p className="text-lg text-muted-foreground mb-6">
               Nenhuma receita cadastrada ainda.
             </p>
-            <Button onClick={() => navigate("/medicamentos/novo")}>
-              Cadastrar Medicamento com Receita
+            <Button onClick={() => setUploadDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Receita
             </Button>
           </div>
         </main>
@@ -352,15 +308,10 @@ export default function Receitas() {
               <CardContent className="p-0">
                 <div className="aspect-square relative">
                   <img
-                    src={receita.prescription_image_url || receita.receita_url || ""}
+                    src={receita.imagem_url}
                     alt={`Receita de ${receita.nome}`}
                     className="w-full h-full object-cover"
                   />
-                  {receita.prescription_status === "used" && (
-                    <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
-                      Usada
-                    </div>
-                  )}
                 </div>
                 <div className="p-3">
                   <p className="text-sm font-medium text-foreground truncate">
@@ -391,26 +342,20 @@ export default function Receitas() {
           <div className="space-y-4">
             <div className="w-full flex justify-center">
               <img
-                src={selectedReceita?.prescription_image_url || selectedReceita?.receita_url || ""}
+                src={selectedReceita?.imagem_url}
                 alt={`Receita de ${selectedReceita?.nome}`}
                 className="max-h-[60vh] object-contain"
               />
             </div>
 
             <div className="flex justify-end gap-2">
-              {selectedReceita?.prescription_status !== "used" ? (
-                <Button onClick={handleMarcarComoUsada}>
-                  Marcar como Usada
-                </Button>
-              ) : (
-                <Button 
-                  variant="destructive" 
-                  onClick={handleExcluirReceita}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Excluir Receita
-                </Button>
-              )}
+              <Button 
+                variant="destructive" 
+                onClick={handleExcluirReceita}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Excluir Receita
+              </Button>
             </div>
           </div>
         </DialogContent>
@@ -425,11 +370,11 @@ export default function Receitas() {
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium text-foreground">
-                Nome do Medicamento
+                Nome da Receita
               </label>
               <Input
                 type="text"
-                placeholder="Ex: Dipirona"
+                placeholder="Ex: Receita Dipirona"
                 value={nomeMedicamento}
                 onChange={(e) => setNomeMedicamento(e.target.value)}
                 className="mt-1"

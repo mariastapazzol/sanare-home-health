@@ -606,6 +606,36 @@ export type Database = {
         }
         Relationships: []
       }
+      receitas: {
+        Row: {
+          context_id: string
+          created_at: string
+          id: string
+          imagem_url: string
+          nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          context_id: string
+          created_at?: string
+          id?: string
+          imagem_url: string
+          nome: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          context_id?: string
+          created_at?: string
+          id?: string
+          imagem_url?: string
+          nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sinais_vitais: {
         Row: {
           context_id: string | null
