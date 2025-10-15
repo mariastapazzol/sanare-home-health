@@ -19,6 +19,8 @@ interface Receita {
   id: string;
   nome: string;
   imagem_url: string;
+  medicamento_id?: string;
+  usada: boolean;
 }
 
 export default function Receitas() {
@@ -59,7 +61,7 @@ export default function Receitas() {
     try {
       const { data, error } = await supabase
         .from("receitas")
-        .select("id, nome, imagem_url")
+        .select("id, nome, imagem_url, medicamento_id, usada")
         .eq("context_id", selectedContextId)
         .order("created_at", { ascending: false });
 
@@ -82,6 +84,36 @@ export default function Receitas() {
   const handleReceitaClick = (receita: Receita) => {
     setSelectedReceita(receita);
     setDialogOpen(true);
+  };
+
+  const handleMarcarComoUsada = async () => {
+    if (!selectedReceita) return;
+
+    try {
+      const { error } = await supabase
+        .from("receitas")
+        .update({ usada: !selectedReceita.usada })
+        .eq("id", selectedReceita.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: selectedReceita.usada
+          ? "Receita desmarcada como usada."
+          : "Receita marcada como usada.",
+      });
+
+      fetchReceitas();
+      setDialogOpen(false);
+    } catch (error) {
+      console.error("Erro ao atualizar receita:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar a receita.",
+        variant: "destructive",
+      });
+    }
   };
 
 
@@ -349,6 +381,12 @@ export default function Receitas() {
             </div>
 
             <div className="flex justify-end gap-2">
+              <Button 
+                variant={selectedReceita?.usada ? "outline" : "default"}
+                onClick={handleMarcarComoUsada}
+              >
+                {selectedReceita?.usada ? "Desmarcar como Usada" : "Marcar como Usada"}
+              </Button>
               <Button 
                 variant="destructive" 
                 onClick={handleExcluirReceita}

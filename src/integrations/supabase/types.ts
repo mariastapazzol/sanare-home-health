@@ -612,8 +612,10 @@ export type Database = {
           created_at: string
           id: string
           imagem_url: string
+          medicamento_id: string | null
           nome: string
           updated_at: string
+          usada: boolean
           user_id: string
         }
         Insert: {
@@ -621,8 +623,10 @@ export type Database = {
           created_at?: string
           id?: string
           imagem_url: string
+          medicamento_id?: string | null
           nome: string
           updated_at?: string
+          usada?: boolean
           user_id: string
         }
         Update: {
@@ -630,11 +634,21 @@ export type Database = {
           created_at?: string
           id?: string
           imagem_url?: string
+          medicamento_id?: string | null
           nome?: string
           updated_at?: string
+          usada?: boolean
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "receitas_medicamento_id_fkey"
+            columns: ["medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "medicamentos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sinais_vitais: {
         Row: {

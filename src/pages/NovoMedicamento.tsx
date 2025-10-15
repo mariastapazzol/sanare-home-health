@@ -294,6 +294,18 @@ const NovoMedicamento = () => {
           if (posoErr) throw posoErr;
         }
 
+        // Salvar receita na tabela receitas se tiver receita
+        if (requires_prescription && prescription_image_url) {
+          await supabase.from("receitas").insert({
+            nome: data.nome,
+            imagem_url: prescription_image_url,
+            context_id: currentContext.id,
+            user_id: user.id,
+            medicamento_id: id,
+            usada: false,
+          });
+        }
+
         toast({ title: "Sucesso!", description: "Medicamento atualizado com sucesso." });
       } else {
         // CRIAR medicamento e depois criar 1 posologia (se houver)
@@ -317,6 +329,18 @@ const NovoMedicamento = () => {
             },
           ]);
           if (posoErr) throw posoErr;
+        }
+
+        // Salvar receita na tabela receitas se tiver receita
+        if (created?.id && requires_prescription && prescription_image_url) {
+          await supabase.from("receitas").insert({
+            nome: data.nome,
+            imagem_url: prescription_image_url,
+            context_id: currentContext.id,
+            user_id: user.id,
+            medicamento_id: created.id,
+            usada: false,
+          });
         }
 
         toast({ title: "Sucesso!", description: "Medicamento cadastrado com sucesso." });
