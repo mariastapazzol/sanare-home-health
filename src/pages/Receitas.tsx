@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useCareContext } from "@/hooks/use-care-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Search, X, Plus, Upload, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -285,10 +286,16 @@ export default function Receitas() {
             <p className="text-lg text-muted-foreground mb-6">
               Nenhuma receita cadastrada ainda.
             </p>
-            <Button onClick={() => setUploadDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Receita
-            </Button>
+            <div className="flex gap-3">
+              <Button onClick={() => navigate("/novo-medicamento")}>
+                <Plus className="h-4 w-4 mr-2" />
+                Cadastrar Medicamento
+              </Button>
+              <Button onClick={() => setUploadDialogOpen(true)} variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Receita
+              </Button>
+            </div>
           </div>
         </main>
       </div>
@@ -344,6 +351,13 @@ export default function Receitas() {
                     alt={`Receita de ${receita.nome}`}
                     className="w-full h-full object-cover"
                   />
+                  {receita.usada && (
+                    <Badge 
+                      className="absolute top-2 right-2 bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      Usada
+                    </Badge>
+                  )}
                 </div>
                 <div className="p-3">
                   <p className="text-sm font-medium text-foreground truncate">
