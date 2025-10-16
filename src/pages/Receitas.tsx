@@ -287,7 +287,7 @@ export default function Receitas() {
               Nenhuma receita cadastrada ainda.
             </p>
             <div className="flex gap-3">
-              <Button onClick={() => navigate("/novo-medicamento")}>
+              <Button onClick={() => navigate("/medicamento/novo")}>
                 <Plus className="h-4 w-4 mr-2" />
                 Cadastrar Medicamento
               </Button>
