@@ -73,8 +73,15 @@ export function ChecklistToday() {
       </CardHeader>
       <CardContent>
         {tasks.filter(t => !t.checked).length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            {tasks.length === 0 ? 'Nenhuma tarefa cadastrada' : '✅ Todas as tarefas concluídas hoje!'}
+          <div className="text-center py-8">
+            {tasks.length === 0 ? (
+              <p className="text-muted-foreground">Nenhuma tarefa cadastrada</p>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-2xl font-semibold text-primary">🎉 Dia concluído!</p>
+                <p className="text-muted-foreground">Todas as tarefas foram concluídas hoje!</p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
