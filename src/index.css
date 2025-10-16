@@ -107,6 +107,25 @@
     @apply bg-background text-foreground;
   }
   
+  /* Mobile keyboard adjustments */
+  body.keyboard-open {
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  /* Smooth scrolling for all containers */
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Prevent content from being hidden behind mobile keyboard */
+  @supports (-webkit-touch-callout: none) {
+    body {
+      min-height: -webkit-fill-available;
+    }
+  }
+  
   /* Mobile-first responsive typography */
   .text-mobile-sm { font-size: 14px; line-height: 20px; }
   .text-mobile-base { font-size: 16px; line-height: 24px; }
