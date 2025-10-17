@@ -178,7 +178,7 @@ const NovoLembrete = () => {
     if (!user || !currentContext) {
       toast({
         title: "Erro",
-        description: "Contexto não disponível. Por favor, faça login novamente.",
+        description: "Selecione um paciente dependente vinculado antes de salvar.",
         variant: "destructive",
       });
       return;
@@ -214,15 +214,19 @@ const NovoLembrete = () => {
     setLoading(true);
 
     try {
-      const lembreteData = {
+      const lembreteData: any = {
         context_id: currentContext.id,
         nome: formData.nome.trim(),
         descricao: formData.descricao.trim() || null,
         datas: formData.datas,
         horarios: formData.horarios,
         icone: formData.icone,
-        user_id: user.id
       };
+
+      // Se o contexto é do tipo dependent, adicionar dependente_id
+      if (currentContext.type === 'dependent') {
+        lembreteData.dependente_id = currentContext.owner_user_id;
+      }
 
       if (isEditing && id) {
         const { error } = await supabase
@@ -250,11 +254,11 @@ const NovoLembrete = () => {
       }
 
       navigate('/lembretes');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao salvar lembrete:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível salvar o lembrete.",
+        description: error?.message || "Não foi possível salvar o lembrete.",
         variant: "destructive",
       });
     } finally {

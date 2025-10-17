@@ -224,7 +224,7 @@ const NovoMedicamento = () => {
     if (!currentContext?.id) {
       toast({
         title: "Erro",
-        description: "Selecione um paciente (contexto) antes de salvar.",
+        description: "Selecione um paciente dependente vinculado antes de salvar.",
         variant: "destructive",
       });
       return;
@@ -246,9 +246,8 @@ const NovoMedicamento = () => {
             : "missing"
         : "missing";
 
-      const medicamentoPayload = {
+      const medicamentoPayload: any = {
         context_id: currentContext.id,
-        user_id: user.id,
         nome: data.nome,
         dosagem: data.dosagem,
         unidade_dose: data.unidade_dose,
@@ -265,15 +264,19 @@ const NovoMedicamento = () => {
         data_inicio: new Date().toISOString().slice(0, 10),
         frequencia: data.frequencia,
         horarios: horariosValidos,
-      } as const;
+      };
+
+      // Se o contexto é do tipo dependent, adicionar dependente_id
+      if (currentContext.type === 'dependent') {
+        medicamentoPayload.dependente_id = currentContext.owner_user_id;
+      }
 
       if (id) {
         // EDITAR medicamento (não envia undefined)
         // === EDITAR MEDICAMENTO ===
         const { error: upErr } = await supabase
           .from("medicamentos")
-          // ignora types antigos do client
-          .update(medicamentoPayload as any)
+          .update(medicamentoPayload)
           .eq("id", id);
         if (upErr) throw upErr;
 
@@ -286,9 +289,6 @@ const NovoMedicamento = () => {
               horarios: horariosValidos,
               duracao_tipo: "indefinido",
               duracao_valor: 0,
-              // atenda aos types antigos (alguns projetos exigem user_id)
-              user_id: user.id,
-              // não enviar 'active' enquanto os types não forem regenerados
             },
           ] as any);
           if (posoErr) throw posoErr;
@@ -300,7 +300,6 @@ const NovoMedicamento = () => {
             nome: data.nome,
             imagem_url: prescription_image_url,
             context_id: currentContext.id,
-            user_id: user.id,
             medicamento_id: id,
             usada: false,
           });
@@ -325,7 +324,6 @@ const NovoMedicamento = () => {
               horarios: horariosValidos,
               duracao_tipo: "indefinido",
               duracao_valor: 0,
-              user_id: user.id,
             },
           ]);
           if (posoErr) throw posoErr;
@@ -337,7 +335,6 @@ const NovoMedicamento = () => {
             nome: data.nome,
             imagem_url: prescription_image_url,
             context_id: currentContext.id,
-            user_id: user.id,
             medicamento_id: created.id,
             usada: false,
           });

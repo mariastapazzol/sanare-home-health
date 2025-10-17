@@ -256,7 +256,7 @@ export type Database = {
           id?: string
           mood: string
           updated_at?: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           content?: string | null
@@ -302,7 +302,7 @@ export type Database = {
           id?: string
           nome: string
           updated_at?: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           context_id?: string
@@ -376,7 +376,7 @@ export type Database = {
           requires_prescription?: boolean
           unidade_dose: string
           updated_at?: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           alerta_minimo?: number
@@ -544,7 +544,7 @@ export type Database = {
           id?: string
           medicamento_id: string
           updated_at?: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           created_at?: string
@@ -627,7 +627,7 @@ export type Database = {
           nome: string
           updated_at?: string
           usada?: boolean
-          user_id: string
+          user_id?: string
         }
         Update: {
           context_id?: string

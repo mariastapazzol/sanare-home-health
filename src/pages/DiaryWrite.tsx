@@ -35,7 +35,7 @@ const DiaryWrite = () => {
     if (!user || !currentContext) {
       toast({
         title: "Erro",
-        description: "Contexto não disponível. Por favor, faça login novamente.",
+        description: "Selecione um paciente dependente vinculado antes de salvar.",
         variant: "destructive"
       });
       return;
@@ -56,7 +56,6 @@ const DiaryWrite = () => {
         .from('diary_entries')
         .insert({
           context_id: currentContext.id,
-          user_id: user.id,
           mood,
           content: content.trim()
         });
@@ -69,11 +68,11 @@ const DiaryWrite = () => {
       });
 
       navigate('/diario/records');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao salvar entrada:', error);
       toast({
         title: "Erro",
-        description: "Erro ao salvar entrada do diário.",
+        description: error?.message || "Erro ao salvar entrada do diário.",
         variant: "destructive"
       });
     } finally {
