@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Receita {
   id: string;
@@ -27,7 +28,7 @@ interface Receita {
 export default function Receitas() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { selectedContextId } = useCareContext();
+  const { currentContext, isContextReady } = useCareContext();
   const { toast } = useToast();
   
   const [receitas, setReceitas] = useState<Receita[]>([]);
@@ -42,10 +43,10 @@ export default function Receitas() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (user && selectedContextId) {
+    if (user && isContextReady && currentContext?.id) {
       fetchReceitas();
     }
-  }, [user, selectedContextId]);
+  }, [user, isContextReady, currentContext?.id]);
 
   useEffect(() => {
     if (searchTerm.trim() === "") {
@@ -59,11 +60,15 @@ export default function Receitas() {
   }, [searchTerm, receitas]);
 
   const fetchReceitas = async () => {
+    if (!currentContext?.id) {
+      setLoading(false);
+      return;
+    }
     try {
       const { data, error } = await supabase
         .from("receitas")
         .select("id, nome, imagem_url, medicamento_id, usada")
-        .eq("context_id", selectedContextId)
+        .eq("context_id", currentContext.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -191,10 +196,19 @@ export default function Receitas() {
       return;
     }
 
+    if (!currentContext?.id) {
+      toast({
+        title: "Erro",
+        description: "Contexto não está disponível.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${selectedContextId}/${crypto.randomUUID()}.${fileExt}`;
+      const fileName = `${currentContext.id}/${crypto.randomUUID()}.${fileExt}`;
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('prescricoes')
@@ -223,8 +237,7 @@ export default function Receitas() {
         .insert({
           nome: nomeMedicamento,
           imagem_url: publicUrl,
-          context_id: selectedContextId,
-          user_id: user?.id,
+          context_id: currentContext.id,
         });
 
       if (insertError) {
@@ -256,6 +269,59 @@ export default function Receitas() {
       setUploading(false);
     }
   };
+
+  if (!isContextReady || loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="bg-card border-b border-border sticky top-0 z-10">
+          <div className="container mx-auto px-4 py-4 flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/home")}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-xl font-semibold text-foreground">Receitas</h1>
+          </div>
+        </header>
+        <main className="container mx-auto px-4 py-8 space-y-4">
+          <Skeleton className="h-12 w-full" />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-48 w-full" />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!currentContext) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="bg-card border-b border-border sticky top-0 z-10">
+          <div className="container mx-auto px-4 py-4 flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/home")}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-xl font-semibold text-foreground">Receitas</h1>
+          </div>
+        </header>
+        <main className="container mx-auto px-4 py-8">
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <p className="text-lg text-muted-foreground mb-6">
+              Selecione um paciente dependente vinculado para visualizar receitas.
+            </p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

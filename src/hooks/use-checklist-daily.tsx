@@ -27,6 +27,7 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
   const loadChecklist = useCallback(async () => {
     if (!user || !contextId) {
       setLoading(false);
+      setItems([]);
       return;
     }
 

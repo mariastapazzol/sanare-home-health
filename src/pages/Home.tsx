@@ -35,13 +35,13 @@ const Home = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { status, papel, dados } = usePerfil();
-  const { currentContext } = useCareContext();
+  const { currentContext, isContextReady } = useCareContext();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [medicamentosComEstoqueBaixo, setMedicamentosComEstoqueBaixo] = useState([]);
   
   // Usar hook de checklist diário com persistência usando context_id
   const { items: checklistItems, loading: checklistLoading, toggleChecked, toggleInactive } = useChecklistDaily({ 
-    contextId: currentContext?.id 
+    contextId: isContextReady ? currentContext?.id : undefined
   });
 
   const homeActions = getHomeActionsForRole(papel);

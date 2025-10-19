@@ -16,6 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const formSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
@@ -32,7 +33,7 @@ const NovoMedicamento = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useAuth();
-  const { currentContext } = useCareContext();
+  const { currentContext, isContextReady } = useCareContext();
   const [horarios, setHorarios] = useState<string[]>([]);
   const [novoHorario, setNovoHorario] = useState('');
   const [imagemUrl, setImagemUrl] = useState<string>("");
@@ -221,7 +222,8 @@ const NovoMedicamento = () => {
       toast({ title: "Erro", description: "Você não está logado.", variant: "destructive" });
       return;
     }
-    if (!currentContext?.id) {
+    if (!isContextReady) return;
+    if (!currentContext?.id || currentContext.type !== 'dependent') {
       toast({
         title: "Erro",
         description: "Selecione um paciente dependente vinculado antes de salvar.",
@@ -356,6 +358,16 @@ const NovoMedicamento = () => {
       setLoading(false);
     }
   };
+
+  if (!isContextReady) {
+    return (
+      <div className="min-h-screen bg-background p-4 space-y-4">
+        <Skeleton className="h-10 w-40" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -666,7 +678,7 @@ const NovoMedicamento = () => {
                 </CardContent>
               </Card>
 
-              <Button type="submit" disabled={loading} className="w-full btn-health">
+              <Button type="submit" disabled={loading || !isContextReady || !currentContext || currentContext.type !== 'dependent'} className="w-full btn-health">
                 {loading ? "Salvando..." : "Salvar Medicamento"}
               </Button>
             </form>
