@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const frequenciaOptions = [
   { id: 'todos_os_dias', label: 'Todos os dias' },
@@ -41,7 +42,7 @@ const NovoLembrete = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useAuth();
-  const { currentContext } = useCareContext();
+  const { currentContext, isContextReady } = useCareContext();
   const isEditing = Boolean(id);
 
   const [formData, setFormData] = useState({
@@ -175,7 +176,8 @@ const NovoLembrete = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user || !currentContext) {
+    if (!isContextReady) return;
+    if (!currentContext || currentContext.type !== 'dependent') {
       toast({
         title: "Erro",
         description: "Selecione um paciente dependente vinculado antes de salvar.",
@@ -265,6 +267,16 @@ const NovoLembrete = () => {
       setLoading(false);
     }
   };
+
+  if (!isContextReady) {
+    return (
+      <div className="min-h-screen bg-background p-4 space-y-4">
+        <Skeleton className="h-10 w-40" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -421,7 +433,7 @@ const NovoLembrete = () => {
         </Card>
 
         {/* Submit Button */}
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button type="submit" className="w-full" disabled={loading || !isContextReady || !currentContext || currentContext.type !== 'dependent'}>
           {loading ? (
             <div className="flex items-center space-x-2">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>

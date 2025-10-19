@@ -8,12 +8,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
+import { Skeleton } from '@/components/ui/skeleton';
+ 
 const DiaryWrite = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { currentContext } = useCareContext();
+  const { currentContext, isContextReady } = useCareContext();
   const { toast } = useToast();
   const [content, setContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -32,7 +33,8 @@ const DiaryWrite = () => {
   };
 
   const handleSave = async () => {
-    if (!user || !currentContext) {
+    if (!isContextReady) return;
+    if (!currentContext || currentContext.type !== 'dependent') {
       toast({
         title: "Erro",
         description: "Selecione um paciente dependente vinculado antes de salvar.",
@@ -81,6 +83,16 @@ const DiaryWrite = () => {
   };
 
   const moodDisplay = getMoodDisplay(mood);
+
+  if (!isContextReady) {
+    return (
+      <div className="min-h-screen bg-background p-4 space-y-4">
+        <Skeleton className="h-10 w-40" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -132,7 +144,7 @@ const DiaryWrite = () => {
                 </Button>
                 <Button
                   onClick={handleSave}
-                  disabled={isLoading}
+                  disabled={isLoading || !isContextReady || !currentContext || currentContext.type !== 'dependent'}
                   className="flex-1"
                 >
                   {isLoading ? 'Salvando...' : 'Salvar'}

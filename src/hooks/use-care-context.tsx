@@ -24,8 +24,10 @@ interface CareCtxState {
   setCurrentContext: (ctx: CareContextView) => void;
   clearContext: () => void;
   loading: boolean;
+  isContextReady: boolean;
   userRole: Role | null;
   reload: () => Promise<void>;
+  selectDependent: (ownerUserId: string) => void;
 }
 
 const CareContextContext = createContext<CareCtxState | undefined>(undefined);
@@ -167,6 +169,13 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const selectDependent = (ownerUserId: string) => {
+    const depCtx = contexts.find(
+      (c) => c.type === "dependent" && c.owner_user_id === ownerUserId
+    );
+    if (depCtx) setCurrentContextState(depCtx);
+  };
+
   const value: CareCtxState = {
     contexts,
     currentContext,
@@ -174,8 +183,10 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
     setCurrentContext,
     clearContext,
     loading,
+    isContextReady: !loading,
     userRole,
     reload: loadContexts,
+    selectDependent,
   };
 
   return <CareContextContext.Provider value={value}>{children}</CareContextContext.Provider>;
