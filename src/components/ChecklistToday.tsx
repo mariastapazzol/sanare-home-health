@@ -3,15 +3,40 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useChecklist } from "@/hooks/use-checklist";
+import { useChecklistDaily } from "@/hooks/use-checklist-daily";
+import { useCareContext } from "@/hooks/use-care-context";
 import { formatDateDisplay } from "@/lib/checklist-utils";
-import { RefreshCw, History } from "lucide-react";
+import { RefreshCw, History, X } from "lucide-react";
 import { Link } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 
 export function ChecklistToday() {
-  const { tasks, loading, todayKey, completedCount, totalCount, toggle, resetToday } = useChecklist();
+  const { currentContext, isContextReady } = useCareContext();
+  const { items, loading, todayKey, toggleChecked, toggleInactive, reload } = useChecklistDaily({ 
+    contextId: currentContext?.id 
+  });
 
-  if (loading) {
+  const incompleteTasks = items.filter(item => !item.checked && !item.inactive);
+  const completedCount = items.filter(item => item.checked).length;
+  const totalCount = items.length;
+
+  const handleReset = async () => {
+    if (!currentContext?.id) {
+      toast({
+        title: "Erro",
+        description: "Contexto não disponível.",
+        variant: "destructive",
+      });
+      return;
+    }
+    await reload();
+    toast({
+      title: "Checklist recarregado",
+      description: "O checklist foi atualizado com sucesso.",
+    });
+  };
+
+  if (!isContextReady || loading) {
     return (
       <Card>
         <CardHeader>
@@ -64,7 +89,7 @@ export function ChecklistToday() {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={resetToday}>Resetar</AlertDialogAction>
+                  <AlertDialogAction onClick={handleReset}>Resetar</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -72,36 +97,48 @@ export function ChecklistToday() {
         </div>
       </CardHeader>
       <CardContent>
-        {tasks.filter(t => !t.checked).length === 0 ? (
+        {incompleteTasks.length === 0 ? (
           <div className="text-center py-8">
-            {tasks.length === 0 ? (
-              <p className="text-muted-foreground">Nenhuma tarefa cadastrada</p>
+            {totalCount === 0 ? (
+              <p className="text-muted-foreground">Nenhum medicamento ou lembrete cadastrado</p>
             ) : (
               <div className="space-y-2">
                 <p className="text-2xl font-semibold text-primary">🎉 Dia concluído!</p>
-                <p className="text-muted-foreground">Todas as tarefas foram concluídas hoje!</p>
+                <p className="text-muted-foreground">Todos os medicamentos e lembretes foram realizados hoje!</p>
               </div>
             )}
           </div>
         ) : (
-          <div className="space-y-4">
-            {tasks.filter(t => !t.checked).map((task) => (
+          <div className="space-y-3">
+            {incompleteTasks.map((item) => (
               <div
-                key={task.id}
-                className="flex items-center space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
+                key={item.id}
+                className="flex items-center space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors border"
               >
                 <Checkbox
-                  id={`task-${task.id}`}
-                  checked={task.checked}
-                  onCheckedChange={() => toggle(task.id)}
+                  id={`item-${item.id}`}
+                  checked={item.checked}
+                  onCheckedChange={() => toggleChecked(item.id)}
                   className="h-5 w-5"
                 />
                 <label
-                  htmlFor={`task-${task.id}`}
-                  className="flex-1 text-base cursor-pointer"
+                  htmlFor={`item-${item.id}`}
+                  className="flex-1 cursor-pointer"
                 >
-                  {task.title}
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{item.nome}</span>
+                    <span className="text-sm text-muted-foreground">às {item.horario}</span>
+                  </div>
                 </label>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  onClick={() => toggleInactive(item.id)}
+                  title="Marcar como não realizado hoje"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
             ))}
           </div>

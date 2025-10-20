@@ -223,10 +223,10 @@ const NovoMedicamento = () => {
       return;
     }
     if (!isContextReady) return;
-    if (!currentContext?.id || currentContext.type !== 'dependent') {
+    if (!currentContext?.id) {
       toast({
         title: "Erro",
-        description: "Selecione um paciente dependente vinculado antes de salvar.",
+        description: "Contexto não disponível. Tente novamente.",
         variant: "destructive",
       });
       return;
@@ -678,7 +678,7 @@ const NovoMedicamento = () => {
                 </CardContent>
               </Card>
 
-              <Button type="submit" disabled={loading || !isContextReady || !currentContext || currentContext.type !== 'dependent'} className="w-full btn-health">
+              <Button type="submit" disabled={loading || !isContextReady || !currentContext?.id} className="w-full btn-health">
                 {loading ? "Salvando..." : "Salvar Medicamento"}
               </Button>
             </form>

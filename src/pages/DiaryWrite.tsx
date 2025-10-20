@@ -34,10 +34,10 @@ const DiaryWrite = () => {
 
   const handleSave = async () => {
     if (!isContextReady) return;
-    if (!currentContext || currentContext.type !== 'dependent') {
+    if (!currentContext?.id) {
       toast({
         title: "Erro",
-        description: "Selecione um paciente dependente vinculado antes de salvar.",
+        description: "Contexto não disponível. Tente novamente.",
         variant: "destructive"
       });
       return;
@@ -144,7 +144,7 @@ const DiaryWrite = () => {
                 </Button>
                 <Button
                   onClick={handleSave}
-                  disabled={isLoading || !isContextReady || !currentContext || currentContext.type !== 'dependent'}
+                  disabled={isLoading || !isContextReady || !currentContext?.id}
                   className="flex-1"
                 >
                   {isLoading ? 'Salvando...' : 'Salvar'}

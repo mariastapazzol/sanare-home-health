@@ -177,10 +177,10 @@ const NovoLembrete = () => {
     e.preventDefault();
     
     if (!isContextReady) return;
-    if (!currentContext || currentContext.type !== 'dependent') {
+    if (!currentContext?.id) {
       toast({
         title: "Erro",
-        description: "Selecione um paciente dependente vinculado antes de salvar.",
+        description: "Contexto não disponível. Tente novamente.",
         variant: "destructive",
       });
       return;
@@ -433,7 +433,7 @@ const NovoLembrete = () => {
         </Card>
 
         {/* Submit Button */}
-        <Button type="submit" className="w-full" disabled={loading || !isContextReady || !currentContext || currentContext.type !== 'dependent'}>
+        <Button type="submit" className="w-full" disabled={loading || !isContextReady || !currentContext?.id}>
           {loading ? (
             <div className="flex items-center space-x-2">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
