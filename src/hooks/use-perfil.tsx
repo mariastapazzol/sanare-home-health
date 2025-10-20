@@ -36,7 +36,7 @@ export function usePerfil() {
 
         // Tenta identificar papel por prioridade: cuidador > autônomo > dependente
         const [{ data: cg }, { data: au }, { data: dp }] = await Promise.all([
-          supabase.from("cuidadores").select("id, nome").eq("user_id", user.id).maybeSingle(),
+          supabase.from("cuidadores").select("id, nome, nascimento").eq("user_id", user.id).maybeSingle(),
           supabase.from("pacientes_autonomos").select("id, nome, nascimento").eq("user_id", user.id).maybeSingle(),
           supabase.from("pacientes_dependentes").select("id, nome, nome_usuario, nascimento, cuidador_id").eq("user_id", user.id).maybeSingle(),
         ]);
@@ -54,7 +54,7 @@ export function usePerfil() {
             .order("nome", { ascending: true });
           if (!cancel) {
             setDependentes(deps ?? []);
-            setDados({ userId: user.id, email, nome: cg.nome });
+            setDados({ userId: user.id, email, nome: cg.nome, nascimento: cg.nascimento ?? null });
             setStatus("ready");
           }
           return;
