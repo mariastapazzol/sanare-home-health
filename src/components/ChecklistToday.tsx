@@ -36,7 +36,7 @@ export function ChecklistToday() {
     });
   };
 
-  if (!isContextReady || !currentContext?.id || loading) {
+  if (!isContextReady || loading) {
     return (
       <Card>
         <CardHeader>

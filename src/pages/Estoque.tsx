@@ -112,7 +112,8 @@ const Estoque = () => {
       const { error } = await supabase
         .from('medicamentos')
         .update({ quantidade_atual: quantidadeAtualizada })
-        .eq('id', selectedMedicamento.id);
+        .eq('id', selectedMedicamento.id)
+        .eq('user_id', user?.id);
 
       if (error) throw error;
 
