@@ -14,37 +14,9 @@ export type Database = {
   }
   public: {
     Tables: {
-      care_contexts: {
-        Row: {
-          caregiver_user_id: string | null
-          created_at: string
-          id: string
-          owner_user_id: string
-          type: string
-          updated_at: string
-        }
-        Insert: {
-          caregiver_user_id?: string | null
-          created_at?: string
-          id?: string
-          owner_user_id: string
-          type: string
-          updated_at?: string
-        }
-        Update: {
-          caregiver_user_id?: string | null
-          created_at?: string
-          id?: string
-          owner_user_id?: string
-          type?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       checklist_daily_status: {
         Row: {
           checked: boolean
-          context_id: string
           created_at: string
           day: string
           horario: string
@@ -57,7 +29,6 @@ export type Database = {
         }
         Insert: {
           checked?: boolean
-          context_id: string
           created_at?: string
           day: string
           horario: string
@@ -70,7 +41,6 @@ export type Database = {
         }
         Update: {
           checked?: boolean
-          context_id?: string
           created_at?: string
           day?: string
           horario?: string
@@ -81,20 +51,11 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "checklist_daily_status_context_id_fkey"
-            columns: ["context_id"]
-            isOneToOne: false
-            referencedRelation: "care_contexts"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       checklist_lembretes: {
         Row: {
           checked: boolean
-          context_id: string
           created_at: string
           day: string
           horario: string
@@ -105,7 +66,6 @@ export type Database = {
         }
         Insert: {
           checked?: boolean
-          context_id: string
           created_at?: string
           day: string
           horario: string
@@ -116,7 +76,6 @@ export type Database = {
         }
         Update: {
           checked?: boolean
-          context_id?: string
           created_at?: string
           day?: string
           horario?: string
@@ -126,13 +85,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "checklist_lembretes_context_id_fkey"
-            columns: ["context_id"]
-            isOneToOne: false
-            referencedRelation: "care_contexts"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "checklist_lembretes_lembrete_id_fkey"
             columns: ["lembrete_id"]
@@ -145,7 +97,6 @@ export type Database = {
       checklist_meds: {
         Row: {
           checked: boolean
-          context_id: string
           created_at: string
           day: string
           horario: string
@@ -157,7 +108,6 @@ export type Database = {
         }
         Insert: {
           checked?: boolean
-          context_id: string
           created_at?: string
           day: string
           horario: string
@@ -169,7 +119,6 @@ export type Database = {
         }
         Update: {
           checked?: boolean
-          context_id?: string
           created_at?: string
           day?: string
           horario?: string
@@ -180,13 +129,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "checklist_meds_context_id_fkey"
-            columns: ["context_id"]
-            isOneToOne: false
-            referencedRelation: "care_contexts"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "checklist_meds_medicamento_id_fkey"
             columns: ["medicamento_id"]
@@ -203,46 +145,9 @@ export type Database = {
           },
         ]
       }
-      cuidadores: {
-        Row: {
-          created_at: string
-          id: string
-          nascimento: string | null
-          nome: string
-          nome_usuario: string | null
-          observacoes: string | null
-          telefone: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          nascimento?: string | null
-          nome: string
-          nome_usuario?: string | null
-          observacoes?: string | null
-          telefone?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          nascimento?: string | null
-          nome?: string
-          nome_usuario?: string | null
-          observacoes?: string | null
-          telefone?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       diary_entries: {
         Row: {
           content: string | null
-          context_id: string | null
           created_at: string
           id: string
           mood: string
@@ -251,7 +156,6 @@ export type Database = {
         }
         Insert: {
           content?: string | null
-          context_id?: string | null
           created_at?: string
           id?: string
           mood: string
@@ -260,29 +164,18 @@ export type Database = {
         }
         Update: {
           content?: string | null
-          context_id?: string | null
           created_at?: string
           id?: string
           mood?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "diary_entries_context_id_fkey"
-            columns: ["context_id"]
-            isOneToOne: false
-            referencedRelation: "care_contexts"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       lembretes: {
         Row: {
-          context_id: string
           created_at: string
           datas: Json
-          dependente_id: string | null
           descricao: string | null
           horarios: Json
           icone: string
@@ -292,10 +185,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          context_id: string
           created_at?: string
           datas?: Json
-          dependente_id?: string | null
           descricao?: string | null
           horarios?: Json
           icone: string
@@ -305,10 +196,8 @@ export type Database = {
           user_id?: string
         }
         Update: {
-          context_id?: string
           created_at?: string
           datas?: Json
-          dependente_id?: string | null
           descricao?: string | null
           horarios?: Json
           icone?: string
@@ -317,23 +206,13 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "lembretes_context_id_fkey"
-            columns: ["context_id"]
-            isOneToOne: false
-            referencedRelation: "care_contexts"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       medicamentos: {
         Row: {
           alerta_minimo: number
-          context_id: string
           created_at: string
           data_inicio: string
-          dependente_id: string | null
           dosagem: string
           frequencia: string
           horarios: Json
@@ -355,10 +234,8 @@ export type Database = {
         }
         Insert: {
           alerta_minimo?: number
-          context_id: string
           created_at?: string
           data_inicio?: string
-          dependente_id?: string | null
           dosagem: string
           frequencia: string
           horarios?: Json
@@ -380,10 +257,8 @@ export type Database = {
         }
         Update: {
           alerta_minimo?: number
-          context_id?: string
           created_at?: string
           data_inicio?: string
-          dependente_id?: string | null
           dosagem?: string
           frequencia?: string
           horarios?: Json
@@ -403,15 +278,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "medicamentos_context_id_fkey"
-            columns: ["context_id"]
-            isOneToOne: false
-            referencedRelation: "care_contexts"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       movimentacoes_estoque: {
         Row: {
@@ -487,42 +354,6 @@ export type Database = {
         }
         Relationships: []
       }
-      pacientes_dependentes: {
-        Row: {
-          created_at: string
-          cuidador_id: string
-          id: string
-          nascimento: string | null
-          nome: string
-          nome_usuario: string
-          observacoes: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          cuidador_id: string
-          id?: string
-          nascimento?: string | null
-          nome: string
-          nome_usuario: string
-          observacoes?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          cuidador_id?: string
-          id?: string
-          nascimento?: string | null
-          nome?: string
-          nome_usuario?: string
-          observacoes?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       posologias: {
         Row: {
           created_at: string
@@ -570,7 +401,6 @@ export type Database = {
       profiles: {
         Row: {
           birth_date: string
-          caregiver_user_id: string | null
           created_at: string
           email: string
           id: string
@@ -582,19 +412,17 @@ export type Database = {
         }
         Insert: {
           birth_date: string
-          caregiver_user_id?: string | null
           created_at?: string
           email: string
           id?: string
           name: string
-          role: Database["public"]["Enums"]["user_role"]
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
           user_id: string
           username?: string | null
         }
         Update: {
           birth_date?: string
-          caregiver_user_id?: string | null
           created_at?: string
           email?: string
           id?: string
@@ -608,7 +436,6 @@ export type Database = {
       }
       receitas: {
         Row: {
-          context_id: string
           created_at: string
           id: string
           imagem_url: string
@@ -619,7 +446,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          context_id: string
           created_at?: string
           id?: string
           imagem_url: string
@@ -630,7 +456,6 @@ export type Database = {
           user_id?: string
         }
         Update: {
-          context_id?: string
           created_at?: string
           id?: string
           imagem_url?: string
@@ -652,7 +477,6 @@ export type Database = {
       }
       sinais_vitais: {
         Row: {
-          context_id: string | null
           created_at: string
           frequencia_cardiaca: number | null
           glicose: number | null
@@ -664,7 +488,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          context_id?: string | null
           created_at?: string
           frequencia_cardiaca?: number | null
           glicose?: number | null
@@ -676,7 +499,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          context_id?: string | null
           created_at?: string
           frequencia_cardiaca?: number | null
           glicose?: number | null
@@ -687,19 +509,10 @@ export type Database = {
           temperatura?: number | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "sinais_vitais_context_id_fkey"
-            columns: ["context_id"]
-            isOneToOne: false
-            referencedRelation: "care_contexts"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       sintomas: {
         Row: {
-          context_id: string | null
           created_at: string
           duracao: string
           fatores_relacionados: Json
@@ -710,7 +523,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          context_id?: string | null
           created_at?: string
           duracao: string
           fatores_relacionados?: Json
@@ -721,7 +533,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          context_id?: string | null
           created_at?: string
           duracao?: string
           fatores_relacionados?: Json
@@ -731,15 +542,7 @@ export type Database = {
           tipo_sintoma?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "sintomas_context_id_fkey"
-            columns: ["context_id"]
-            isOneToOne: false
-            referencedRelation: "care_contexts"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       task_status: {
         Row: {
@@ -770,13 +573,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "task_status_context_id_fkey"
-            columns: ["context_id"]
-            isOneToOne: false
-            referencedRelation: "care_contexts"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "task_status_task_id_fkey"
             columns: ["task_id"]
@@ -815,21 +611,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_access_context: {
-        Args: { ctx: string }
-        Returns: boolean
-      }
-      server_time_sampa: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      server_time_sampa: { Args: never; Returns: string }
     }
     Enums: {
-      user_role:
-        | "paciente_autonomo"
-        | "cuidador"
-        | "dependente"
-        | "paciente_dependente"
+      user_role: "paciente_autonomo"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -957,12 +742,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      user_role: [
-        "paciente_autonomo",
-        "cuidador",
-        "dependente",
-        "paciente_dependente",
-      ],
+      user_role: ["paciente_autonomo"],
     },
   },
 } as const
