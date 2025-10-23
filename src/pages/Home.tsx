@@ -6,6 +6,7 @@ import { useChecklistDaily } from '@/hooks/use-checklist-daily';
 import { useCareContext } from '@/hooks/use-care-context';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import ContextSwitcher from '@/components/ContextSwitcher';
 import { 
   Menu, 
@@ -147,13 +148,22 @@ const Home = () => {
               sintomas: Activity,
             };
             const Icon = iconMap[action.key] || Activity;
+            const hasLowStock = action.key === 'estoque' && medicamentosComEstoqueBaixo.length > 0;
             
             return (
               <Button
                 key={action.key}
                 onClick={() => navigate(action.path)}
-                className="btn-health h-20 flex-col space-y-2"
+                className="btn-health h-20 flex-col space-y-2 relative"
               >
+                {hasLowStock && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-1 -right-1 h-6 w-6 flex items-center justify-center p-0 rounded-full"
+                  >
+                    {medicamentosComEstoqueBaixo.length}
+                  </Badge>
+                )}
                 <Icon className="h-6 w-6" />
                 <span>{action.label}</span>
               </Button>
