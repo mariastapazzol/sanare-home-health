@@ -269,8 +269,8 @@ const NovoMedicamento = () => {
       };
 
       // Se o contexto é do tipo dependent, adicionar dependente_id
-      if (currentContext.type === 'dependent') {
-        medicamentoPayload.dependente_id = currentContext.owner_user_id;
+      if (currentContext.tipo === 'dependent') {
+        medicamentoPayload.dependente_id = currentContext.dependente_id;
       }
 
       if (id) {

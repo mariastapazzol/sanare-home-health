@@ -6,9 +6,10 @@ type Role = "paciente_autonomo" | "cuidador" | "paciente_dependente";
 
 export interface CareContextRow {
   id: string;
+  nome: string;
+  tipo: "self" | "dependent";
+  dependente_id: string | null;
   owner_user_id: string;
-  caregiver_user_id: string | null;
-  type: "self" | "dependent";
   created_at?: string;
   updated_at?: string;
 }
@@ -86,7 +87,7 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
       const { data: ctxs, error: ctxErr } = await supabase
         .from("care_contexts")
         .select("*")
-        .or(`owner_user_id.eq.${user.id},caregiver_user_id.eq.${user.id}`)
+        .eq("owner_user_id", user.id)
         .order("created_at", { ascending: true });
 
       if (ctxErr) {
@@ -99,12 +100,12 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
 
       // 3) Garante SELF somente para paciente_autonomo ou paciente_dependente (não cria para cuidador)
       if (role === "paciente_autonomo" || role === "paciente_dependente") {
-        const hasSelf = contextsList.some((c) => c.type === "self" && c.owner_user_id === user.id);
+        const hasSelf = contextsList.some((c) => c.tipo === "self" && c.owner_user_id === user.id);
         if (!hasSelf && role === "paciente_autonomo") {
           // Só cria contexto self para autônomo
           const { data: created, error: createErr } = await supabase
             .from("care_contexts")
-            .insert([{ type: "self", owner_user_id: user.id }])
+            .insert([{ nome: "Meu contexto", tipo: "self", owner_user_id: user.id }])
             .select()
             .maybeSingle();
           if (!createErr && created) {
@@ -118,13 +119,13 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
       // 4) Adiciona nome do owner aos contextos dependent
       const withNames: CareContextView[] = await Promise.all(
         contextsList.map(async (ctx) => {
-          if (ctx.type === "dependent") {
-            const { data: ownerProfile } = await supabase
-              .from("profiles")
-              .select("name")
-              .eq("user_id", ctx.owner_user_id)
+          if (ctx.tipo === "dependent" && ctx.dependente_id) {
+            const { data: depProfile } = await supabase
+              .from("pacientes_dependentes")
+              .select("nome")
+              .eq("id", ctx.dependente_id)
               .maybeSingle();
-            return { ...ctx, owner_name: ownerProfile?.name ?? undefined };
+            return { ...ctx, owner_name: depProfile?.nome ?? undefined };
           }
           return ctx as CareContextView;
         }),
@@ -146,16 +147,14 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
 
       if (!chosen) {
         if (role === "paciente_autonomo") {
-          chosen = withNames.find((c) => c.type === "self" && c.owner_user_id === user.id) ?? null;
+          chosen = withNames.find((c) => c.tipo === "self" && c.owner_user_id === user.id) ?? null;
         } else if (role === "paciente_dependente") {
-          chosen = withNames.find((c) => c.type === "dependent" && c.owner_user_id === user.id) ?? null;
+          chosen = withNames.find((c) => c.tipo === "dependent" && c.owner_user_id === user.id) ?? null;
         } else if (role === "cuidador") {
-          // Se o cuidador tiver apenas 1 dependente, seleciona automaticamente
-          const dependentContexts = withNames.filter((c) => c.type === "dependent" && c.caregiver_user_id === user.id);
-          if (dependentContexts.length === 1) {
-            chosen = dependentContexts[0];
+          // Cuidador: seleciona automaticamente se tiver exatamente 1 contexto
+          if (withNames.length === 1) {
+            chosen = withNames[0];
           } else {
-            // Se tiver mais de 1 ou nenhum, não seleciona automaticamente
             chosen = null;
           }
         }
@@ -171,7 +170,7 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
 
   const selectDependent = (ownerUserId: string) => {
     const depCtx = contexts.find(
-      (c) => c.type === "dependent" && c.owner_user_id === ownerUserId
+      (c) => c.tipo === "dependent" && c.owner_user_id === ownerUserId
     );
     if (depCtx) setCurrentContextState(depCtx);
   };

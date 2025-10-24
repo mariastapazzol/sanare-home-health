@@ -62,12 +62,13 @@ const SignupCuidador = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Failed to create user');
 
-      // Create cuidador record (without nome_usuario)
+      // Create cuidador record
       const { error: cuidadorError } = await supabase
         .from('cuidadores')
         .insert({
           user_id: authData.user.id,
           nome: formData.name,
+          nome_usuario: formData.email.split('@')[0],
           nascimento: formData.birthDate || null,
         });
 

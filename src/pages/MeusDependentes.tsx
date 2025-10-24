@@ -43,11 +43,48 @@ const MeusDependentes = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, name, username, email, birth_date')
-        .eq('caregiver_user_id', user.id)
-        .eq('role', 'dependente');
+      // Busca o cuidador para pegar o dependente_id
+      const { data: cuidador } = await supabase
+        .from('cuidadores')
+        .select('dependente_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!cuidador?.dependente_id) {
+        setDependents([]);
+        setLoading(false);
+        return;
+      }
+
+      // Busca os dados do dependente
+      const { data: depData, error: depError } = await supabase
+        .from('pacientes_dependentes')
+        .select('id, nome, nome_usuario, nascimento, user_id')
+        .eq('id', cuidador.dependente_id)
+        .maybeSingle();
+
+      if (depError) throw depError;
+
+      if (depData) {
+        // Busca o email do dependente na tabela profiles
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('user_id', depData.user_id)
+          .maybeSingle();
+
+        const dependent: Dependent = {
+          id: depData.id,
+          name: depData.nome,
+          username: depData.nome_usuario,
+          email: profileData?.email || '',
+          birth_date: depData.nascimento || ''
+        };
+
+        setDependents([dependent]);
+      }
+
+      const { data, error } = { data: null, error: null };
 
       if (error) {
         console.error('Error loading dependents:', error);

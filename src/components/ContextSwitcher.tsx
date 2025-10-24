@@ -34,7 +34,7 @@ const ContextSwitcher = () => {
         <SelectContent>
           {contexts.map((ctx) => (
             <SelectItem key={ctx.id} value={ctx.id}>
-              {ctx.type === 'self' ? 'Meu Perfil' : ctx.owner_name || 'Dependente'}
+              {ctx.tipo === 'self' ? 'Meu Perfil' : ctx.owner_name || 'Dependente'}
             </SelectItem>
           ))}
         </SelectContent>

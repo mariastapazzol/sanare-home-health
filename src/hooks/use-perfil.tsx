@@ -36,9 +36,9 @@ export function usePerfil() {
 
         // Tenta identificar papel por prioridade: cuidador > autônomo > dependente
         const [{ data: cg }, { data: au }, { data: dp }] = await Promise.all([
-          supabase.from("cuidadores").select("id, nome, nascimento").eq("user_id", user.id).maybeSingle(),
+          supabase.from("cuidadores").select("id, nome, nascimento, dependente_id").eq("user_id", user.id).maybeSingle(),
           supabase.from("pacientes_autonomos").select("id, nome, nascimento").eq("user_id", user.id).maybeSingle(),
-          supabase.from("pacientes_dependentes").select("id, nome, nome_usuario, nascimento, cuidador_id").eq("user_id", user.id).maybeSingle(),
+          supabase.from("pacientes_dependentes").select("id, nome, nome_usuario, nascimento").eq("user_id", user.id).maybeSingle(),
         ]);
 
         if (cancel) return;
@@ -46,14 +46,18 @@ export function usePerfil() {
         // Cuidador
         if (cg) {
           setPapel("cuidador");
-          // Carrega lista de dependentes
-          const { data: deps } = await supabase
-            .from("pacientes_dependentes")
-            .select("id, nome, nome_usuario, nascimento")
-            .eq("cuidador_id", user.id)
-            .order("nome", { ascending: true });
+          // Carrega o dependente vinculado ao cuidador
+          let deps: Array<{ id: string; nome: string; nome_usuario: string; nascimento: string | null }> = [];
+          if (cg.dependente_id) {
+            const { data: dep } = await supabase
+              .from("pacientes_dependentes")
+              .select("id, nome, nome_usuario, nascimento")
+              .eq("id", cg.dependente_id)
+              .maybeSingle();
+            if (dep) deps = [dep];
+          }
           if (!cancel) {
-            setDependentes(deps ?? []);
+            setDependentes(deps);
             setDados({ userId: user.id, email, nome: cg.nome, nascimento: cg.nascimento ?? null });
             setStatus("ready");
           }
@@ -73,16 +77,23 @@ export function usePerfil() {
         // Dependente
         if (dp) {
           setPapel("paciente_dependente");
-          // opcional: pegar dados do cuidador
+          // Busca o cuidador através da tabela cuidadores
           let cuidador: { nome?: string | null; email?: string | null } | undefined = undefined;
-          if (dp.cuidador_id) {
-            const { data: cgRow } = await supabase
-              .from("cuidadores")
-              .select("nome")
-              .eq("user_id", dp.cuidador_id)
+          const { data: cgRow } = await supabase
+            .from("cuidadores")
+            .select("nome, user_id")
+            .eq("dependente_id", dp.id)
+            .maybeSingle();
+          
+          if (cgRow) {
+            const { data: cgUser } = await supabase
+              .from("profiles")
+              .select("email")
+              .eq("user_id", cgRow.user_id)
               .maybeSingle();
-            cuidador = { nome: cgRow?.nome ?? null, email: null };
+            cuidador = { nome: cgRow.nome, email: cgUser?.email ?? null };
           }
+          
           if (!cancel) {
             setDados({ 
               userId: user.id, 

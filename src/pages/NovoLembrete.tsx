@@ -226,8 +226,8 @@ const NovoLembrete = () => {
       };
 
       // Se o contexto é do tipo dependent, adicionar dependente_id
-      if (currentContext.type === 'dependent') {
-        lembreteData.dependente_id = currentContext.owner_user_id;
+      if (currentContext.tipo === 'dependent') {
+        lembreteData.dependente_id = currentContext.dependente_id;
       }
 
       if (isEditing && id) {
