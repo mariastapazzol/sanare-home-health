@@ -22,7 +22,6 @@ function toISODate(d: string): string | null {
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -38,12 +37,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create admin client with service role key
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false }
     });
     
-    // Get the authorization header to verify the caregiver
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
@@ -52,7 +49,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify the caregiver's JWT
     const token = authHeader.replace('Bearer ', '');
     const { data: { user: caregiver }, error: authError } = await supabaseAdmin.auth.getUser(token);
     
@@ -66,10 +62,10 @@ Deno.serve(async (req) => {
 
     console.log('Caregiver authenticated:', caregiver.id);
 
-    // Verify user is actually a caregiver
+    // Verify user is a caregiver
     const { data: cgRow, error: cgErr } = await supabaseAdmin
       .from('cuidadores')
-      .select('id')
+      .select('id, dependente_id')
       .eq('user_id', caregiver.id)
       .maybeSingle();
 
@@ -87,10 +83,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Parse request body - NO EMAIL REQUIRED
+    // Check if caregiver already has a dependent
+    if (cgRow.dependente_id) {
+      return new Response(
+        JSON.stringify({ error: 'Cuidador já possui um dependente cadastrado' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { name, username, birth_date, password, observacoes } = await req.json();
 
-    // Validate required fields
     if (!name || !username || !birth_date || !password) {
       return new Response(
         JSON.stringify({ error: 'Campos obrigatórios ausentes' }),
@@ -98,7 +100,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Validate username format
     const usernameRegex = /^[A-Za-z0-9._]{3,}$/;
     if (!usernameRegex.test(username)) {
       return new Response(
@@ -107,7 +108,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Validate password length
     if (password.length < 8) {
       return new Response(
         JSON.stringify({ error: 'A senha deve ter pelo menos 8 caracteres' }),
@@ -115,7 +115,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Normalize birth date
     const isoBirth = toISODate(birth_date);
     if (!isoBirth) {
       return new Response(
@@ -124,7 +123,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check username uniqueness (case-insensitive)
+    // Check username uniqueness
     const { data: existing } = await supabaseAdmin
       .from('pacientes_dependentes')
       .select('id')
@@ -143,14 +142,15 @@ Deno.serve(async (req) => {
 
     console.log('Creating dependent user with shadow email:', shadowEmail);
 
-    // Create the dependent user account with shadow email
+    // Create the dependent user account
     const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
       email: shadowEmail,
       password,
       email_confirm: true,
       user_metadata: {
         role: 'paciente_dependente',
-        username
+        username,
+        name
       }
     });
 
@@ -165,36 +165,56 @@ Deno.serve(async (req) => {
     console.log('User created:', newUser.user.id);
 
     // Insert into pacientes_dependentes table
-    const { error: depError } = await supabaseAdmin
+    const { data: depData, error: depError } = await supabaseAdmin
       .from('pacientes_dependentes')
       .insert({
         user_id: newUser.user.id,
-        cuidador_id: caregiver.id,
         nome: name,
         nome_usuario: username,
         nascimento: isoBirth,
         observacoes: observacoes ?? null
-      });
+      })
+      .select('id')
+      .single();
 
-    if (depError) {
+    if (depError || !depData) {
       console.error('Error creating dependent record:', depError);
-      // If dependent creation fails, delete the user
       await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
       return new Response(
-        JSON.stringify({ error: 'Failed to create dependent: ' + depError.message }),
+        JSON.stringify({ error: 'Failed to create dependent: ' + depError?.message }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Dependent record created');
+    console.log('Dependent record created with ID:', depData.id);
 
-    // Create the care context for the dependent
+    // Update cuidador to link to this dependent
+    const { error: updateCgError } = await supabaseAdmin
+      .from('cuidadores')
+      .update({ dependente_id: depData.id })
+      .eq('user_id', caregiver.id);
+
+    if (updateCgError) {
+      console.error('Error linking caregiver to dependent:', updateCgError);
+      // Rollback
+      await supabaseAdmin.from('pacientes_dependentes').delete().eq('id', depData.id);
+      await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
+      return new Response(
+        JSON.stringify({ error: 'Failed to link caregiver: ' + updateCgError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Caregiver linked to dependent');
+
+    // Create care context for the caregiver managing the dependent
     const { error: contextError } = await supabaseAdmin
       .from('care_contexts')
       .insert({
-        owner_user_id: newUser.user.id,
-        caregiver_user_id: caregiver.id,
-        type: 'dependent'
+        nome: `Cuidado de ${name}`,
+        tipo: 'dependent',
+        owner_user_id: caregiver.id,
+        dependente_id: depData.id
       });
 
     if (contextError) {
@@ -207,10 +227,27 @@ Deno.serve(async (req) => {
 
     console.log('Care context created');
 
+    // Create profile for the dependent
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .insert({
+        user_id: newUser.user.id,
+        name: name,
+        username: username,
+        email: shadowEmail,
+        birth_date: isoBirth,
+        role: 'paciente_dependente'
+      });
+
+    if (profileError) {
+      console.error('Error creating profile:', profileError);
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
         dependent_user_id: newUser.user.id,
+        dependent_id: depData.id,
         message: 'Dependente criado com sucesso'
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
