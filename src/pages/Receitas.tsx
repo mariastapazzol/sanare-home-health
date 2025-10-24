@@ -1,21 +1,17 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useCareContext } from "@/hooks/use-care-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Search, X, Plus, Upload, Trash2 } from "lucide-react";
+import { ArrowLeft, Search, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ReceitaCard } from "@/components/receitas/ReceitaCard";
+import { ReceitaDialog } from "@/components/receitas/ReceitaDialog";
+import { UploadReceitaDialog } from "@/components/receitas/UploadReceitaDialog";
+import { ReceitasEmpty } from "@/components/receitas/ReceitasEmpty";
 
 interface Receita {
   id: string;
@@ -40,7 +36,6 @@ export default function Receitas() {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [nomeMedicamento, setNomeMedicamento] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user && isContextReady && currentContext?.id) {
@@ -92,7 +87,7 @@ export default function Receitas() {
     setDialogOpen(true);
   };
 
-  const handleMarcarComoUsada = async () => {
+  const handleToggleUsada = async () => {
     if (!selectedReceita) return;
 
     try {
@@ -122,20 +117,17 @@ export default function Receitas() {
     }
   };
 
-
   const handleExcluirReceita = async () => {
     if (!selectedReceita) return;
 
     try {
-      // Excluir imagem do storage
       const urlParts = selectedReceita.imagem_url.split('/');
-      const filePath = urlParts.slice(-2).join('/'); // context_id/filename
+      const filePath = urlParts.slice(-2).join('/');
       
       await supabase.storage
         .from('prescricoes')
         .remove([filePath]);
 
-      // Excluir receita do banco
       const { error } = await supabase
         .from("receitas")
         .delete()
@@ -160,10 +152,7 @@ export default function Receitas() {
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const handleFileSelect = async (file: File) => {
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
     if (!allowedTypes.includes(file.type)) {
       toast({
@@ -183,10 +172,6 @@ export default function Receitas() {
       return;
     }
 
-    handleUploadReceita(file);
-  };
-
-  const handleUploadReceita = async (file: File) => {
     if (!nomeMedicamento.trim()) {
       toast({
         title: "Erro",
@@ -210,7 +195,7 @@ export default function Receitas() {
       const fileExt = file.name.split('.').pop();
       const fileName = `${currentContext.id}/${crypto.randomUUID()}.${fileExt}`;
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('prescricoes')
         .upload(fileName, file, {
           contentType: file.type,
@@ -218,15 +203,7 @@ export default function Receitas() {
           upsert: false
         });
 
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        toast({
-          title: "Erro no upload",
-          description: uploadError.message,
-          variant: "destructive",
-        });
-        return;
-      }
+      if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
         .from('prescricoes')
@@ -240,15 +217,7 @@ export default function Receitas() {
           context_id: currentContext.id,
         });
 
-      if (insertError) {
-        console.error('Receita insert error:', insertError);
-        toast({
-          title: "Erro ao adicionar receita",
-          description: insertError.message,
-          variant: "destructive",
-        });
-        return;
-      }
+      if (insertError) throw insertError;
 
       toast({
         title: "Sucesso",
@@ -323,14 +292,6 @@ export default function Receitas() {
     );
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-lg text-muted-foreground">Carregando receitas...</div>
-      </div>
-    );
-  }
-
   if (receitas.length === 0) {
     return (
       <div className="min-h-screen bg-background">
@@ -348,64 +309,20 @@ export default function Receitas() {
         </header>
 
         <main className="container mx-auto px-4 py-8">
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <p className="text-lg text-muted-foreground mb-6">
-              Nenhuma receita cadastrada ainda.
-            </p>
-            <div className="flex gap-3">
-              <Button onClick={() => navigate("/medicamentos/novo")}>
-                <Plus className="h-4 w-4 mr-2" />
-                Cadastrar Medicamento
-              </Button>
-              <Button onClick={() => setUploadDialogOpen(true)} variant="outline">
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar Receita
-              </Button>
-            </div>
-          </div>
+          <ReceitasEmpty 
+            onAddReceita={() => setUploadDialogOpen(true)}
+            onAddMedicamento={() => navigate("/medicamentos/novo")}
+          />
         </main>
 
-        <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Adicionar Receita</DialogTitle>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-foreground">
-                  Nome da Receita
-                </label>
-                <Input
-                  type="text"
-                  placeholder="Ex: Receita Dipirona"
-                  value={nomeMedicamento}
-                  onChange={(e) => setNomeMedicamento(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-                <Button
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading || !nomeMedicamento.trim()}
-                  className="w-full"
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  {uploading ? "Enviando..." : "Selecionar Foto da Receita"}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <UploadReceitaDialog
+          open={uploadDialogOpen}
+          onOpenChange={setUploadDialogOpen}
+          nomeMedicamento={nomeMedicamento}
+          onNomeChange={setNomeMedicamento}
+          uploading={uploading}
+          onFileSelect={handleFileSelect}
+        />
       </div>
     );
   }
@@ -447,121 +364,31 @@ export default function Receitas() {
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {filteredReceitas.map((receita) => (
-            <Card
+            <ReceitaCard
               key={receita.id}
-              className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
+              receita={receita}
               onClick={() => handleReceitaClick(receita)}
-            >
-              <CardContent className="p-0">
-                <div className="aspect-square relative">
-                  <img
-                    src={receita.imagem_url}
-                    alt={`Receita de ${receita.nome}`}
-                    className="w-full h-full object-cover"
-                  />
-                  {receita.usada && (
-                    <Badge 
-                      className="absolute top-2 right-2 bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      Usada
-                    </Badge>
-                  )}
-                </div>
-                <div className="p-3">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {receita.nome}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            />
           ))}
         </div>
       </main>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <span>{selectedReceita?.nome}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setDialogOpen(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div className="w-full flex justify-center">
-              <img
-                src={selectedReceita?.imagem_url}
-                alt={`Receita de ${selectedReceita?.nome}`}
-                className="max-h-[60vh] object-contain"
-              />
-            </div>
+      <ReceitaDialog
+        receita={selectedReceita}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onToggleUsada={handleToggleUsada}
+        onExcluir={handleExcluirReceita}
+      />
 
-            <div className="flex justify-end gap-2">
-              <Button 
-                variant={selectedReceita?.usada ? "outline" : "default"}
-                onClick={handleMarcarComoUsada}
-              >
-                {selectedReceita?.usada ? "Desmarcar como Usada" : "Marcar como Usada"}
-              </Button>
-              <Button 
-                variant="destructive" 
-                onClick={handleExcluirReceita}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Excluir Receita
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Adicionar Receita</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-foreground">
-                Nome da Receita
-              </label>
-              <Input
-                type="text"
-                placeholder="Ex: Receita Dipirona"
-                value={nomeMedicamento}
-                onChange={(e) => setNomeMedicamento(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-
-            <div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              <Button
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading || !nomeMedicamento.trim()}
-                className="w-full"
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                {uploading ? "Enviando..." : "Selecionar Foto da Receita"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <UploadReceitaDialog
+        open={uploadDialogOpen}
+        onOpenChange={setUploadDialogOpen}
+        nomeMedicamento={nomeMedicamento}
+        onNomeChange={setNomeMedicamento}
+        uploading={uploading}
+        onFileSelect={handleFileSelect}
+      />
     </div>
   );
 }
