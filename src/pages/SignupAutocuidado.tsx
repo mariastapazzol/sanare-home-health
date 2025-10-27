@@ -89,6 +89,51 @@ const SignupAutocuidado = () => {
             return;
           }
 
+          // Create profile
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              user_id: session.user.id,
+              name: formData.name,
+              username: formData.email.split('@')[0],
+              email: formData.email,
+              birth_date: formData.birth_date || null
+            });
+
+          if (profileError) {
+            console.error('Error creating profile:', profileError);
+            toast({
+              title: "Erro",
+              description: "Falha ao criar perfil.",
+              variant: "destructive"
+            });
+            await supabase.auth.signOut();
+            navigate('/auth/choice');
+            setLoading(false);
+            return;
+          }
+
+          // Insert role in user_roles table (security)
+          const { error: roleError } = await supabase
+            .from('user_roles')
+            .insert({
+              user_id: session.user.id,
+              role: 'paciente_autonomo'
+            });
+
+          if (roleError) {
+            console.error('Error assigning role:', roleError);
+            toast({
+              title: "Erro",
+              description: "Falha ao atribuir papel.",
+              variant: "destructive"
+            });
+            await supabase.auth.signOut();
+            navigate('/auth/choice');
+            setLoading(false);
+            return;
+          }
+
           // Criar registro em pacientes_autonomos (tabela correta)
           const { error: autonomoError } = await supabase
             .from('pacientes_autonomos')

@@ -235,12 +235,23 @@ Deno.serve(async (req) => {
         name: name,
         username: username,
         email: shadowEmail,
-        birth_date: isoBirth,
-        role: 'paciente_dependente'
+        birth_date: isoBirth
       });
 
     if (profileError) {
       console.error('Error creating profile:', profileError);
+    }
+
+    // Insert role in user_roles table (security)
+    const { error: roleError } = await supabaseAdmin
+      .from('user_roles')
+      .insert({
+        user_id: newUser.user.id,
+        role: 'paciente_dependente'
+      });
+
+    if (roleError) {
+      console.error('Error assigning role:', roleError);
     }
 
     return new Response(

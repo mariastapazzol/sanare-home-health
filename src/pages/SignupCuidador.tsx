@@ -62,6 +62,35 @@ const SignupCuidador = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Failed to create user');
 
+      // Create profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          user_id: authData.user.id,
+          name: formData.name,
+          username: formData.email.split('@')[0],
+          email: formData.email,
+          birth_date: formData.birthDate || null
+        });
+
+      if (profileError) {
+        console.error('Error creating profile:', profileError);
+        throw new Error('Database error creating profile');
+      }
+
+      // Insert role in user_roles table (security)
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: authData.user.id,
+          role: 'cuidador'
+        });
+
+      if (roleError) {
+        console.error('Error assigning role:', roleError);
+        throw new Error('Database error assigning role');
+      }
+
       // Create cuidador record
       const { error: cuidadorError } = await supabase
         .from('cuidadores')
@@ -74,7 +103,7 @@ const SignupCuidador = () => {
 
       if (cuidadorError) {
         console.error('Error creating cuidador:', cuidadorError);
-        throw new Error('Database error saving new user');
+        throw new Error('Database error saving caregiver');
       }
 
       toast({
