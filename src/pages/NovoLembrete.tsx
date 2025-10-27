@@ -433,7 +433,17 @@ const NovoLembrete = () => {
         </Card>
 
         {/* Submit Button */}
-        <Button type="submit" className="w-full" disabled={loading || !isContextReady || !currentContext?.id}>
+        <Button 
+          type="submit" 
+          className="w-full" 
+          disabled={
+            loading || 
+            !currentContext?.id || 
+            !formData.nome.trim() || 
+            formData.horarios.length === 0 || 
+            formData.datas.length === 0
+          }
+        >
           {loading ? (
             <div className="flex items-center space-x-2">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>

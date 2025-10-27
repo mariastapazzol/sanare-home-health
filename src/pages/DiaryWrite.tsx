@@ -33,20 +33,10 @@ const DiaryWrite = () => {
   };
 
   const handleSave = async () => {
-    if (!isContextReady) return;
-    if (!currentContext?.id) {
+    if (!isContextReady || !currentContext?.id) {
       toast({
         title: "Erro",
         description: "Contexto não disponível. Tente novamente.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (!content.trim()) {
-      toast({
-        title: "Erro",
-        description: "Por favor, escreva algo antes de salvar.",
         variant: "destructive"
       });
       return;
@@ -82,8 +72,6 @@ const DiaryWrite = () => {
     }
   };
 
-  const moodDisplay = getMoodDisplay(mood);
-
   if (!isContextReady) {
     return (
       <div className="min-h-screen bg-background p-4 space-y-4">
@@ -93,6 +81,9 @@ const DiaryWrite = () => {
       </div>
     );
   }
+
+  const moodDisplay = getMoodDisplay(mood);
+  const isFormValid = content.trim().length > 0 && currentContext?.id;
 
   return (
     <div className="min-h-screen bg-background">
@@ -144,7 +135,7 @@ const DiaryWrite = () => {
                 </Button>
                 <Button
                   onClick={handleSave}
-                  disabled={isLoading || !isContextReady || !currentContext?.id}
+                  disabled={isLoading || !isFormValid}
                   className="flex-1"
                 >
                   {isLoading ? 'Salvando...' : 'Salvar'}

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -18,7 +19,7 @@ interface ValidacaoSinal {
 const NovoSinalVital = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { currentContext } = useCareContext();
+  const { currentContext, isContextReady } = useCareContext();
   const [loading, setLoading] = useState(false);
   const [pressaoSistolica, setPressaoSistolica] = useState('');
   const [pressaoDiastolica, setPressaoDiastolica] = useState('');
@@ -105,13 +106,8 @@ const NovoSinalVital = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user || !currentContext) {
-      toast.error('Contexto não disponível. Por favor, faça login novamente.');
-      return;
-    }
-    
-    if (!pressaoSistolica && !pressaoDiastolica && !frequenciaCardiaca && !saturacaoOxigenio && !temperatura && !glicose) {
-      toast.error('Por favor, preencha pelo menos um sinal vital');
+    if (!isContextReady || !currentContext?.id) {
+      toast.error('Contexto não disponível. Tente novamente.');
       return;
     }
 
@@ -143,12 +139,25 @@ const NovoSinalVital = () => {
     }
   };
 
+  if (!isContextReady) {
+    return (
+      <div className="min-h-screen bg-background p-4 space-y-4">
+        <Skeleton className="h-10 w-40" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
+
   const validacaoPA = validarPressaoSistolica(pressaoSistolica);
   const validacaoPAD = validarPressaoDiastolica(pressaoDiastolica);
   const validacaoFC = validarFrequenciaCardiaca(frequenciaCardiaca);
   const validacaoSat = validarSaturacao(saturacaoOxigenio);
   const validacaoTemp = validarTemperatura(temperatura);
   const validacaoGlic = validarGlicose(glicose);
+
+  const hasAtLeastOneValue = pressaoSistolica || pressaoDiastolica || frequenciaCardiaca || saturacaoOxigenio || temperatura || glicose;
+  const isFormValid = hasAtLeastOneValue && currentContext?.id;
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -314,7 +323,7 @@ const NovoSinalVital = () => {
         <Button
           type="submit"
           className="btn-health w-full"
-          disabled={loading}
+          disabled={loading || !isFormValid}
         >
           {loading ? 'Salvando...' : 'Registrar Sinais Vitais'}
         </Button>

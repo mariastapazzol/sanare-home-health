@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -50,7 +51,7 @@ const DURACOES = [
 const NovoSintoma = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { currentContext } = useCareContext();
+  const { currentContext, isContextReady } = useCareContext();
   const [loading, setLoading] = useState(false);
   const [sintoma, setSintoma] = useState('');
   const [sintomaCustom, setSintomaCustom] = useState('');
@@ -82,18 +83,8 @@ const NovoSintoma = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user || !currentContext) {
-      toast.error('Contexto não disponível. Por favor, faça login novamente.');
-      return;
-    }
-    
-    if (!sintoma && !sintomaCustom) {
-      toast.error('Por favor, selecione ou digite um sintoma');
-      return;
-    }
-    
-    if (!duracao) {
-      toast.error('Por favor, selecione a duração do sintoma');
+    if (!isContextReady || !currentContext?.id) {
+      toast.error('Contexto não disponível. Tente novamente.');
       return;
     }
 
@@ -123,6 +114,18 @@ const NovoSintoma = () => {
       setLoading(false);
     }
   };
+
+  if (!isContextReady) {
+    return (
+      <div className="min-h-screen bg-background p-4 space-y-4">
+        <Skeleton className="h-10 w-40" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
+
+  const isFormValid = (sintoma || sintomaCustom) && duracao && currentContext?.id;
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -251,7 +254,7 @@ const NovoSintoma = () => {
         <Button
           type="submit"
           className="btn-health w-full"
-          disabled={loading}
+          disabled={loading || !isFormValid}
         >
           {loading ? 'Salvando...' : 'Registrar Sintoma'}
         </Button>

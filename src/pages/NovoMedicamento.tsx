@@ -45,6 +45,8 @@ const NovoMedicamento = () => {
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
+    mode: 'onChange',
+    reValidateMode: 'onChange',
     defaultValues: {
       nome: "",
       dosagem: "",
@@ -678,7 +680,11 @@ const NovoMedicamento = () => {
                 </CardContent>
               </Card>
 
-              <Button type="submit" disabled={loading || !isContextReady || !currentContext?.id} className="w-full btn-health">
+              <Button 
+                type="submit" 
+                disabled={loading || !form.formState.isValid || !currentContext?.id} 
+                className="w-full btn-health"
+              >
                 {loading ? "Salvando..." : "Salvar Medicamento"}
               </Button>
             </form>
