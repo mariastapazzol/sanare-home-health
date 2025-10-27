@@ -125,7 +125,7 @@ export default function Receitas() {
       const filePath = urlParts.slice(-2).join('/');
       
       await supabase.storage
-        .from('prescricoes')
+        .from('receitas')
         .remove([filePath]);
 
       const { error } = await supabase
@@ -196,7 +196,7 @@ export default function Receitas() {
       const fileName = `${currentContext.id}/${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('prescricoes')
+        .from('receitas')
         .upload(fileName, file, {
           contentType: file.type,
           cacheControl: '3600',
@@ -206,7 +206,7 @@ export default function Receitas() {
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('prescricoes')
+        .from('receitas')
         .getPublicUrl(fileName);
 
       const { error: insertError } = await supabase
