@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { ArrowLeft, AlertCircle, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -21,6 +22,7 @@ const NovoSinalVital = () => {
   const { user } = useAuth();
   const { currentContext, isContextReady } = useCareContext();
   const [loading, setLoading] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pressaoSistolica, setPressaoSistolica] = useState('');
   const [pressaoDiastolica, setPressaoDiastolica] = useState('');
   const [frequenciaCardiaca, setFrequenciaCardiaca] = useState('');
@@ -103,15 +105,19 @@ const NovoSinalVital = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setShowConfirmDialog(true);
+  };
+
+  const confirmSave = async () => {
     if (!isContextReady || !currentContext?.id) {
       toast.error('Contexto não disponível. Tente novamente.');
       return;
     }
 
     setLoading(true);
+    setShowConfirmDialog(false);
 
     try {
       const { error } = await supabase
@@ -328,6 +334,27 @@ const NovoSinalVital = () => {
           {loading ? 'Salvando...' : 'Registrar Sinais Vitais'}
         </Button>
       </form>
+
+      {/* Dialog de Confirmação */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              Confirmar registro dos sinais vitais
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Após salvar, este registro não poderá ser editado ou excluído. Tem certeza de que deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSave} disabled={loading}>
+              {loading ? 'Salvando...' : 'Confirmar e salvar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

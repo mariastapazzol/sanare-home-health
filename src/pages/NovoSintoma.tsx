@@ -9,7 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -53,6 +54,7 @@ const NovoSintoma = () => {
   const { user } = useAuth();
   const { currentContext, isContextReady } = useCareContext();
   const [loading, setLoading] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [sintoma, setSintoma] = useState('');
   const [sintomaCustom, setSintomaCustom] = useState('');
   const [intensidade, setIntensidade] = useState([5]);
@@ -80,15 +82,19 @@ const NovoSintoma = () => {
     return 'Intenso';
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setShowConfirmDialog(true);
+  };
+
+  const confirmSave = async () => {
     if (!isContextReady || !currentContext?.id) {
       toast.error('Contexto não disponível. Tente novamente.');
       return;
     }
 
     setLoading(true);
+    setShowConfirmDialog(false);
 
     try {
       const { error } = await supabase
@@ -259,6 +265,27 @@ const NovoSintoma = () => {
           {loading ? 'Salvando...' : 'Registrar Sintoma'}
         </Button>
       </form>
+
+      {/* Dialog de Confirmação */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              Confirmar registro do sintoma
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Após salvar, este registro não poderá ser editado ou excluído. Tem certeza de que deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSave} disabled={loading}>
+              {loading ? 'Salvando...' : 'Confirmar e salvar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
