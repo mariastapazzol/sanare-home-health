@@ -3,18 +3,29 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useChecklistDaily } from "@/hooks/use-checklist-daily";
 import { useCareContext } from "@/hooks/use-care-context";
 import { formatDateDisplay } from "@/lib/checklist-utils";
-import { RefreshCw, History, X } from "lucide-react";
+import { RefreshCw, History, X, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 export function ChecklistToday() {
   const { currentContext, isContextReady } = useCareContext();
   const { items, loading, todayKey, toggleChecked, toggleInactive, reload } = useChecklistDaily({ 
     contextId: currentContext?.id 
   });
+  const [confirmingItemId, setConfirmingItemId] = useState<string | null>(null);
+
+  const isTimePassed = (horario: string): boolean => {
+    const now = new Date();
+    const [hours, minutes] = horario.split(':').map(Number);
+    const itemTime = new Date();
+    itemTime.setHours(hours, minutes, 0, 0);
+    return now > itemTime;
+  };
 
   const incompleteTasks = items.filter(item => !item.checked && !item.inactive);
   const completedCount = items.filter(item => item.checked).length;
@@ -109,39 +120,95 @@ export function ChecklistToday() {
             )}
           </div>
         ) : (
-          <div className="space-y-3">
-            {incompleteTasks.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors border"
-              >
-                <Checkbox
-                  id={`item-${item.id}`}
-                  checked={item.checked}
-                  onCheckedChange={() => toggleChecked(item.id)}
-                  className="h-5 w-5"
-                />
-                <label
-                  htmlFor={`item-${item.id}`}
-                  className="flex-1 cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{item.nome}</span>
-                    <span className="text-sm text-muted-foreground">às {item.horario}</span>
+          <TooltipProvider>
+            <div className="space-y-3">
+              {incompleteTasks.map((item) => {
+                const timePassed = isTimePassed(item.horario);
+                return (
+                  <div
+                    key={item.id}
+                    className={`flex items-center space-x-3 p-3 rounded-lg transition-colors border ${
+                      timePassed ? 'opacity-60 bg-muted/30' : 'hover:bg-muted/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {timePassed ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="h-5 w-5 flex items-center justify-center cursor-not-allowed">
+                              <Lock className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Prazo expirado</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <Checkbox
+                          id={`item-${item.id}`}
+                          checked={item.checked}
+                          onCheckedChange={() => toggleChecked(item.id)}
+                          className="h-5 w-5"
+                        />
+                      )}
+                    </div>
+                    <label
+                      htmlFor={timePassed ? undefined : `item-${item.id}`}
+                      className={`flex-1 ${timePassed ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{item.nome}</span>
+                        <span className="text-sm text-muted-foreground">às {item.horario}</span>
+                      </div>
+                      {timePassed && (
+                        <AlertDialog open={confirmingItemId === item.id} onOpenChange={(open) => !open && setConfirmingItemId(null)}>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="link"
+                              size="sm"
+                              className="h-auto p-0 text-xs text-primary mt-1"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setConfirmingItemId(item.id);
+                              }}
+                            >
+                              Marcar como feito mesmo após o horário?
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Confirmar conclusão</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                O horário limite para "{item.nome}" já passou. Deseja marcar como concluído mesmo assim?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => {
+                                toggleChecked(item.id);
+                                setConfirmingItemId(null);
+                              }}>
+                                Confirmar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </label>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => toggleInactive(item.id)}
+                      title="Marcar como não realizado hoje"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
-                </label>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                  onClick={() => toggleInactive(item.id)}
-                  title="Marcar como não realizado hoje"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          </TooltipProvider>
         )}
         
         {totalCount > 0 && (
