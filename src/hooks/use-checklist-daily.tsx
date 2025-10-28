@@ -11,6 +11,9 @@ export interface ChecklistItem {
   checked: boolean;
   inactive: boolean;
   tipo: 'medicamento' | 'lembrete';
+  quantidade_atual?: number;
+  quantidade_por_dose?: number;
+  alerta_minimo?: number;
 }
 
 interface UseChecklistDailyProps {
@@ -41,7 +44,7 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
       // @ts-ignore - Evita erro de inferência de tipo profunda do Supabase
       const { data: medicamentos } = await supabase
         .from('medicamentos')
-        .select('id, nome, horarios')
+        .select('id, nome, horarios, quantidade_atual, quantidade_por_dose, alerta_minimo')
         .eq('context_id', contextId);
 
       // Buscar lembretes pelo context_id
@@ -65,7 +68,10 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
               horario,
               checked: false,
               inactive: false,
-              tipo: 'medicamento'
+              tipo: 'medicamento',
+              quantidade_atual: med.quantidade_atual,
+              quantidade_por_dose: med.quantidade_por_dose,
+              alerta_minimo: med.alerta_minimo
             });
           });
         });
@@ -239,12 +245,39 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
     }
   }, [user, todayKey, contextId, items]);
 
+  // Verificar se há estoque suficiente
+  const checkStock = useCallback((itemId: string): { sufficient: boolean; current: number; needed: number } => {
+    const item = items.find(i => i.id === itemId);
+    if (!item || item.tipo !== 'medicamento') {
+      return { sufficient: true, current: 0, needed: 0 };
+    }
+    
+    const current = item.quantidade_atual || 0;
+    const needed = item.quantidade_por_dose || 0;
+    
+    return {
+      sufficient: current >= needed,
+      current,
+      needed
+    };
+  }, [items]);
+
   // Marcar item como concluído (checked)
-  const toggleChecked = useCallback((itemId: string) => {
+  const toggleChecked = useCallback(async (itemId: string) => {
     const item = items.find(i => i.id === itemId);
     if (!item) return;
-    updateItemStatus(itemId, { checked: !item.checked });
-  }, [items, updateItemStatus]);
+    
+    // Se está marcando como feito e é medicamento, verificar estoque
+    if (!item.checked && item.tipo === 'medicamento') {
+      const stock = checkStock(itemId);
+      if (!stock.sufficient) {
+        return { success: false, stockInsufficient: true };
+      }
+    }
+    
+    await updateItemStatus(itemId, { checked: !item.checked });
+    return { success: true, stockInsufficient: false };
+  }, [items, updateItemStatus, checkStock]);
 
   // Marcar item como inativo
   const toggleInactive = useCallback((itemId: string) => {
@@ -301,6 +334,7 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
     todayKey,
     toggleChecked,
     toggleInactive,
+    checkStock,
     reload: loadChecklist
   };
 }

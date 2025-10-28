@@ -4,20 +4,23 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 import { useChecklistDaily } from "@/hooks/use-checklist-daily";
 import { useCareContext } from "@/hooks/use-care-context";
 import { formatDateDisplay } from "@/lib/checklist-utils";
-import { RefreshCw, History, X, Lock } from "lucide-react";
-import { Link } from "react-router-dom";
+import { RefreshCw, History, X, Lock, AlertTriangle, Package } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
 
 export function ChecklistToday() {
   const { currentContext, isContextReady } = useCareContext();
-  const { items, loading, todayKey, toggleChecked, toggleInactive, reload } = useChecklistDaily({ 
+  const { items, loading, todayKey, toggleChecked, toggleInactive, checkStock, reload } = useChecklistDaily({ 
     contextId: currentContext?.id 
   });
   const [confirmingItemId, setConfirmingItemId] = useState<string | null>(null);
+  const [stockWarningItem, setStockWarningItem] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const isTimePassed = (horario: string): boolean => {
     const now = new Date();
@@ -25,6 +28,13 @@ export function ChecklistToday() {
     const itemTime = new Date();
     itemTime.setHours(hours, minutes, 0, 0);
     return now > itemTime;
+  };
+
+  const handleToggleChecked = async (itemId: string) => {
+    const result = await toggleChecked(itemId);
+    if (result && !result.success && result.stockInsufficient) {
+      setStockWarningItem(itemId);
+    }
   };
 
   const incompleteTasks = items.filter(item => !item.checked && !item.inactive);
@@ -147,7 +157,7 @@ export function ChecklistToday() {
                         <Checkbox
                           id={`item-${item.id}`}
                           checked={item.checked}
-                          onCheckedChange={() => toggleChecked(item.id)}
+                          onCheckedChange={() => handleToggleChecked(item.id)}
                           className="h-5 w-5"
                         />
                       )}
@@ -156,9 +166,21 @@ export function ChecklistToday() {
                       htmlFor={timePassed ? undefined : `item-${item.id}`}
                       className={`flex-1 ${timePassed ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium">{item.nome}</span>
                         <span className="text-sm text-muted-foreground">às {item.horario}</span>
+                        {item.tipo === 'medicamento' && item.quantidade_atual !== undefined && item.alerta_minimo !== undefined && item.quantidade_atual <= item.alerta_minimo && (
+                          <Badge variant="destructive" className="text-xs gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            Estoque baixo
+                          </Badge>
+                        )}
+                        {item.tipo === 'medicamento' && item.quantidade_atual !== undefined && (
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Package className="h-3 w-3" />
+                            {item.quantidade_atual} disponível
+                          </span>
+                        )}
                       </div>
                       {timePassed && (
                         <AlertDialog open={confirmingItemId === item.id} onOpenChange={(open) => !open && setConfirmingItemId(null)}>
@@ -185,7 +207,7 @@ export function ChecklistToday() {
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancelar</AlertDialogCancel>
                               <AlertDialogAction onClick={() => {
-                                toggleChecked(item.id);
+                                handleToggleChecked(item.id);
                                 setConfirmingItemId(null);
                               }}>
                                 Confirmar
@@ -228,6 +250,30 @@ export function ChecklistToday() {
           </div>
         )}
       </CardContent>
+
+      {/* Dialog de estoque insuficiente */}
+      <AlertDialog open={stockWarningItem !== null} onOpenChange={(open) => !open && setStockWarningItem(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Estoque insuficiente
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Não há estoque suficiente para marcar este medicamento como tomado. Deseja ajustar o estoque agora?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setStockWarningItem(null);
+              navigate('/estoque');
+            }}>
+              Ajustar estoque
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
