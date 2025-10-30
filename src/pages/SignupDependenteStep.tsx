@@ -7,6 +7,41 @@ import { Heart } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
+
+// Schema de validação
+const dependentSchema = z.object({
+  name: z.string()
+    .trim()
+    .min(3, "Nome deve ter pelo menos 3 caracteres")
+    .max(100, "Nome deve ter no máximo 100 caracteres"),
+  username: z.string()
+    .trim()
+    .toLowerCase()
+    .min(3, "Nome de usuário deve ter pelo menos 3 caracteres")
+    .max(30, "Nome de usuário deve ter no máximo 30 caracteres")
+    .regex(/^[a-z0-9._]+$/, "Use apenas letras minúsculas, números, pontos e underscores"),
+  birthDate: z.string().min(1, "Data de nascimento é obrigatória"),
+  password: z.string()
+    .min(8, "Senha deve ter pelo menos 8 caracteres")
+    .max(100, "Senha deve ter no máximo 100 caracteres"),
+  confirmPassword: z.string()
+});
+
+const toISODate = (d: string): string => {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) {
+    const [a, b, c] = d.split("/");
+    const dd = parseInt(a, 10);
+    const mm = parseInt(b, 10);
+    const yyyy = c;
+    const [month, day] = dd > 12 ? [mm, dd] : [dd, mm];
+    return `${yyyy}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  }
+  const dt = new Date(d);
+  if (!isNaN(+dt)) return dt.toISOString().slice(0, 10);
+  throw new Error("DATA_INVALIDA");
+};
 
 const SignupDependenteStep = () => {
   const navigate = useNavigate();
@@ -20,25 +55,18 @@ const SignupDependenteStep = () => {
   });
   const [loading, setLoading] = useState(false);
 
-  const toISODate = (d: string): string => {
-    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) {
-      const [a, b, c] = d.split("/");
-      const dd = parseInt(a, 10);
-      const mm = parseInt(b, 10);
-      const yyyy = c;
-      const [month, day] = dd > 12 ? [mm, dd] : [dd, mm];
-      return `${yyyy}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    }
-    const dt = new Date(d);
-    if (!isNaN(+dt)) return dt.toISOString().slice(0, 10);
-    throw new Error("DATA_INVALIDA");
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (formData.password !== formData.confirmPassword) {
+    // Normalizar username antes de validar
+    const normalizedData = {
+      ...formData,
+      name: formData.name.trim(),
+      username: formData.username.trim().toLowerCase(),
+    };
+    
+    // Validar senhas coincidirem
+    if (normalizedData.password !== normalizedData.confirmPassword) {
       toast({
         title: "Erro",
         description: "As senhas não coincidem",
@@ -47,24 +75,19 @@ const SignupDependenteStep = () => {
       return;
     }
 
-    if (formData.password.length < 8) {
-      toast({
-        title: "Erro",
-        description: "A senha deve ter pelo menos 8 caracteres",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Validate username
-    const usernameRegex = /^[A-Za-z0-9._]{3,}$/;
-    if (!usernameRegex.test(formData.username)) {
-      toast({
-        title: "Erro",
-        description: "Nome de usuário inválido. Use apenas letras, números, pontos e underscores (mínimo 3 caracteres)",
-        variant: "destructive"
-      });
-      return;
+    // Validar com schema zod
+    try {
+      dependentSchema.parse(normalizedData);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const firstError = error.errors[0];
+        toast({
+          title: "Erro de validação",
+          description: firstError.message,
+          variant: "destructive"
+        });
+        return;
+      }
     }
     
     setLoading(true);
@@ -73,7 +96,7 @@ const SignupDependenteStep = () => {
       // Normalize date
       let isoDate: string;
       try {
-        isoDate = toISODate(formData.birthDate);
+        isoDate = toISODate(normalizedData.birthDate);
       } catch {
         toast({
           title: "Erro",
@@ -97,7 +120,7 @@ const SignupDependenteStep = () => {
         return;
       }
 
-      // Call edge function directly with fetch for better error handling
+      // Call edge function with normalized data
       const supabaseUrl = "https://qcglxiuygxzxmbmajyxs.supabase.co";
       const response = await fetch(`${supabaseUrl}/functions/v1/create-dependent-user`, {
         method: 'POST',
@@ -106,10 +129,10 @@ const SignupDependenteStep = () => {
           'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
-          name: formData.name,
-          username: formData.username,
+          name: normalizedData.name,
+          username: normalizedData.username,
           birth_date: isoDate,
-          password: formData.password,
+          password: normalizedData.password,
           observacoes: null,
         })
       });
@@ -185,13 +208,16 @@ const SignupDependenteStep = () => {
                 id="username"
                 type="text"
                 value={formData.username}
-                onChange={(e) => handleChange('username', e.target.value.toLowerCase())}
+                onChange={(e) => {
+                  const normalized = e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, '');
+                  handleChange('username', normalized);
+                }}
                 placeholder="usuario123"
                 required
-                className="min-h-[44px]"
+                className="min-h-[44px] font-mono"
               />
               <p className="text-xs text-muted-foreground">
-                O usuário será usado para login. Não pode ser alterado depois.
+                Apenas letras minúsculas, números, pontos e underscores. Mínimo 3 caracteres.
               </p>
             </div>
 

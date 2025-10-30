@@ -91,8 +91,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { name, username, birth_date, password, observacoes } = await req.json();
+    let { name, username, birth_date, password, observacoes } = await req.json();
 
+    // Normalize and validate inputs
     if (!name || !username || !birth_date || !password) {
       return new Response(
         JSON.stringify({ error: 'Campos obrigatórios ausentes' }),
@@ -100,17 +101,22 @@ Deno.serve(async (req) => {
       );
     }
 
-    const usernameRegex = /^[A-Za-z0-9._]{3,}$/;
+    // Normalize username: trim, lowercase, remove invalid chars
+    name = name.trim();
+    username = username.trim().toLowerCase().replace(/[^a-z0-9._]/g, '');
+
+    // Validate username format
+    const usernameRegex = /^[a-z0-9._]{3,30}$/;
     if (!usernameRegex.test(username)) {
       return new Response(
-        JSON.stringify({ error: 'Username inválido. Use letras, números, ponto ou underline (mín. 3).' }),
+        JSON.stringify({ error: 'Username inválido. Use apenas letras minúsculas, números, ponto ou underline (3-30 caracteres).' }),
         { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    if (password.length < 8) {
+    if (password.length < 8 || password.length > 100) {
       return new Response(
-        JSON.stringify({ error: 'A senha deve ter pelo menos 8 caracteres' }),
+        JSON.stringify({ error: 'A senha deve ter entre 8 e 100 caracteres' }),
         { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -123,11 +129,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check username uniqueness
+    // Check username uniqueness (case-insensitive)
     const { data: existing } = await supabaseAdmin
       .from('pacientes_dependentes')
       .select('id')
-      .ilike('nome_usuario', username)
+      .eq('nome_usuario', username)
       .maybeSingle();
 
     if (existing) {
@@ -137,8 +143,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Generate shadow email for auth
-    const shadowEmail = `${username.toLowerCase()}@dep.sanare.local`;
+    // Generate shadow email for auth (username is already lowercase)
+    const shadowEmail = `${username}@dep.sanare.local`;
 
     console.log('Creating dependent user with shadow email:', shadowEmail);
 
