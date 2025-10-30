@@ -29,6 +29,7 @@ interface CareCtxState {
   userRole: Role | null;
   reload: () => Promise<void>;
   selectDependent: (ownerUserId: string) => void;
+  bootstrapping: boolean;
 }
 
 const CareContextContext = createContext<CareCtxState | undefined>(undefined);
@@ -40,6 +41,7 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
   const [currentContext, setCurrentContextState] = useState<CareContextView | null>(null);
   const [userRole, setUserRole] = useState<Role | null>(null);
   const [loading, setLoading] = useState(true);
+  const [bootstrapping, setBootstrapping] = useState(false);
 
   const selectedContextId = currentContext?.id ?? null;
 
@@ -70,6 +72,7 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
   const loadContexts = async () => {
     if (!user) return;
     setLoading(true);
+    setBootstrapping(true);
 
     try {
       // 1) Papel
@@ -93,19 +96,20 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
       if (ctxErr) {
         console.error("Error loading contexts:", ctxErr);
         setLoading(false);
+        setBootstrapping(false);
         return;
       }
 
       let contextsList = (ctxs ?? []) as CareContextRow[];
 
-      // 3) Garante SELF somente para paciente_autonomo ou paciente_dependente (não cria para cuidador)
-      if (role === "paciente_autonomo" || role === "paciente_dependente") {
+      // 3) Bootstrap: Garante que sempre haja um contexto para o usuário
+      if (role === "paciente_autonomo") {
         const hasSelf = contextsList.some((c) => c.tipo === "self" && c.owner_user_id === user.id);
-        if (!hasSelf && role === "paciente_autonomo") {
-          // Só cria contexto self para autônomo
+        if (!hasSelf) {
+          // Cria contexto self para autônomo
           const { data: created, error: createErr } = await supabase
             .from("care_contexts")
-            .insert([{ nome: "Meu contexto", tipo: "self", owner_user_id: user.id }])
+            .insert([{ nome: "Meu Cuidado", tipo: "self", owner_user_id: user.id }])
             .select()
             .maybeSingle();
           if (!createErr && created) {
@@ -113,6 +117,13 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
           } else if (createErr) {
             console.error("Error creating self context:", createErr);
           }
+        }
+      } else if (role === "paciente_dependente") {
+        // Paciente dependente: deve já ter um contexto criado pelo cuidador
+        // Se não tiver, é um erro de configuração
+        const hasDependent = contextsList.some((c) => c.tipo === "dependent" && c.owner_user_id === user.id);
+        if (!hasDependent) {
+          console.warn("Paciente dependente sem contexto. Isso não deveria acontecer.");
         }
       }
 
@@ -133,38 +144,48 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
 
       setContexts(withNames);
 
-      // 5) Define currentContext:
-      //    - Tenta restaurar do localStorage (se ainda válido)
-      //    - Senão: autônomo => self; dependente => seu dependent; cuidador => não seleciona (força seleção manual)
+      // 5) Define currentContext com garantia de seleção
       let chosen: CareContextView | null = null;
 
+      // Tenta restaurar do localStorage (se ainda válido)
       const fromLSRaw = localStorage.getItem(LS_KEY);
       if (fromLSRaw) {
-        const fromLS = JSON.parse(fromLSRaw) as CareContextView;
-        const stillThere = withNames.find((c) => c.id === fromLS.id);
-        if (stillThere) chosen = stillThere;
+        try {
+          const fromLS = JSON.parse(fromLSRaw) as CareContextView;
+          const stillThere = withNames.find((c) => c.id === fromLS.id);
+          if (stillThere) chosen = stillThere;
+        } catch (e) {
+          console.warn("Error parsing localStorage context:", e);
+          localStorage.removeItem(LS_KEY);
+        }
       }
 
-      if (!chosen) {
+      // Se não restaurou, seleciona baseado no role
+      if (!chosen && withNames.length > 0) {
         if (role === "paciente_autonomo") {
-          chosen = withNames.find((c) => c.tipo === "self" && c.owner_user_id === user.id) ?? null;
+          // Autônomo: sempre seleciona seu contexto self
+          chosen = withNames.find((c) => c.tipo === "self" && c.owner_user_id === user.id) ?? withNames[0];
         } else if (role === "paciente_dependente") {
-          chosen = withNames.find((c) => c.tipo === "dependent" && c.owner_user_id === user.id) ?? null;
+          // Dependente: seleciona seu contexto dependent
+          chosen = withNames.find((c) => c.tipo === "dependent" && c.owner_user_id === user.id) ?? withNames[0];
         } else if (role === "cuidador") {
           // Cuidador: seleciona automaticamente se tiver exatamente 1 contexto
           if (withNames.length === 1) {
             chosen = withNames[0];
-          } else {
-            chosen = null;
           }
+          // Se tiver mais de 1, deixa null para forçar seleção manual
         }
       }
 
       setCurrentContextState(chosen);
+
+      // Aguarda um frame para garantir que o estado foi atualizado
+      await new Promise(resolve => setTimeout(resolve, 0));
     } catch (e) {
       console.error("Error in loadContexts:", e);
     } finally {
       setLoading(false);
+      setBootstrapping(false);
     }
   };
 
@@ -182,10 +203,11 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
     setCurrentContext,
     clearContext,
     loading,
-    isContextReady: !loading,
+    isContextReady: !loading && !bootstrapping,
     userRole,
     reload: loadContexts,
     selectDependent,
+    bootstrapping,
   };
 
   return <CareContextContext.Provider value={value}>{children}</CareContextContext.Provider>;
