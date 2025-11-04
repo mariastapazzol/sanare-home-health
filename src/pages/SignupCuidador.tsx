@@ -65,6 +65,16 @@ const SignupCuidador = () => {
       // Wait a moment for the trigger to complete
       await new Promise(resolve => setTimeout(resolve, 1000));
 
+      // Update profile role to cuidador
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ role: 'cuidador' })
+        .eq('user_id', authData.user.id);
+
+      if (profileError) {
+        console.error('Error updating profile role:', profileError);
+      }
+
       // Update user role to cuidador (trigger creates as paciente_autonomo by default)
       const { error: roleError } = await supabase
         .from('user_roles')
@@ -81,6 +91,13 @@ const SignupCuidador = () => {
         .from('pacientes_autonomos')
         .delete()
         .eq('user_id', authData.user.id);
+
+      // Delete self care context (created by trigger, not needed for caregivers)
+      await supabase
+        .from('care_contexts')
+        .delete()
+        .eq('owner_user_id', authData.user.id)
+        .eq('tipo', 'self');
 
       // Create cuidador record
       const { error: cuidadorError } = await supabase
