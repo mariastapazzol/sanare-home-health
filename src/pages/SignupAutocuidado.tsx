@@ -66,89 +66,29 @@ const SignupAutocuidado = () => {
         return;
       }
 
-      // Wait for session
+      // Wait for session and trigger to complete
       setTimeout(async () => {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
-          // Verificar se já existe em outras tabelas (evitar duplicação)
-          const [{ data: existeCuidador }, { data: existeDependente }] = await Promise.all([
-            supabase.from('cuidadores').select('id').eq('user_id', session.user.id).maybeSingle(),
-            supabase.from('pacientes_dependentes').select('id').eq('user_id', session.user.id).maybeSingle()
-          ]);
-
-          if (existeCuidador || existeDependente) {
-            toast({
-              title: "Erro",
-              description: "Este usuário já possui um cadastro em outro papel.",
-              variant: "destructive"
-            });
-            await supabase.auth.signOut();
-            navigate('/auth/choice');
-            setLoading(false);
-            return;
-          }
-
-          // Create profile
-          const { error: profileError } = await supabase
+          // O trigger handle_new_user() já criou:
+          // - profiles
+          // - user_roles (com role paciente_autonomo)
+          // - pacientes_autonomos
+          // - care_contexts (self)
+          
+          // Apenas verificar se tudo foi criado corretamente
+          const { data: profile } = await supabase
             .from('profiles')
-            .insert({
-              user_id: session.user.id,
-              name: formData.name,
-              username: formData.email.split('@')[0],
-              email: formData.email,
-              birth_date: formData.birth_date || null
-            });
+            .select('id')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
 
-          if (profileError) {
-            console.error('Error creating profile:', profileError);
+          if (!profile) {
+            console.error('Profile não foi criado pelo trigger');
             toast({
               title: "Erro",
-              description: "Falha ao criar perfil.",
-              variant: "destructive"
-            });
-            await supabase.auth.signOut();
-            navigate('/auth/choice');
-            setLoading(false);
-            return;
-          }
-
-          // Insert role in user_roles table (security)
-          const { error: roleError } = await supabase
-            .from('user_roles')
-            .insert({
-              user_id: session.user.id,
-              role: 'paciente_autonomo'
-            });
-
-          if (roleError) {
-            console.error('Error assigning role:', roleError);
-            toast({
-              title: "Erro",
-              description: "Falha ao atribuir papel.",
-              variant: "destructive"
-            });
-            await supabase.auth.signOut();
-            navigate('/auth/choice');
-            setLoading(false);
-            return;
-          }
-
-          // Criar registro em pacientes_autonomos (tabela correta)
-          const { error: autonomoError } = await supabase
-            .from('pacientes_autonomos')
-            .insert({
-              user_id: session.user.id,
-              nome: formData.name,
-              nome_usuario: formData.email.split('@')[0],
-              nascimento: formData.birth_date || null
-            });
-
-          if (autonomoError) {
-            console.error('Error creating paciente_autonomo:', autonomoError);
-            toast({
-              title: "Erro",
-              description: "Falha ao salvar dados do perfil.",
+              description: "Falha ao criar perfil. Tente novamente.",
               variant: "destructive"
             });
             await supabase.auth.signOut();
