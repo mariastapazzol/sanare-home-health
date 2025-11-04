@@ -223,38 +223,44 @@ const Profile = () => {
               </div>
             )}
 
-            <div className="flex space-x-4">
-              {editing ? (
-                <>
+            {/* Botão de editar - apenas para cuidadores */}
+            {papel === 'cuidador' && (
+              <div className="flex space-x-4">
+                {editing ? (
+                  <>
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      onClick={handleCancel}
+                      className="flex-1"
+                      size="sm"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancelar
+                    </Button>
+                    
+                    <Button 
+                      onClick={handleSave}
+                      className="btn-health flex-1"
+                      disabled={loading}
+                      size="sm"
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {loading ? 'Salvando...' : 'Salvar'}
+                    </Button>
+                  </>
+                ) : (
                   <Button 
-                    type="button"
-                    variant="outline"
-                    onClick={handleCancel}
-                    className="flex-1"
+                    onClick={handleEdit}
+                    className="btn-health"
+                    size="sm"
                   >
-                    <X className="h-4 w-4 mr-2" />
-                    Cancelar
+                    <Edit className="h-3 w-3 mr-2" />
+                    Editar
                   </Button>
-                  
-                  <Button 
-                    onClick={handleSave}
-                    className="btn-health flex-1"
-                    disabled={loading}
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    {loading ? 'Salvando...' : 'Salvar'}
-                  </Button>
-                </>
-              ) : (
-                <Button 
-                  onClick={handleEdit}
-                  className="btn-health w-full"
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar Perfil
-                </Button>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </div>
         </Card>
 
