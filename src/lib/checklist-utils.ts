@@ -1,30 +1,13 @@
-import { supabase } from "@/integrations/supabase/client";
+import { formatInTimeZone } from 'date-fns-tz';
 
 const TIMEZONE = "America/Sao_Paulo";
 
 /**
- * Obtém a data de hoje do servidor no timezone de São Paulo
+ * Obtém a data de hoje no timezone de São Paulo
  * Retorna no formato 'YYYY-MM-DD'
  */
-export async function getTodayKeyFromServer(): Promise<string> {
-  const { data, error } = await supabase.rpc('server_time_sampa');
-  
-  if (error) {
-    console.error('Erro ao buscar hora do servidor:', error);
-    // Fallback para hora local se a RPC falhar
-    return getLocalDateKey();
-  }
-  
-  // Converter timestamptz para data YYYY-MM-DD
-  const serverDate = new Date(data);
-  return serverDate.toISOString().split('T')[0];
-}
-
-/**
- * Obtém a data local (fallback)
- */
-function getLocalDateKey(): string {
-  return new Date().toISOString().split('T')[0];
+export function getTodayKey(): string {
+  return formatInTimeZone(new Date(), TIMEZONE, 'yyyy-MM-dd');
 }
 
 /**

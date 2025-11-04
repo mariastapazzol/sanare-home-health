@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { getTodayKeyFromServer, millisToNextMidnight } from '@/lib/checklist-utils';
+import { getTodayKey } from '@/lib/checklist-utils';
 import { useAuth } from '@/hooks/use-auth';
 
 export interface ChecklistItem {
@@ -36,9 +36,9 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
 
     setLoading(true);
     try {
-      // Obter data do servidor
-      const serverDate = await getTodayKeyFromServer();
-      setTodayKey(serverDate);
+      // Obter data de hoje em São Paulo
+      const dayKey = getTodayKey();
+      setTodayKey(dayKey);
 
       // Buscar medicamentos pelo context_id
       // @ts-ignore - Evita erro de inferência de tipo profunda do Supabase
@@ -99,7 +99,7 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
         .from('checklist_daily_status')
         .select('*')
         .eq('context_id', contextId)
-        .eq('day', serverDate);
+        .eq('day', dayKey);
 
       // Aplicar estado persistido
       if (statusData && statusData.length > 0) {
@@ -129,15 +129,21 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
 
   // Atualizar estado de um item
   const updateItemStatus = useCallback(async (itemId: string, updates: Partial<Pick<ChecklistItem, 'checked' | 'inactive'>>) => {
-    if (!user || !todayKey || !contextId) return;
+    if (!user || !contextId) return;
 
     const item = items.find(i => i.id === itemId);
     if (!item) return;
 
-    // Atualização otimista
-    setItems(prev => prev.map(i => 
-      i.id === itemId ? { ...i, ...updates } : i
-    ));
+    const dayKey = getTodayKey();
+
+    // Atualização otimista: se marcou como feito, remove da lista local
+    if (updates.checked === true) {
+      setItems(prev => prev.filter(i => i.id !== itemId));
+    } else {
+      setItems(prev => prev.map(i => 
+        i.id === itemId ? { ...i, ...updates } : i
+      ));
+    }
 
     // Persistir no banco usando context_id
     try {
@@ -146,7 +152,7 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
         .upsert({
           user_id: user.id,
           context_id: contextId,
-          day: todayKey,
+          day: dayKey,
           item_type: item.tipo,
           item_id: item.item_id,
           horario: item.horario,
@@ -159,9 +165,11 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
       if (error) {
         console.error('Erro ao salvar estado:', error);
         // Reverter otimização em caso de erro
-        setItems(prev => prev.map(i => 
-          i.id === itemId ? item : i
-        ));
+        if (updates.checked === true) {
+          setItems(prev => [...prev, item]);
+        } else {
+          setItems(prev => prev.map(i => i.id === itemId ? item : i));
+        }
         return;
       }
 
@@ -239,11 +247,13 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
     } catch (error) {
       console.error('Erro ao salvar estado:', error);
       // Reverter otimização em caso de erro
-      setItems(prev => prev.map(i => 
-        i.id === itemId ? item : i
-      ));
+      if (updates.checked === true) {
+        setItems(prev => [...prev, item]);
+      } else {
+        setItems(prev => prev.map(i => i.id === itemId ? item : i));
+      }
     }
-  }, [user, todayKey, contextId, items]);
+  }, [user, contextId, items]);
 
   // Verificar se há estoque suficiente
   const checkStock = useCallback((itemId: string): { sufficient: boolean; current: number; needed: number } => {
@@ -286,34 +296,17 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
     updateItemStatus(itemId, { inactive: !item.inactive });
   }, [items, updateItemStatus]);
 
-  // Configurar timer para reset à meia-noite
+  // Refetch on focus: detectar mudança de dia ao voltar à tela
   useEffect(() => {
     if (!user || !contextId) return;
     
-    const msUntilMidnight = millisToNextMidnight();
-    
-    const timerId = setTimeout(() => {
-      console.log('[Checklist] Meia-noite detectada, recarregando checklist');
-      loadChecklist();
-    }, msUntilMidnight);
-
-    return () => clearTimeout(timerId);
-  }, [user, contextId, loadChecklist]);
-
-  // Detectar mudança de data quando app volta do segundo plano
-  useEffect(() => {
-    if (!user || !contextId) return;
-    
-    let lastDate = todayKey;
-
-    const handleVisibilityChange = async () => {
+    const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        const currentDate = await getTodayKeyFromServer();
-        if (lastDate && currentDate !== lastDate) {
-          console.log('[Checklist] Mudança de data detectada, recarregando');
+        const currentDayKey = getTodayKey();
+        if (todayKey && currentDayKey !== todayKey) {
+          console.log('[Checklist] Mudança de dia detectada, recarregando');
           loadChecklist();
         }
-        lastDate = currentDate;
       }
     };
 

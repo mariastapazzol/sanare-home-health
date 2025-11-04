@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './use-auth';
 import { toast } from '@/components/ui/use-toast';
-import { getTodayKeyFromServer, millisToNextMidnight, checklistCache } from '@/lib/checklist-utils';
+import { getTodayKey, millisToNextMidnight, checklistCache } from '@/lib/checklist-utils';
 
 export interface Task {
   id: number;
@@ -40,8 +40,8 @@ export function useChecklist() {
 
     setLoading(true);
     try {
-      // Buscar data do servidor
-      const today = await getTodayKeyFromServer();
+      // Buscar data de hoje em São Paulo
+      const today = getTodayKey();
       setTodayKey(today);
 
       // Buscar tasks ativas
@@ -239,9 +239,9 @@ export function useChecklist() {
    * Verifica se mudou o dia quando o app volta ao foco
    */
   useEffect(() => {
-    const handleVisibilityChange = async () => {
+    const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && user) {
-        const currentDay = await getTodayKeyFromServer();
+        const currentDay = getTodayKey();
         if (currentDay !== todayKey) {
           console.log('Dia mudou - recarregando checklist');
           loadToday();
