@@ -102,7 +102,7 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
         contextsList = [...(ownedCtxs ?? [])] as CareContextRow[];
       }
 
-      // Se for paciente_dependente, busca também o contexto onde ele é o dependente
+      // Se for paciente_dependente, busca o contexto onde ele é o dependente
       if (role === "paciente_dependente") {
         // Busca o registro do dependente
         const { data: depRecord } = await supabase
@@ -112,7 +112,7 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
           .maybeSingle();
 
         if (depRecord?.id) {
-          // Busca contextos onde ele é o dependente
+          // Busca contextos onde ele é o dependente (criado pelo cuidador)
           const { data: depCtxs } = await supabase
             .from("care_contexts")
             .select("*")
@@ -120,11 +120,8 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
             .order("created_at", { ascending: true });
 
           if (depCtxs && depCtxs.length > 0) {
-            // Adiciona contextos de dependente que ainda não estão na lista
-            const newCtxs = (depCtxs as CareContextRow[]).filter(
-              (dc) => !contextsList.some((c) => c.id === dc.id)
-            );
-            contextsList = [...contextsList, ...newCtxs];
+            // Substitui a lista com os contextos do dependente
+            contextsList = depCtxs as CareContextRow[];
           }
         }
       }
@@ -146,11 +143,10 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
           }
         }
       } else if (role === "paciente_dependente") {
-        // Paciente dependente: deve já ter um contexto criado pelo cuidador
-        // Se não tiver, é um erro de configuração
-        const hasDependent = contextsList.some((c) => c.tipo === "dependent" && c.owner_user_id === user.id);
-        if (!hasDependent) {
-          console.warn("Paciente dependente sem contexto. Isso não deveria acontecer.");
+        // Paciente dependente: deve ter um contexto criado pelo cuidador
+        // onde ele é o dependente_id, não o owner
+        if (contextsList.length === 0) {
+          console.warn("Paciente dependente sem contexto criado pelo cuidador.");
         }
       }
 
@@ -193,8 +189,8 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
           // Autônomo: sempre seleciona seu contexto self
           chosen = withNames.find((c) => c.tipo === "self" && c.owner_user_id === user.id) ?? withNames[0];
         } else if (role === "paciente_dependente") {
-          // Dependente: seleciona seu contexto dependent
-          chosen = withNames.find((c) => c.tipo === "dependent" && c.owner_user_id === user.id) ?? withNames[0];
+          // Dependente: seleciona o contexto onde ele é o dependente (criado pelo cuidador)
+          chosen = withNames.find((c) => c.tipo === "dependent") ?? withNames[0];
         } else if (role === "cuidador") {
           // Cuidador: seleciona automaticamente se tiver exatamente 1 contexto
           if (withNames.length === 1) {
