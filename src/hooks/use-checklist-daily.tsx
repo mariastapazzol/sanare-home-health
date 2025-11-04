@@ -116,10 +116,13 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
         });
       }
 
-      // Ordenar por horário
-      checklistItems.sort((a, b) => a.horario.localeCompare(b.horario));
+      // Filtrar apenas items não concluídos (checked = false)
+      const uncheckedItems = checklistItems.filter(item => !item.checked);
 
-      setItems(checklistItems);
+      // Ordenar por horário
+      uncheckedItems.sort((a, b) => a.horario.localeCompare(b.horario));
+
+      setItems(uncheckedItems);
     } catch (error) {
       console.error('Erro ao carregar checklist:', error);
     } finally {

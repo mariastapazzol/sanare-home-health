@@ -7,11 +7,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Badge } from "@/components/ui/badge";
 import { useChecklistDaily } from "@/hooks/use-checklist-daily";
 import { useCareContext } from "@/hooks/use-care-context";
-import { formatDateDisplay } from "@/lib/checklist-utils";
+import { formatDateDisplay, getTodayKey } from "@/lib/checklist-utils";
 import { RefreshCw, History, X, Lock, AlertTriangle, Package } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export function ChecklistToday() {
   const { currentContext, isContextReady } = useCareContext();
@@ -37,10 +38,33 @@ export function ChecklistToday() {
     }
   };
 
-  // Filtrar: ocultar items checked, mostrar apenas não-checked
-  const visibleTasks = items.filter(item => !item.checked);
-  const completedCount = items.filter(item => item.checked).length;
-  const totalCount = items.length;
+  // Items já vem filtrados (checked = false apenas)
+  const visibleTasks = items;
+  
+  // Para contar os concluídos, precisamos buscar do banco
+  const [completedCount, setCompletedCount] = useState(0);
+  
+  // Total = visible + completed
+  const totalCount = visibleTasks.length + completedCount;
+
+  // Buscar count de items concluídos
+  useEffect(() => {
+    const fetchCompletedCount = async () => {
+      if (!currentContext?.id) return;
+      
+      const dayKey = getTodayKey();
+      const { count } = await supabase
+        .from('checklist_daily_status')
+        .select('*', { count: 'exact', head: true })
+        .eq('context_id', currentContext.id)
+        .eq('day', dayKey)
+        .eq('checked', true);
+      
+      setCompletedCount(count || 0);
+    };
+    
+    fetchCompletedCount();
+  }, [currentContext?.id, items.length]);
 
   const handleReset = async () => {
     if (!currentContext?.id) {
