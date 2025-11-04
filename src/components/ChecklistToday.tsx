@@ -37,7 +37,8 @@ export function ChecklistToday() {
     }
   };
 
-  const incompleteTasks = items.filter(item => !item.checked && !item.inactive);
+  // Filtrar: ocultar items checked, mostrar apenas não-checked
+  const visibleTasks = items.filter(item => !item.checked);
   const completedCount = items.filter(item => item.checked).length;
   const totalCount = items.length;
 
@@ -118,7 +119,7 @@ export function ChecklistToday() {
         </div>
       </CardHeader>
       <CardContent>
-        {incompleteTasks.length === 0 ? (
+        {visibleTasks.length === 0 ? (
           <div className="text-center py-8">
             {totalCount === 0 ? (
               <p className="text-muted-foreground">Nenhum medicamento ou lembrete cadastrado</p>
@@ -132,13 +133,17 @@ export function ChecklistToday() {
         ) : (
           <TooltipProvider>
             <div className="space-y-3">
-              {incompleteTasks.map((item) => {
+              {visibleTasks.map((item) => {
                 const timePassed = isTimePassed(item.horario);
                 return (
                   <div
                     key={item.id}
                     className={`flex items-center space-x-3 p-3 rounded-lg transition-colors border ${
-                      timePassed ? 'opacity-60 bg-muted/30' : 'hover:bg-muted/50'
+                      item.inactive 
+                        ? 'opacity-40 bg-muted/20 pointer-events-none' 
+                        : timePassed 
+                        ? 'opacity-60 bg-muted/30' 
+                        : 'hover:bg-muted/50'
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -217,15 +222,22 @@ export function ChecklistToday() {
                         </AlertDialog>
                       )}
                     </label>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                      onClick={() => toggleInactive(item.id)}
-                      title="Marcar como não realizado hoje"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                    {!item.inactive && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={() => toggleInactive(item.id)}
+                        title="Marcar como não realizado hoje"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {item.inactive && (
+                      <Badge variant="outline" className="text-xs">
+                        Não feito
+                      </Badge>
+                    )}
                   </div>
                 );
               })}

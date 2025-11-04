@@ -28,20 +28,23 @@ function getLocalDateKey(): string {
 }
 
 /**
- * Calcula os milissegundos até a próxima meia-noite no timezone especificado
+ * Calcula os milissegundos até a próxima meia-noite no timezone de São Paulo
  * @param tz - Timezone (default: "America/Sao_Paulo")
- * @returns Milissegundos até 00:00:00 do próximo dia
+ * @returns Milissegundos até 00:00:00 do próximo dia no horário de São Paulo
  */
 export function millisToNextMidnight(tz: string = TIMEZONE): number {
   const now = new Date();
   
-  // Criar data para meia-noite de amanhã no timezone local
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
+  // Obter a data/hora atual em São Paulo
+  const nowInSaoPaulo = new Date(now.toLocaleString('en-US', { timeZone: tz }));
+  
+  // Criar meia-noite de amanhã em São Paulo
+  const tomorrowInSaoPaulo = new Date(nowInSaoPaulo);
+  tomorrowInSaoPaulo.setDate(tomorrowInSaoPaulo.getDate() + 1);
+  tomorrowInSaoPaulo.setHours(0, 0, 0, 0);
   
   // Calcular diferença em milissegundos
-  const msUntilMidnight = tomorrow.getTime() - now.getTime();
+  const msUntilMidnight = tomorrowInSaoPaulo.getTime() - nowInSaoPaulo.getTime();
   
   return Math.max(msUntilMidnight, 0);
 }
