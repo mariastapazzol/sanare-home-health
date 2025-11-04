@@ -214,32 +214,37 @@ Deno.serve(async (req) => {
     console.log('Caregiver linked to dependent');
 
     // Create care context for the caregiver managing the dependent
-    const { error: contextError } = await supabaseAdmin
+    const { data: contextData, error: contextError } = await supabaseAdmin
       .from('care_contexts')
       .insert({
-        nome: `Cuidado de ${name}`,
+        nome: 'Cuidado',
         tipo: 'dependent',
         owner_user_id: caregiver.id,
         dependente_id: depData.id
-      });
+      })
+      .select('id')
+      .single();
 
-    if (contextError) {
+    if (contextError || !contextData) {
       console.error('Error creating care context:', contextError);
       return new Response(
-        JSON.stringify({ error: 'Failed to create care context: ' + contextError.message }),
+        JSON.stringify({ error: 'Failed to create care context: ' + contextError?.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Care context created');
+    console.log('Care context created with ID:', contextData.id);
 
     // Wait for trigger to create profile
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Update profile username (trigger might use default)
+    // Update profile username and role
     await supabaseAdmin
       .from('profiles')
-      .update({ username: username })
+      .update({ 
+        username: username,
+        role: 'paciente_dependente'
+      })
       .eq('user_id', newUser.user.id);
 
     // Update user role to paciente_dependente (trigger creates as paciente_autonomo)
@@ -255,11 +260,19 @@ Deno.serve(async (req) => {
       .delete()
       .eq('user_id', newUser.user.id);
 
+    // Delete self care context created by trigger
+    await supabaseAdmin
+      .from('care_contexts')
+      .delete()
+      .eq('owner_user_id', newUser.user.id)
+      .eq('tipo', 'self');
+
     return new Response(
       JSON.stringify({ 
         success: true, 
         dependent_user_id: newUser.user.id,
         dependent_id: depData.id,
+        context_id: contextData.id,
         message: 'Dependente criado com sucesso'
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

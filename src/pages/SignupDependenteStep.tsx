@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
+import { useCareContext } from '@/hooks/use-care-context';
 
 // Schema de validação
 const dependentSchema = z.object({
@@ -46,6 +47,7 @@ const toISODate = (d: string): string => {
 const SignupDependenteStep = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { reload: reloadContext } = useCareContext();
   const [formData, setFormData] = useState({
     name: '',
     username: '',
@@ -140,14 +142,28 @@ const SignupDependenteStep = () => {
       const result = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        toast({
-          title: "Erro",
-          description: result?.error || `Falha ao criar dependente (${response.status})`,
-          variant: "destructive"
-        });
+        const errorMsg = result?.error || `Falha ao criar dependente (${response.status})`;
+        
+        // Check if user is not a dependent
+        if (errorMsg.includes('não é dependente') || errorMsg.includes('paciente_dependente')) {
+          toast({
+            title: "Erro",
+            description: "Usuário não é dependente",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Erro",
+            description: errorMsg,
+            variant: "destructive"
+          });
+        }
         setLoading(false);
         return;
       }
+
+      // Reload care contexts to get the new dependent context
+      await reloadContext();
 
       toast({
         title: "Sucesso!",
