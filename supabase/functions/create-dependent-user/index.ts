@@ -170,47 +170,45 @@ Deno.serve(async (req) => {
 
     console.log('User created:', newUser.user.id);
 
-    // Insert explicitly into profiles with paciente_dependente role
+    // Wait briefly for trigger to create profile and user_roles
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    // Update profile with correct role and username (trigger creates with defaults)
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .insert({
-        user_id: newUser.user.id,
-        name: name,
-        email: shadowEmail,
-        birth_date: isoBirth,
+      .update({
         username: username,
         role: 'paciente_dependente'
-      });
+      })
+      .eq('user_id', newUser.user.id);
 
     if (profileError) {
-      console.error('Error creating profile:', profileError);
+      console.error('Error updating profile:', profileError);
       await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
       return new Response(
-        JSON.stringify({ error: 'Failed to create profile: ' + profileError.message }),
+        JSON.stringify({ error: 'Failed to update profile: ' + profileError.message }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Profile created with role paciente_dependente');
+    console.log('Profile updated with role paciente_dependente');
 
-    // Insert explicitly into user_roles with paciente_dependente role
+    // Update user_roles to paciente_dependente (trigger creates as paciente_autonomo)
     const { error: roleError } = await supabaseAdmin
       .from('user_roles')
-      .insert({
-        user_id: newUser.user.id,
-        role: 'paciente_dependente'
-      });
+      .update({ role: 'paciente_dependente' })
+      .eq('user_id', newUser.user.id);
 
     if (roleError) {
-      console.error('Error creating user role:', roleError);
+      console.error('Error updating user role:', roleError);
       await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
       return new Response(
-        JSON.stringify({ error: 'Failed to create user role: ' + roleError.message }),
+        JSON.stringify({ error: 'Failed to update user role: ' + roleError.message }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('User role created as paciente_dependente');
+    console.log('User role updated to paciente_dependente');
 
     // Insert into pacientes_dependentes table
     const { data: depData, error: depError } = await supabaseAdmin
