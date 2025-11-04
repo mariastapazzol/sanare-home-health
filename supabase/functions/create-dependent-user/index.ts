@@ -233,32 +233,27 @@ Deno.serve(async (req) => {
 
     console.log('Care context created');
 
-    // Create profile for the dependent
-    const { error: profileError } = await supabaseAdmin
+    // Wait for trigger to create profile
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Update profile username (trigger might use default)
+    await supabaseAdmin
       .from('profiles')
-      .insert({
-        user_id: newUser.user.id,
-        name: name,
-        username: username,
-        email: shadowEmail,
-        birth_date: isoBirth
-      });
+      .update({ username: username })
+      .eq('user_id', newUser.user.id);
 
-    if (profileError) {
-      console.error('Error creating profile:', profileError);
-    }
-
-    // Insert role in user_roles table (security)
-    const { error: roleError } = await supabaseAdmin
+    // Update user role to paciente_dependente (trigger creates as paciente_autonomo)
+    await supabaseAdmin
       .from('user_roles')
-      .insert({
-        user_id: newUser.user.id,
-        role: 'paciente_dependente'
-      });
+      .update({ role: 'paciente_dependente' })
+      .eq('user_id', newUser.user.id)
+      .eq('role', 'paciente_autonomo');
 
-    if (roleError) {
-      console.error('Error assigning role:', roleError);
-    }
+    // Delete pacientes_autonomos record created by trigger
+    await supabaseAdmin
+      .from('pacientes_autonomos')
+      .delete()
+      .eq('user_id', newUser.user.id);
 
     return new Response(
       JSON.stringify({ 

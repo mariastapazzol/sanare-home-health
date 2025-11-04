@@ -62,34 +62,25 @@ const SignupCuidador = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Failed to create user');
 
-      // Create profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          user_id: authData.user.id,
-          name: formData.name,
-          username: formData.email.split('@')[0],
-          email: formData.email,
-          birth_date: formData.birthDate || null
-        });
+      // Wait a moment for the trigger to complete
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      if (profileError) {
-        console.error('Error creating profile:', profileError);
-        throw new Error('Database error creating profile');
-      }
-
-      // Insert role in user_roles table (security)
+      // Update user role to cuidador (trigger creates as paciente_autonomo by default)
       const { error: roleError } = await supabase
         .from('user_roles')
-        .insert({
-          user_id: authData.user.id,
-          role: 'cuidador'
-        });
+        .update({ role: 'cuidador' })
+        .eq('user_id', authData.user.id)
+        .eq('role', 'paciente_autonomo');
 
       if (roleError) {
-        console.error('Error assigning role:', roleError);
-        throw new Error('Database error assigning role');
+        console.error('Error updating role:', roleError);
       }
+
+      // Delete pacientes_autonomos record (created by trigger)
+      await supabase
+        .from('pacientes_autonomos')
+        .delete()
+        .eq('user_id', authData.user.id);
 
       // Create cuidador record
       const { error: cuidadorError } = await supabase
