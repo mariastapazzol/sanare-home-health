@@ -87,20 +87,47 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
       setUserRole(role);
 
       // 2) Busca contextos onde o usuário participa
-      const { data: ctxs, error: ctxErr } = await supabase
+      let contextsList: CareContextRow[] = [];
+
+      // Busca contextos criados pelo usuário (cuidador ou autônomo)
+      const { data: ownedCtxs, error: ownedErr } = await supabase
         .from("care_contexts")
         .select("*")
         .eq("owner_user_id", user.id)
         .order("created_at", { ascending: true });
 
-      if (ctxErr) {
-        console.error("Error loading contexts:", ctxErr);
-        setLoading(false);
-        setBootstrapping(false);
-        return;
+      if (ownedErr) {
+        console.error("Error loading owned contexts:", ownedErr);
+      } else {
+        contextsList = [...(ownedCtxs ?? [])] as CareContextRow[];
       }
 
-      let contextsList = (ctxs ?? []) as CareContextRow[];
+      // Se for paciente_dependente, busca também o contexto onde ele é o dependente
+      if (role === "paciente_dependente") {
+        // Busca o registro do dependente
+        const { data: depRecord } = await supabase
+          .from("pacientes_dependentes")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (depRecord?.id) {
+          // Busca contextos onde ele é o dependente
+          const { data: depCtxs } = await supabase
+            .from("care_contexts")
+            .select("*")
+            .eq("dependente_id", depRecord.id)
+            .order("created_at", { ascending: true });
+
+          if (depCtxs && depCtxs.length > 0) {
+            // Adiciona contextos de dependente que ainda não estão na lista
+            const newCtxs = (depCtxs as CareContextRow[]).filter(
+              (dc) => !contextsList.some((c) => c.id === dc.id)
+            );
+            contextsList = [...contextsList, ...newCtxs];
+          }
+        }
+      }
 
       // 3) Bootstrap: Garante que sempre haja um contexto para o usuário
       if (role === "paciente_autonomo") {
