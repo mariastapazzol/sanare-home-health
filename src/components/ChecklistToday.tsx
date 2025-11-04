@@ -34,6 +34,9 @@ export function ChecklistToday() {
     if (result && !result.success && result.stockInsufficient) {
       setStockWarningItem(itemId);
     } else if (result && result.success) {
+      // Atualizar count de concluídos imediatamente
+      setCompletedCount(prev => prev + 1);
+      
       toast({
         title: "✓ Marcado como tomado",
         description: "Item concluído com sucesso.",
@@ -54,6 +57,7 @@ export function ChecklistToday() {
   const [completedCount, setCompletedCount] = useState(0);
   const totalCount = visibleTasks.length + completedCount;
 
+  // Atualizar count de items concluídos
   useEffect(() => {
     const fetchCompletedCount = async () => {
       if (!currentContext?.id) return;

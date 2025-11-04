@@ -330,7 +330,7 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
     }
   }, [user, contextId, loadChecklist]);
 
-  // Sincronização em tempo real
+  // Sincronização em tempo real - não recarregar durante operações locais
   useEffect(() => {
     if (!contextId || !user) return;
 
@@ -346,10 +346,14 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
           table: 'checklist_daily_status',
           filter: `context_id=eq.${contextId}`
         },
-        (payload) => {
+        (payload: any) => {
           console.log('[Checklist] Realtime update:', payload);
-          // Recarregar checklist quando houver mudanças
-          loadChecklist();
+          // Só recarregar se for de outro usuário (não da sessão atual)
+          // Isso evita recarregar quando o próprio usuário marca um item
+          const newData = payload.new as { user_id?: string } | null;
+          if (newData && newData.user_id && newData.user_id !== user.id) {
+            loadChecklist();
+          }
         }
       )
       .subscribe();
