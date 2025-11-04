@@ -1,14 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { useChecklistDaily } from "@/hooks/use-checklist-daily";
 import { useCareContext } from "@/hooks/use-care-context";
 import { formatDateDisplay, getTodayKey } from "@/lib/checklist-utils";
-import { RefreshCw, History, X, Lock, AlertTriangle, Package } from "lucide-react";
+import { RefreshCw, History, CheckCircle, XCircle, Clock, AlertTriangle, Package, Pill, Bell } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
@@ -19,8 +17,8 @@ export function ChecklistToday() {
   const { items, loading, todayKey, toggleChecked, toggleInactive, checkStock, reload } = useChecklistDaily({ 
     contextId: currentContext?.id 
   });
-  const [confirmingItemId, setConfirmingItemId] = useState<string | null>(null);
   const [stockWarningItem, setStockWarningItem] = useState<string | null>(null);
+  const [showResetDialog, setShowResetDialog] = useState(false);
   const navigate = useNavigate();
 
   const isTimePassed = (horario: string): boolean => {
@@ -35,19 +33,27 @@ export function ChecklistToday() {
     const result = await toggleChecked(itemId);
     if (result && !result.success && result.stockInsufficient) {
       setStockWarningItem(itemId);
+    } else if (result && result.success) {
+      toast({
+        title: "✓ Marcado como tomado",
+        description: "Item concluído com sucesso.",
+      });
     }
   };
 
-  // Items já vem filtrados (checked = false apenas)
+  const handleToggleInactive = async (itemId: string) => {
+    await toggleInactive(itemId);
+    toast({
+      title: "Marcado como não tomado",
+      description: "Este item ficará desabilitado até o próximo dia.",
+      variant: "destructive",
+    });
+  };
+
   const visibleTasks = items;
-  
-  // Para contar os concluídos, precisamos buscar do banco
   const [completedCount, setCompletedCount] = useState(0);
-  
-  // Total = visible + completed
   const totalCount = visibleTasks.length + completedCount;
 
-  // Buscar count de items concluídos
   useEffect(() => {
     const fetchCompletedCount = async () => {
       if (!currentContext?.id) return;
@@ -75,10 +81,19 @@ export function ChecklistToday() {
       });
       return;
     }
+    
+    const dayKey = getTodayKey();
+    await supabase
+      .from('checklist_daily_status')
+      .delete()
+      .eq('context_id', currentContext.id)
+      .eq('day', dayKey);
+    
     await reload();
+    setShowResetDialog(false);
     toast({
-      title: "Checklist recarregado",
-      description: "O checklist foi atualizado com sucesso.",
+      title: "Checklist resetado",
+      description: "Todos os itens foram restaurados.",
     });
   };
 
@@ -91,8 +106,7 @@ export function ChecklistToday() {
         <CardContent className="space-y-4">
           {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="flex items-center space-x-3">
-              <Skeleton className="h-5 w-5" />
-              <Skeleton className="h-5 flex-1" />
+              <Skeleton className="h-16 flex-1" />
             </div>
           ))}
         </CardContent>
@@ -103,13 +117,13 @@ export function ChecklistToday() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <CardTitle className="text-2xl">
-              Checklist de hoje ({todayKey ? formatDateDisplay(todayKey) : ''})
+              Checklist de hoje
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              {completedCount} de {totalCount} concluídas
+              {todayKey && formatDateDisplay(todayKey)} • {completedCount} de {totalCount} concluídas
             </p>
           </div>
           <div className="flex gap-2">
@@ -119,173 +133,189 @@ export function ChecklistToday() {
                 Histórico
               </Button>
             </Link>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Resetar
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Resetar checklist de hoje?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta ação irá desmarcar todas as tarefas de hoje. Esta ação não pode ser desfeita.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleReset}>Resetar</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <Button variant="outline" size="sm" onClick={() => setShowResetDialog(true)}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Resetar
+            </Button>
           </div>
         </div>
       </CardHeader>
       <CardContent>
         {visibleTasks.length === 0 ? (
-          <div className="text-center py-8">
+          <div className="text-center py-12">
             {totalCount === 0 ? (
-              <p className="text-muted-foreground">Nenhum medicamento ou lembrete cadastrado</p>
+              <div className="space-y-2">
+                <div className="text-5xl mb-4">📋</div>
+                <p className="text-lg font-medium">Nenhum item cadastrado</p>
+                <p className="text-sm text-muted-foreground">
+                  Cadastre medicamentos e lembretes para começar
+                </p>
+              </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-2xl font-semibold text-primary">🎉 Dia concluído!</p>
-                <p className="text-muted-foreground">Todos os medicamentos e lembretes foram realizados hoje!</p>
+                <div className="text-6xl mb-4">🎉</div>
+                <p className="text-2xl font-semibold text-green-600 dark:text-green-400">Parabéns!</p>
+                <p className="text-muted-foreground">Todos os itens foram concluídos hoje!</p>
               </div>
             )}
           </div>
         ) : (
-          <TooltipProvider>
-            <div className="space-y-3">
-              {visibleTasks.map((item) => {
-                const timePassed = isTimePassed(item.horario);
-                return (
-                  <div
-                    key={item.id}
-                    className={`flex items-center space-x-3 p-3 rounded-lg transition-colors border ${
-                      item.inactive 
-                        ? 'opacity-40 bg-muted/20 pointer-events-none' 
-                        : timePassed 
-                        ? 'opacity-60 bg-muted/30' 
-                        : 'hover:bg-muted/50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      {timePassed ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="h-5 w-5 flex items-center justify-center cursor-not-allowed">
-                              <Lock className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Prazo expirado</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        <Checkbox
-                          id={`item-${item.id}`}
-                          checked={item.checked}
-                          onCheckedChange={() => handleToggleChecked(item.id)}
-                          className="h-5 w-5"
-                        />
+          <div className="space-y-3">
+            {visibleTasks.map((item) => {
+              const timePassed = isTimePassed(item.horario);
+              const borderColor = item.inactive 
+                ? 'border-red-300 dark:border-red-700' 
+                : timePassed 
+                ? 'border-gray-300 dark:border-gray-700' 
+                : 'border-yellow-300 dark:border-yellow-700';
+              
+              const bgColor = item.inactive
+                ? 'bg-red-50 dark:bg-red-950/20'
+                : timePassed
+                ? 'bg-gray-50 dark:bg-gray-900/20'
+                : 'bg-yellow-50 dark:bg-yellow-950/20';
+
+              return (
+                <div
+                  key={item.id}
+                  className={`p-4 rounded-lg border-2 ${borderColor} ${bgColor} transition-all ${
+                    item.inactive ? 'opacity-60' : ''
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 space-y-2">
+                      {/* Cabeçalho com ícone, nome e horário */}
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-full ${
+                          item.tipo === 'medicamento' 
+                            ? 'bg-blue-100 dark:bg-blue-900/30' 
+                            : 'bg-purple-100 dark:bg-purple-900/30'
+                        }`}>
+                          {item.tipo === 'medicamento' ? (
+                            <Pill className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                          ) : (
+                            <Bell className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg">{item.nome}</h3>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Clock className="h-3.5 w-3.5" />
+                            <span>{item.horario}</span>
+                            {item.tipo === 'medicamento' && item.dosagem && (
+                              <>
+                                <span>•</span>
+                                <span>{item.quantidade_por_dose} {item.unidade_dose}</span>
+                                <span className="text-xs">({item.dosagem})</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Informações adicionais */}
+                      {item.tipo === 'medicamento' && (
+                        <div className="flex items-center gap-3 ml-14">
+                          {item.quantidade_atual !== undefined && (
+                            <Badge variant="secondary" className="gap-1">
+                              <Package className="h-3 w-3" />
+                              {item.quantidade_atual} {item.unidade_dose} disponível
+                            </Badge>
+                          )}
+                          {item.quantidade_atual !== undefined && 
+                           item.alerta_minimo !== undefined && 
+                           item.quantidade_atual <= item.alerta_minimo && (
+                            <Badge variant="destructive" className="gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              Estoque baixo
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+
+                      {item.tipo === 'lembrete' && item.descricao && (
+                        <p className="text-sm text-muted-foreground ml-14">
+                          {item.descricao}
+                        </p>
+                      )}
+
+                      {/* Status */}
+                      {item.inactive && (
+                        <Badge variant="destructive" className="ml-14">
+                          Não tomado
+                        </Badge>
+                      )}
+                      {timePassed && !item.inactive && (
+                        <Badge variant="secondary" className="ml-14 gap-1">
+                          <Clock className="h-3 w-3" />
+                          Horário passou
+                        </Badge>
                       )}
                     </div>
-                    <label
-                      htmlFor={timePassed ? undefined : `item-${item.id}`}
-                      className={`flex-1 ${timePassed ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                    >
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium">{item.nome}</span>
-                        <span className="text-sm text-muted-foreground">às {item.horario}</span>
-                        {item.tipo === 'medicamento' && item.quantidade_atual !== undefined && item.alerta_minimo !== undefined && item.quantidade_atual <= item.alerta_minimo && (
-                          <Badge variant="destructive" className="text-xs gap-1">
-                            <AlertTriangle className="h-3 w-3" />
-                            Estoque baixo
-                          </Badge>
-                        )}
-                        {item.tipo === 'medicamento' && item.quantidade_atual !== undefined && (
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Package className="h-3 w-3" />
-                            {item.quantidade_atual} disponível
-                          </span>
-                        )}
-                      </div>
-                      {timePassed && (
-                        <AlertDialog open={confirmingItemId === item.id} onOpenChange={(open) => !open && setConfirmingItemId(null)}>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="link"
-                              size="sm"
-                              className="h-auto p-0 text-xs text-primary mt-1"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                setConfirmingItemId(item.id);
-                              }}
-                            >
-                              Marcar como feito mesmo após o horário?
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Confirmar conclusão</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                O horário limite para "{item.nome}" já passou. Deseja marcar como concluído mesmo assim?
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => {
-                                handleToggleChecked(item.id);
-                                setConfirmingItemId(null);
-                              }}>
-                                Confirmar
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
-                    </label>
+
+                    {/* Botões de ação */}
                     {!item.inactive && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={() => toggleInactive(item.id)}
-                        title="Marcar como não realizado hoje"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {item.inactive && (
-                      <Badge variant="outline" className="text-xs">
-                        Não feito
-                      </Badge>
+                      <div className="flex flex-col gap-2 min-w-[100px]">
+                        <Button
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white gap-2"
+                          onClick={() => handleToggleChecked(item.id)}
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          Tomado
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="gap-2"
+                          onClick={() => handleToggleInactive(item.id)}
+                        >
+                          <XCircle className="h-4 w-4" />
+                          Não
+                        </Button>
+                      </div>
                     )}
                   </div>
-                );
-              })}
-            </div>
-          </TooltipProvider>
+                </div>
+              );
+            })}
+          </div>
         )}
         
         {totalCount > 0 && (
           <div className="mt-6 pt-4 border-t">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Progresso</span>
+            <div className="flex items-center justify-between text-sm mb-2">
+              <span className="text-muted-foreground">Progresso do dia</span>
               <span className="font-medium">
                 {Math.round((completedCount / totalCount) * 100)}%
               </span>
             </div>
-            <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
+            <div className="h-3 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-primary transition-all duration-300"
+                className="h-full bg-green-600 dark:bg-green-500 transition-all duration-500"
                 style={{ width: `${(completedCount / totalCount) * 100}%` }}
               />
             </div>
           </div>
         )}
       </CardContent>
+
+      {/* Dialog de reset */}
+      <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Resetar checklist de hoje?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação irá desmarcar todas as tarefas de hoje e restaurar o checklist. 
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleReset}>Resetar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Dialog de estoque insuficiente */}
       <AlertDialog open={stockWarningItem !== null} onOpenChange={(open) => !open && setStockWarningItem(null)}>
@@ -296,7 +326,8 @@ export function ChecklistToday() {
               Estoque insuficiente
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Não há estoque suficiente para marcar este medicamento como tomado. Deseja ajustar o estoque agora?
+              Não há estoque suficiente para marcar este medicamento como tomado. 
+              Deseja ajustar o estoque agora?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

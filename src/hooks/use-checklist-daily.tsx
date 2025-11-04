@@ -14,6 +14,9 @@ export interface ChecklistItem {
   quantidade_atual?: number;
   quantidade_por_dose?: number;
   alerta_minimo?: number;
+  dosagem?: string;
+  unidade_dose?: string;
+  descricao?: string;
 }
 
 interface UseChecklistDailyProps {
@@ -44,14 +47,14 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
       // @ts-ignore - Evita erro de inferência de tipo profunda do Supabase
       const { data: medicamentos } = await supabase
         .from('medicamentos')
-        .select('id, nome, horarios, quantidade_atual, quantidade_por_dose, alerta_minimo')
+        .select('id, nome, horarios, quantidade_atual, quantidade_por_dose, alerta_minimo, dosagem, unidade_dose')
         .eq('context_id', contextId);
 
       // Buscar lembretes pelo context_id
       // @ts-ignore - Evita erro de inferência de tipo profunda do Supabase
       const { data: lembretes } = await supabase
         .from('lembretes')
-        .select('id, nome, horarios')
+        .select('id, nome, horarios, descricao')
         .eq('context_id', contextId);
 
       // Construir lista de itens
@@ -71,7 +74,9 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
               tipo: 'medicamento',
               quantidade_atual: med.quantidade_atual,
               quantidade_por_dose: med.quantidade_por_dose,
-              alerta_minimo: med.alerta_minimo
+              alerta_minimo: med.alerta_minimo,
+              dosagem: med.dosagem,
+              unidade_dose: med.unidade_dose
             });
           });
         });
@@ -88,7 +93,8 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
               horario,
               checked: false,
               inactive: false,
-              tipo: 'lembrete'
+              tipo: 'lembrete',
+              descricao: lem.descricao
             });
           });
         });
@@ -323,6 +329,35 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
       loadChecklist();
     }
   }, [user, contextId, loadChecklist]);
+
+  // Sincronização em tempo real
+  useEffect(() => {
+    if (!contextId || !user) return;
+
+    const dayKey = getTodayKey();
+    
+    const channel = supabase
+      .channel(`checklist-${contextId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'checklist_daily_status',
+          filter: `context_id=eq.${contextId}`
+        },
+        (payload) => {
+          console.log('[Checklist] Realtime update:', payload);
+          // Recarregar checklist quando houver mudanças
+          loadChecklist();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [contextId, user, loadChecklist]);
 
   return {
     items,
