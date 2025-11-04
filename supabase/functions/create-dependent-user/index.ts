@@ -170,6 +170,48 @@ Deno.serve(async (req) => {
 
     console.log('User created:', newUser.user.id);
 
+    // Insert explicitly into profiles with paciente_dependente role
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .insert({
+        user_id: newUser.user.id,
+        name: name,
+        email: shadowEmail,
+        birth_date: isoBirth,
+        username: username,
+        role: 'paciente_dependente'
+      });
+
+    if (profileError) {
+      console.error('Error creating profile:', profileError);
+      await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
+      return new Response(
+        JSON.stringify({ error: 'Failed to create profile: ' + profileError.message }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Profile created with role paciente_dependente');
+
+    // Insert explicitly into user_roles with paciente_dependente role
+    const { error: roleError } = await supabaseAdmin
+      .from('user_roles')
+      .insert({
+        user_id: newUser.user.id,
+        role: 'paciente_dependente'
+      });
+
+    if (roleError) {
+      console.error('Error creating user role:', roleError);
+      await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
+      return new Response(
+        JSON.stringify({ error: 'Failed to create user role: ' + roleError.message }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('User role created as paciente_dependente');
+
     // Insert into pacientes_dependentes table
     const { data: depData, error: depError } = await supabaseAdmin
       .from('pacientes_dependentes')
@@ -235,32 +277,12 @@ Deno.serve(async (req) => {
 
     console.log('Care context created with ID:', contextData.id);
 
-    // Wait for trigger to create profile
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Update profile username and role
-    await supabaseAdmin
-      .from('profiles')
-      .update({ 
-        username: username,
-        role: 'paciente_dependente'
-      })
-      .eq('user_id', newUser.user.id);
-
-    // Update user role to paciente_dependente (trigger creates as paciente_autonomo)
-    await supabaseAdmin
-      .from('user_roles')
-      .update({ role: 'paciente_dependente' })
-      .eq('user_id', newUser.user.id)
-      .eq('role', 'paciente_autonomo');
-
-    // Delete pacientes_autonomos record created by trigger
+    // Clean up any records created by trigger (if trigger still exists)
     await supabaseAdmin
       .from('pacientes_autonomos')
       .delete()
       .eq('user_id', newUser.user.id);
 
-    // Delete self care context created by trigger
     await supabaseAdmin
       .from('care_contexts')
       .delete()
