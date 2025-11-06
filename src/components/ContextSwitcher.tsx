@@ -11,12 +11,12 @@ import { User } from 'lucide-react';
 const ContextSwitcher = () => {
   const { contexts, currentContext, setCurrentContext, userRole, selectDependent } = useCareContext();
 
-  // Never show for caregivers - they have a fixed context
-  if (userRole === 'cuidador') {
+  // Never show for caregivers or autonomous patients - they have a fixed context
+  if (userRole === 'cuidador' || userRole === 'paciente_autonomo') {
     return null;
   }
   
-  // Only show for others with multiple contexts
+  // Only show for dependents with multiple contexts
   if (contexts.length <= 1) {
     return null;
   }

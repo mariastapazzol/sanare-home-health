@@ -14,11 +14,6 @@ const Profile = () => {
   const { toast } = useToast();
   const { status, papel, dados, dependentes, erro } = usePerfil();
 
-  // Bloquear acesso para paciente_autonomo
-  if (status === "ready" && papel === "paciente_autonomo") {
-    navigate('/home', { replace: true });
-    return null;
-  }
   
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -251,11 +246,9 @@ const Profile = () => {
             </div>
           </div>
           <h1 className="text-mobile-2xl font-bold">Meu Perfil</h1>
-          {papel && (
+          {papel && papel !== 'paciente_autonomo' && (
             <p className="text-sm text-muted-foreground">
-              {papel === 'cuidador' ? 'Cuidador' : 
-               papel === 'paciente_autonomo' ? 'Paciente Autônomo' : 
-               'Paciente Dependente'}
+              {papel === 'cuidador' ? 'Cuidador' : 'Paciente Dependente'}
             </p>
           )}
         </div>
@@ -328,8 +321,8 @@ const Profile = () => {
               </>
             )}
 
-            {/* Botão de editar - apenas para cuidadores */}
-            {papel === 'cuidador' && (
+            {/* Botão de editar - para cuidadores e autônomos */}
+            {(papel === 'cuidador' || papel === 'paciente_autonomo') && (
               <div className="flex space-x-4">
                 {editing ? (
                   <>
