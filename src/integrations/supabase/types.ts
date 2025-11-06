@@ -294,6 +294,7 @@ export type Database = {
           icone: string
           id: string
           nome: string
+          notification_ids: Json | null
           updated_at: string
           user_id: string
         }
@@ -307,6 +308,7 @@ export type Database = {
           icone: string
           id?: string
           nome: string
+          notification_ids?: Json | null
           updated_at?: string
           user_id?: string
         }
@@ -320,6 +322,7 @@ export type Database = {
           icone?: string
           id?: string
           nome?: string
+          notification_ids?: Json | null
           updated_at?: string
           user_id?: string
         }
@@ -353,6 +356,7 @@ export type Database = {
           id: string
           imagem_url: string | null
           nome: string
+          notification_ids: Json | null
           precisa_receita: boolean
           prescription_image_url: string | null
           prescription_status: string
@@ -378,6 +382,7 @@ export type Database = {
           id?: string
           imagem_url?: string | null
           nome: string
+          notification_ids?: Json | null
           precisa_receita?: boolean
           prescription_image_url?: string | null
           prescription_status?: string
@@ -403,6 +408,7 @@ export type Database = {
           id?: string
           imagem_url?: string | null
           nome?: string
+          notification_ids?: Json | null
           precisa_receita?: boolean
           prescription_image_url?: string | null
           prescription_status?: string

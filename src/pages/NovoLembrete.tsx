@@ -20,6 +20,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { scheduleReminderNotifications, isNativePlatform } from '@/lib/notifications';
+import { NotificationPermissionDeniedAlert } from '@/components/NotificationPermissionPrompt';
 
 const frequenciaOptions = [
   { id: 'todos_os_dias', label: 'Todos os dias' },
@@ -242,10 +244,47 @@ const NovoLembrete = () => {
           title: "Sucesso",
           description: "Lembrete atualizado com sucesso!",
         });
+        
+        // Schedule notifications if on native platform
+        if (isNativePlatform() && formData.horarios.length > 0) {
+          try {
+            // Get existing notification IDs
+            const { data: existingLembrete } = await supabase
+              .from('lembretes')
+              .select('notification_ids')
+              .eq('id', id)
+              .single();
+            
+            const existingIds = (existingLembrete?.notification_ids as number[]) || [];
+            
+            // Only pass specific dates if they're not frequency markers
+            const specificDates = formData.datas.filter(
+              d => !['todos_os_dias', 'dias_alternados', 'semanal'].includes(d)
+            );
+            
+            const notificationIds = await scheduleReminderNotifications(
+              id,
+              formData.nome,
+              formData.horarios,
+              specificDates,
+              existingIds
+            );
+            
+            // Update notification_ids in database
+            await supabase
+              .from('lembretes')
+              .update({ notification_ids: notificationIds })
+              .eq('id', id);
+          } catch (error) {
+            console.error('Error scheduling notifications:', error);
+          }
+        }
       } else {
-        const { error } = await supabase
+        const { data: created, error } = await supabase
           .from('lembretes')
-          .insert([lembreteData]);
+          .insert([lembreteData])
+          .select('id')
+          .single();
 
         if (error) throw error;
 
@@ -253,6 +292,32 @@ const NovoLembrete = () => {
           title: "Sucesso",
           description: "Lembrete criado com sucesso!",
         });
+        
+        // Schedule notifications if on native platform
+        if (isNativePlatform() && created?.id && formData.horarios.length > 0) {
+          try {
+            // Only pass specific dates if they're not frequency markers
+            const specificDates = formData.datas.filter(
+              d => !['todos_os_dias', 'dias_alternados', 'semanal'].includes(d)
+            );
+            
+            const notificationIds = await scheduleReminderNotifications(
+              created.id,
+              formData.nome,
+              formData.horarios,
+              specificDates,
+              []
+            );
+            
+            // Update notification_ids in database
+            await supabase
+              .from('lembretes')
+              .update({ notification_ids: notificationIds })
+              .eq('id', created.id);
+          } catch (error) {
+            console.error('Error scheduling notifications:', error);
+          }
+        }
       }
 
       navigate('/lembretes');

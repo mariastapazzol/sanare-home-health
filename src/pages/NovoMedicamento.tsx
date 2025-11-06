@@ -17,6 +17,8 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { scheduleMedicationNotifications, isNativePlatform } from "@/lib/notifications";
+import { NotificationPermissionDeniedAlert } from "@/components/NotificationPermissionPrompt";
 
 const formSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
@@ -310,6 +312,35 @@ const NovoMedicamento = () => {
         }
 
         toast({ title: "Sucesso!", description: "Medicamento atualizado com sucesso." });
+        
+        // Schedule notifications if on native platform
+        if (isNativePlatform() && horariosValidos.length > 0) {
+          try {
+            // Get existing notification IDs
+            const { data: existingMed } = await supabase
+              .from('medicamentos')
+              .select('notification_ids')
+              .eq('id', id)
+              .single();
+            
+            const existingIds = (existingMed?.notification_ids as number[]) || [];
+            
+            const notificationIds = await scheduleMedicationNotifications(
+              id,
+              data.nome,
+              horariosValidos,
+              existingIds
+            );
+            
+            // Update notification_ids in database
+            await supabase
+              .from('medicamentos')
+              .update({ notification_ids: notificationIds })
+              .eq('id', id);
+          } catch (error) {
+            console.error('Error scheduling notifications:', error);
+          }
+        }
       } else {
         // CRIAR medicamento e depois criar 1 posologia (se houver)
         const { data: created, error: insErr } = await supabase
@@ -345,6 +376,26 @@ const NovoMedicamento = () => {
         }
 
         toast({ title: "Sucesso!", description: "Medicamento cadastrado com sucesso." });
+        
+        // Schedule notifications if on native platform
+        if (isNativePlatform() && created?.id && horariosValidos.length > 0) {
+          try {
+            const notificationIds = await scheduleMedicationNotifications(
+              created.id,
+              data.nome,
+              horariosValidos,
+              []
+            );
+            
+            // Update notification_ids in database
+            await supabase
+              .from('medicamentos')
+              .update({ notification_ids: notificationIds })
+              .eq('id', created.id);
+          } catch (error) {
+            console.error('Error scheduling notifications:', error);
+          }
+        }
       }
 
       navigate("/medicamentos");

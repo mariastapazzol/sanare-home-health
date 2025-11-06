@@ -19,6 +19,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "@/hooks/use-toast";
+import { cancelNotifications, isNativePlatform } from "@/lib/notifications";
+import { NotificationPermissionDeniedAlert } from "@/components/NotificationPermissionPrompt";
 
 interface Medicamento {
   id: string;
@@ -66,6 +68,20 @@ const Medicamentos = () => {
 
   const deleteMedicamento = async (id: string, nome: string) => {
     try {
+      // Cancel notifications before deleting
+      if (isNativePlatform()) {
+        const { data: med } = await supabase
+          .from('medicamentos')
+          .select('notification_ids')
+          .eq('id', id)
+          .single();
+        
+        if (med?.notification_ids) {
+          const notificationIds = med.notification_ids as number[];
+          await cancelNotifications(notificationIds);
+        }
+      }
+      
       const { error } = await supabase
         .from('medicamentos')
         .delete()
@@ -146,6 +162,7 @@ const Medicamentos = () => {
   // Tela de listagem
   return (
     <div className="min-h-screen bg-background">
+      <NotificationPermissionDeniedAlert />
       <div className="relative">
         <button
           onClick={() => navigate('/home')}

@@ -6,7 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/use-auth";
 import { CareContextProvider } from "@/hooks/use-care-context";
 import { useKeyboard } from "@/hooks/use-keyboard";
+import { useNotificationScheduler } from "@/hooks/use-notification-scheduler";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { NotificationPermissionPrompt } from "@/components/NotificationPermissionPrompt";
 import Welcome from "./pages/Welcome";
 import Auth from "./pages/Auth";
 import AuthChoice from "./pages/AuthChoice";
@@ -38,17 +40,14 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => {
+const AppContent = () => {
   useKeyboard();
+  useNotificationScheduler();
   
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <CareContextProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
+    <>
+      <NotificationPermissionPrompt />
+      <BrowserRouter>
             <Routes>
               <Route path="/" element={<Welcome />} />
               <Route path="/auth" element={<Auth />} />
@@ -167,10 +166,23 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-        </TooltipProvider>
-      </CareContextProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+    </>
+  );
+};
+
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <CareContextProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <AppContent />
+          </TooltipProvider>
+        </CareContextProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 };
 

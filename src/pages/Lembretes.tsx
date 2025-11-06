@@ -24,6 +24,8 @@ import {
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { cancelNotifications, isNativePlatform } from '@/lib/notifications';
+import { NotificationPermissionDeniedAlert } from '@/components/NotificationPermissionPrompt';
 
 interface Lembrete {
   id: string;
@@ -94,6 +96,20 @@ const Lembretes = () => {
     if (!lembreteToDelete) return;
 
     try {
+      // Cancel notifications before deleting
+      if (isNativePlatform()) {
+        const { data: lembrete } = await supabase
+          .from('lembretes')
+          .select('notification_ids')
+          .eq('id', lembreteToDelete)
+          .single();
+        
+        if (lembrete?.notification_ids) {
+          const notificationIds = lembrete.notification_ids as number[];
+          await cancelNotifications(notificationIds);
+        }
+      }
+      
       const { error } = await supabase
         .from('lembretes')
         .delete()
@@ -222,6 +238,8 @@ const Lembretes = () => {
       </div>
 
       <div className="p-4 space-y-4">
+        <NotificationPermissionDeniedAlert />
+        
         {/* Add Button */}
         <Button
           onClick={() => navigate('/lembretes/novo')}
