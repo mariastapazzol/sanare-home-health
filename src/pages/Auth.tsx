@@ -4,9 +4,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Heart, Eye, EyeOff } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import logoSanare from '@/assets/logo-sanare.png';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -38,7 +37,7 @@ const Auth = () => {
     <div className="min-h-screen bg-gradient-to-br from-health-light to-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
         {/* Header */}
-        <div className="text-center space-y-6">
+        <div className="text-center space-y-4">
           <button 
             onClick={() => navigate('/')}
             className="back-btn"
@@ -47,12 +46,11 @@ const Auth = () => {
           </button>
           
           <div className="flex justify-center">
-            <img 
-              src={logoSanare} 
-              alt="Sanare" 
-              className="w-40 h-auto"
-            />
+            <div className="bg-primary rounded-full p-4">
+              <Heart className="h-12 w-12 text-primary-foreground" />
+            </div>
           </div>
+          <h1 className="text-mobile-2xl font-bold">Entrar no Sanare</h1>
         </div>
 
         {/* Login Form */}

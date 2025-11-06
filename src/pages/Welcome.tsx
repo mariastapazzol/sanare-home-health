@@ -1,8 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Pill, Shield } from 'lucide-react';
-import logoSanare from '@/assets/logo-sanare.png';
+import { Heart, Pill, Shield } from 'lucide-react';
 
 const Welcome = () => {
   const navigate = useNavigate();
@@ -11,15 +10,14 @@ const Welcome = () => {
     <div className="min-h-screen bg-gradient-to-br from-health-light to-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
         {/* Logo/Header */}
-        <div className="text-center space-y-6">
+        <div className="text-center space-y-4">
           <div className="flex justify-center">
-            <img 
-              src={logoSanare} 
-              alt="Sanare" 
-              className="w-48 h-auto"
-            />
+            <div className="bg-primary rounded-full p-4">
+              <Heart className="h-12 w-12 text-primary-foreground" />
+            </div>
           </div>
-          <p className="text-mobile-lg text-muted-foreground">
+          <h1 className="text-mobile-3xl font-bold text-foreground">Sanare</h1>
+          <p className="text-mobile-base text-muted-foreground">
             Organize seus medicamentos e cuide da sua saúde
           </p>
         </div>
