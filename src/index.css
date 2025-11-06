@@ -115,47 +115,55 @@
     }
   }
   
-  /* Mobile-first responsive typography */
+  /* Mobile-first responsive typography - optimized for readability */
   .text-mobile-sm { font-size: 14px; line-height: 20px; }
   .text-mobile-base { font-size: 16px; line-height: 24px; }
   .text-mobile-lg { font-size: 18px; line-height: 28px; }
   .text-mobile-xl { font-size: 20px; line-height: 28px; }
-  .text-mobile-2xl { font-size: 24px; line-height: 32px; }
-  .text-mobile-3xl { font-size: 30px; line-height: 36px; }
+  .text-mobile-2xl { font-size: 26px; line-height: 34px; }
+  .text-mobile-3xl { font-size: 32px; line-height: 40px; }
+  
+  /* Mobile touch targets - minimum 44x44px */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
 
 @layer components {
-  /* Minimal themed components */
+  /* Minimal themed components - mobile optimized */
   .btn-health {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90;
-    @apply rounded-xl px-6 py-3 min-h-[48px] font-medium;
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80;
+    @apply rounded-xl px-6 py-3 min-h-[48px] font-medium text-base;
     @apply transition-all duration-200;
-    @apply shadow-sm hover:shadow-md;
+    @apply shadow-sm hover:shadow-md active:shadow-sm;
   }
   
   .btn-health-outline {
-    @apply border border-primary/30 text-primary hover:bg-primary/5;
-    @apply rounded-xl px-6 py-3 min-h-[48px] font-medium;
+    @apply border-2 border-primary/30 text-primary hover:bg-primary/5 active:bg-primary/10;
+    @apply rounded-xl px-6 py-3 min-h-[48px] font-medium text-base;
     @apply transition-all duration-200;
   }
   
   .card-health {
-    @apply bg-card rounded-2xl p-5 shadow-sm border border-border/40;
+    @apply bg-card rounded-2xl p-6 shadow-sm border border-border/40;
+    @apply w-full;
   }
   
   .floating-action-btn {
-    @apply fixed bottom-8 right-8 z-50;
+    @apply fixed bottom-6 right-6 z-50;
     @apply bg-primary text-primary-foreground;
-    @apply w-14 h-14 rounded-full shadow-md;
+    @apply w-16 h-16 rounded-full shadow-lg;
     @apply flex items-center justify-center;
-    @apply hover:bg-primary/90 hover:shadow-lg transition-all duration-200;
+    @apply hover:bg-primary/90 active:bg-primary/80 hover:shadow-xl active:shadow-md;
+    @apply transition-all duration-200;
   }
   
   .back-btn {
-    @apply absolute top-5 left-5 z-10;
-    @apply w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm;
+    @apply absolute top-4 left-4 z-10;
+    @apply w-11 h-11 rounded-full bg-background/90 backdrop-blur-sm;
     @apply flex items-center justify-center;
-    @apply text-foreground hover:bg-background border border-border/40;
+    @apply text-foreground hover:bg-background active:bg-muted border border-border/40;
     @apply transition-all duration-200;
   }
 }
