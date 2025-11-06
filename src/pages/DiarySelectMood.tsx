@@ -74,13 +74,14 @@ const DiarySelectMood = () => {
         </div>
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="p-4">
         <Card className="card-health">
           <CardHeader className="text-center">
             <CardTitle className="text-xl">Como você está se sentindo hoje?</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-3">
+              {/* Emoções padrão */}
               {defaultMoods.map((mood) => (
                 <Button
                   key={mood.value}
@@ -92,44 +93,33 @@ const DiarySelectMood = () => {
                   <span className={`font-medium ${mood.color}`}>{mood.label}</span>
                 </Button>
               ))}
+
+              {/* Emoções personalizadas */}
+              {customMoods.map((mood) => (
+                <Button
+                  key={mood.id}
+                  variant="outline"
+                  className="h-14 flex items-center justify-start space-x-4 text-left hover:bg-muted/50"
+                  onClick={() => handleMoodSelect(mood.id, true)}
+                >
+                  <span className="text-2xl">{mood.emoji}</span>
+                  <span className="font-medium text-primary">{mood.name}</span>
+                </Button>
+              ))}
+
+              {/* Botão "Outro" para criar nova emoção */}
+              <Button
+                onClick={() => setShowAddDialog(true)}
+                variant="outline"
+                className="h-14 flex items-center justify-start space-x-4 text-left hover:bg-muted/50 border-dashed border-2"
+                disabled={loading}
+              >
+                <span className="text-2xl">➕</span>
+                <span className="font-medium text-muted-foreground">Outro</span>
+              </Button>
             </div>
           </CardContent>
         </Card>
-
-        {/* Custom Moods Section */}
-        {customMoods.length > 0 && (
-          <Card className="card-health">
-            <CardHeader>
-              <CardTitle className="text-lg">Minhas Emoções</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-3">
-                {customMoods.map((mood) => (
-                  <Button
-                    key={mood.id}
-                    variant="outline"
-                    className="h-14 flex items-center justify-start space-x-4 text-left hover:bg-muted/50"
-                    onClick={() => handleMoodSelect(mood.id, true)}
-                  >
-                    <span className="text-2xl">{mood.emoji}</span>
-                    <span className="font-medium text-primary">{mood.name}</span>
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Add Custom Mood Button */}
-        <Button
-          onClick={() => setShowAddDialog(true)}
-          variant="outline"
-          className="w-full h-14 border-dashed border-2"
-          disabled={loading}
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Adicionar Nova Emoção
-        </Button>
 
         <AddCustomMoodDialog
           open={showAddDialog}
