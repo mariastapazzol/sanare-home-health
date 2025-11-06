@@ -18,6 +18,7 @@ export interface ChecklistItem {
   unidade_dose?: string;
   descricao?: string;
   imagem_url?: string;
+  icone?: string;
 }
 
 interface UseChecklistDailyProps {
@@ -55,7 +56,7 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
       // @ts-ignore - Evita erro de inferência de tipo profunda do Supabase
       const { data: lembretes } = await supabase
         .from('lembretes')
-        .select('id, nome, horarios, descricao')
+        .select('id, nome, horarios, descricao, icone')
         .eq('context_id', contextId);
 
       // Construir lista de itens
@@ -96,7 +97,8 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
               checked: false,
               inactive: false,
               tipo: 'lembrete',
-              descricao: lem.descricao
+              descricao: lem.descricao,
+              icone: lem.icone || 'bell'
             });
           });
         });

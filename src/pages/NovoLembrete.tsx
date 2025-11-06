@@ -15,7 +15,16 @@ import {
   X,
   Clock,
   Calendar,
-  Save
+  Save,
+  Bell,
+  Heart,
+  Zap,
+  Star,
+  Coffee,
+  Apple,
+  Pill,
+  Activity,
+  AlertCircle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -38,6 +47,19 @@ const diasSemana = [
   { id: 'sexta', label: 'Sexta' },
   { id: 'sabado', label: 'Sábado' },
   { id: 'domingo', label: 'Domingo' }
+];
+
+const iconeOptions = [
+  { id: 'bell', label: 'Sino', Icon: Bell },
+  { id: 'clock', label: 'Relógio', Icon: Clock },
+  { id: 'heart', label: 'Coração', Icon: Heart },
+  { id: 'star', label: 'Estrela', Icon: Star },
+  { id: 'zap', label: 'Raio', Icon: Zap },
+  { id: 'coffee', label: 'Café', Icon: Coffee },
+  { id: 'apple', label: 'Maçã', Icon: Apple },
+  { id: 'pill', label: 'Pílula', Icon: Pill },
+  { id: 'activity', label: 'Atividade', Icon: Activity },
+  { id: 'alert', label: 'Alerta', Icon: AlertCircle }
 ];
 
 const NovoLembrete = () => {
@@ -494,6 +516,34 @@ const NovoLembrete = () => {
                 </div>
               </div>
             )}
+          </div>
+        </Card>
+
+        {/* Seleção de Ícone */}
+        <Card className="p-4">
+          <div className="space-y-4">
+            <Label>Escolha um ícone *</Label>
+            <div className="grid grid-cols-5 gap-3">
+              {iconeOptions.map((opcao) => {
+                const Icon = opcao.Icon;
+                const isSelected = formData.icone === opcao.id;
+                return (
+                  <button
+                    key={opcao.id}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, icone: opcao.id }))}
+                    className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-1 ${
+                      isSelected 
+                        ? 'border-primary bg-primary/10' 
+                        : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                    }`}
+                  >
+                    <Icon className={`h-6 w-6 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <span className="text-xs">{opcao.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </Card>
 

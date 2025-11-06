@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useChecklistDaily } from "@/hooks/use-checklist-daily";
 import { useCareContext } from "@/hooks/use-care-context";
 import { formatDateDisplay, getTodayKey } from "@/lib/checklist-utils";
-import { RefreshCw, History, CheckCircle, XCircle, Clock, AlertTriangle, Package, Pill, Bell } from "lucide-react";
+import { RefreshCw, History, CheckCircle, XCircle, Clock, AlertTriangle, Package, Pill, Bell, Heart, Zap, Star, Coffee, Apple, Activity, AlertCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
@@ -20,6 +20,25 @@ export function ChecklistToday() {
   const [stockWarningItem, setStockWarningItem] = useState<string | null>(null);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const navigate = useNavigate();
+
+  // Mapa de ícones disponíveis
+  const iconMap: Record<string, any> = {
+    bell: Bell,
+    clock: Clock,
+    heart: Heart,
+    star: Star,
+    zap: Zap,
+    coffee: Coffee,
+    apple: Apple,
+    pill: Pill,
+    activity: Activity,
+    alert: AlertCircle
+  };
+
+  const getLembreteIcon = (iconeName?: string) => {
+    const Icon = iconMap[iconeName || 'bell'] || Bell;
+    return Icon;
+  };
 
   const isTimePassed = (horario: string): boolean => {
     const now = new Date();
@@ -196,17 +215,18 @@ export function ChecklistToday() {
                             alt={item.nome}
                             className="w-12 h-12 rounded-lg object-cover"
                           />
+                        ) : item.tipo === 'lembrete' ? (
+                          (() => {
+                            const LembreteIcon = getLembreteIcon(item.icone);
+                            return (
+                              <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/30">
+                                <LembreteIcon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                              </div>
+                            );
+                          })()
                         ) : (
-                          <div className={`p-2 rounded-full ${
-                            item.tipo === 'medicamento' 
-                              ? 'bg-blue-100 dark:bg-blue-900/30' 
-                              : 'bg-purple-100 dark:bg-purple-900/30'
-                          }`}>
-                            {item.tipo === 'medicamento' ? (
-                              <Pill className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                            ) : (
-                              <Bell className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                            )}
+                          <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/30">
+                            <Pill className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                           </div>
                         )}
                         <div className="flex-1">
