@@ -89,7 +89,7 @@ const DiaryRecords = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR });
+    return format(new Date(dateString), "dd/MM/yyyy 'as' HH:mm", { locale: ptBR });
   };
 
   return (
