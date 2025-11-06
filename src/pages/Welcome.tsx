@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Heart, Pill, Shield } from 'lucide-react';
+import { Pill, Shield } from 'lucide-react';
+import logoSanare from '@/assets/logo-sanare.png';
 
 const Welcome = () => {
   const navigate = useNavigate();
@@ -12,9 +13,11 @@ const Welcome = () => {
         {/* Logo/Header */}
         <div className="text-center space-y-4">
           <div className="flex justify-center">
-            <div className="bg-primary rounded-full p-4">
-              <Heart className="h-12 w-12 text-primary-foreground" />
-            </div>
+            <img 
+              src={logoSanare} 
+              alt="Sanare" 
+              className="h-24 w-24"
+            />
           </div>
           <h1 className="text-mobile-3xl font-bold text-foreground">Sanare</h1>
           <p className="text-mobile-base text-muted-foreground">

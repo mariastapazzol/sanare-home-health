@@ -4,8 +4,9 @@ import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, Heart, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import logoSanare from '@/assets/logo-sanare.png';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -46,9 +47,11 @@ const Auth = () => {
           </button>
           
           <div className="flex justify-center">
-            <div className="bg-primary rounded-full p-4">
-              <Heart className="h-12 w-12 text-primary-foreground" />
-            </div>
+            <img 
+              src={logoSanare} 
+              alt="Sanare" 
+              className="h-20 w-20"
+            />
           </div>
           <h1 className="text-mobile-2xl font-bold">Entrar no Sanare</h1>
         </div>

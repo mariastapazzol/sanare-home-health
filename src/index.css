@@ -11,18 +11,18 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 15% 20%;
     
-    /* Minimal teal/sage theme */
-    --primary: 174 35% 45%;
+    /* Turquoise theme matching Sanare logo */
+    --primary: 188 78% 41%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 174 30% 65%;
-    --primary-dark: 174 40% 35%;
+    --primary-light: 188 70% 55%;
+    --primary-dark: 188 80% 30%;
     
     --secondary: 210 25% 96%;
     --secondary-foreground: 220 15% 30%;
     --muted: 210 20% 96%;
     --muted-foreground: 220 10% 50%;
-    --accent: 174 20% 94%;
-    --accent-foreground: 174 40% 35%;
+    --accent: 188 25% 94%;
+    --accent-foreground: 188 80% 30%;
     
     /* Alert colors - softer */
     --destructive: 0 70% 55%;
@@ -34,7 +34,7 @@
     
     --border: 220 15% 90%;
     --input: 220 15% 92%;
-    --ring: 174 35% 45%;
+    --ring: 188 78% 41%;
     --radius: 0.875rem;
     
     /* Minimal shadows */
@@ -57,10 +57,10 @@
     --popover: 220 18% 15%;
     --popover-foreground: 210 30% 92%;
     
-    --primary: 174 40% 55%;
+    --primary: 188 75% 50%;
     --primary-foreground: 220 20% 12%;
-    --primary-light: 174 40% 65%;
-    --primary-dark: 174 45% 40%;
+    --primary-light: 188 70% 60%;
+    --primary-dark: 188 80% 35%;
     
     --secondary: 220 15% 20%;
     --secondary-foreground: 210 30% 92%;
@@ -78,7 +78,7 @@
     
     --border: 220 15% 25%;
     --input: 220 15% 25%;
-    --ring: 174 40% 55%;
+    --ring: 188 75% 50%;
     
     --chart-1: 174 50% 50%;
     --chart-2: 184 65% 59%;

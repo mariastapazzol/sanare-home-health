@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, Heart, User, Users } from 'lucide-react';
+import { ArrowLeft, User, Users } from 'lucide-react';
+import logoSanare from '@/assets/logo-sanare.png';
 
 const AuthChoice = () => {
   const navigate = useNavigate();
@@ -19,9 +20,11 @@ const AuthChoice = () => {
           </button>
           
           <div className="flex justify-center">
-            <div className="bg-primary rounded-full p-4">
-              <Heart className="h-12 w-12 text-primary-foreground" />
-            </div>
+            <img 
+              src={logoSanare} 
+              alt="Sanare" 
+              className="h-20 w-20"
+            />
           </div>
           <h1 className="text-mobile-2xl font-bold">Criar Conta</h1>
           <p className="text-mobile-base text-muted-foreground">
