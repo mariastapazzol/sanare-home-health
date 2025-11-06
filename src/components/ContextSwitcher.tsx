@@ -9,21 +9,30 @@ import {
 import { User } from 'lucide-react';
 
 const ContextSwitcher = () => {
-  const { contexts, currentContext, setCurrentContext, userRole } = useCareContext();
+  const { contexts, currentContext, setCurrentContext, userRole, selectDependent } = useCareContext();
 
   // Only show for caregivers with multiple contexts
   if (userRole !== 'cuidador' || contexts.length <= 1) {
     return null;
   }
 
+  const handleContextChange = async (value: string) => {
+    const ctx = contexts.find(c => c.id === value);
+    if (ctx) {
+      // Se é um contexto de dependente, usar selectDependent para garantir que existe
+      if (ctx.tipo === 'dependent' && ctx.dependente_id) {
+        await selectDependent(ctx.dependente_id, ctx.owner_name);
+      } else {
+        setCurrentContext(ctx);
+      }
+    }
+  };
+
   return (
     <div className="w-full max-w-xs">
       <Select
         value={currentContext?.id}
-        onValueChange={(value) => {
-          const ctx = contexts.find(c => c.id === value);
-          if (ctx) setCurrentContext(ctx);
-        }}
+        onValueChange={handleContextChange}
       >
         <SelectTrigger className="w-full bg-card">
           <div className="flex items-center gap-2">

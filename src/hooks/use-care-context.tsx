@@ -28,7 +28,7 @@ interface CareCtxState {
   isContextReady: boolean;
   userRole: Role | null;
   reload: () => Promise<void>;
-  selectDependent: (ownerUserId: string) => void;
+  selectDependent: (dependenteId: string, dependenteName?: string) => Promise<void>;
   bootstrapping: boolean;
 }
 
@@ -100,6 +100,47 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
         console.error("Error loading owned contexts:", ownedErr);
       } else {
         contextsList = [...(ownedCtxs ?? [])] as CareContextRow[];
+      }
+
+      // Se for cuidador, garantir que há contextos para todos os dependentes
+      if (role === "cuidador") {
+        const { data: cuidadorData } = await supabase
+          .from("cuidadores")
+          .select("dependente_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (cuidadorData?.dependente_id) {
+          // Verifica se já existe contexto para este dependente
+          const hasContext = contextsList.some(
+            c => c.tipo === 'dependent' && c.dependente_id === cuidadorData.dependente_id
+          );
+
+          if (!hasContext) {
+            // Busca nome do dependente
+            const { data: depData } = await supabase
+              .from("pacientes_dependentes")
+              .select("nome")
+              .eq("id", cuidadorData.dependente_id)
+              .maybeSingle();
+
+            // Cria contexto para o dependente
+            const { data: newCtx } = await supabase
+              .from("care_contexts")
+              .insert([{
+                nome: `Cuidado de ${depData?.nome || 'Dependente'}`,
+                tipo: 'dependent',
+                owner_user_id: user.id,
+                dependente_id: cuidadorData.dependente_id
+              }])
+              .select()
+              .maybeSingle();
+
+            if (newCtx) {
+              contextsList = [...contextsList, newCtx as CareContextRow];
+            }
+          }
+        }
       }
 
       // Se for paciente_dependente, busca o contexto onde ele é o dependente
@@ -212,11 +253,69 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const selectDependent = (ownerUserId: string) => {
-    const depCtx = contexts.find(
-      (c) => c.tipo === "dependent" && c.owner_user_id === ownerUserId
+  // Busca ou cria um contexto para um dependente específico
+  const ensureDependentContext = async (dependenteId: string, dependenteName: string): Promise<CareContextView | null> => {
+    if (!user) return null;
+
+    try {
+      // Busca se já existe um contexto para este dependente criado por este cuidador
+      const { data: existingCtx } = await supabase
+        .from('care_contexts')
+        .select('*')
+        .eq('owner_user_id', user.id)
+        .eq('tipo', 'dependent')
+        .eq('dependente_id', dependenteId)
+        .maybeSingle();
+
+      if (existingCtx) {
+        const ctx = { ...existingCtx, owner_name: dependenteName } as CareContextView;
+        return ctx;
+      }
+
+      // Cria novo contexto se não existir
+      const { data: newCtx, error: createErr } = await supabase
+        .from('care_contexts')
+        .insert([{
+          nome: `Cuidado de ${dependenteName}`,
+          tipo: 'dependent',
+          owner_user_id: user.id,
+          dependente_id: dependenteId
+        }])
+        .select()
+        .single();
+
+      if (createErr) {
+        console.error('Error creating dependent context:', createErr);
+        return null;
+      }
+
+      const ctx = { ...newCtx, owner_name: dependenteName } as CareContextView;
+      
+      // Atualiza a lista de contextos
+      setContexts(prev => [...prev, ctx]);
+      
+      return ctx;
+    } catch (e) {
+      console.error('Error in ensureDependentContext:', e);
+      return null;
+    }
+  };
+
+  const selectDependent = async (dependenteId: string, dependenteName?: string) => {
+    // Busca o contexto existente
+    let depCtx = contexts.find(
+      (c) => c.tipo === "dependent" && c.dependente_id === dependenteId && c.owner_user_id === user?.id
     );
-    if (depCtx) setCurrentContextState(depCtx);
+
+    // Se não encontrou, cria
+    if (!depCtx && dependenteId) {
+      const name = dependenteName || 'Dependente';
+      depCtx = await ensureDependentContext(dependenteId, name);
+    }
+
+    if (depCtx) {
+      setCurrentContextState(depCtx);
+    }
   };
 
   const value: CareCtxState = {
