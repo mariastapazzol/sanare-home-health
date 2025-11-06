@@ -233,11 +233,8 @@ export function CareContextProvider({ children }: { children: ReactNode }) {
           // Dependente: seleciona o contexto onde ele é o dependente (criado pelo cuidador)
           chosen = withNames.find((c) => c.tipo === "dependent") ?? withNames[0];
         } else if (role === "cuidador") {
-          // Cuidador: seleciona automaticamente se tiver exatamente 1 contexto
-          if (withNames.length === 1) {
-            chosen = withNames[0];
-          }
-          // Se tiver mais de 1, deixa null para forçar seleção manual
+          // Cuidador: sempre seleciona automaticamente o contexto do dependente
+          chosen = withNames.find((c) => c.tipo === "dependent") ?? withNames[0];
         }
       }
 
