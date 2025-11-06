@@ -188,20 +188,25 @@ const NovoSintoma = () => {
           <div className="flex justify-between items-center">
             <Label>Intensidade</Label>
             <span className={`text-lg font-bold px-3 py-1 rounded ${getIntensidadeColor(intensidade[0])} text-white`}>
-              {intensidade[0]}/10 - {getIntensidadeLabel(intensidade[0])}
+              {getIntensidadeLabel(intensidade[0])}
             </span>
           </div>
-          <Slider
-            value={intensidade}
-            onValueChange={setIntensidade}
-            min={0}
-            max={10}
-            step={1}
-            className="w-full"
-          />
+          <div className="flex items-center gap-4">
+            <Slider
+              value={intensidade}
+              onValueChange={setIntensidade}
+              min={0}
+              max={10}
+              step={1}
+              className="flex-1"
+            />
+            <span className="text-2xl font-bold text-primary min-w-[3rem] text-center">
+              {intensidade[0]}
+            </span>
+          </div>
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Sem dor</span>
-            <span>Dor máxima</span>
+            <span>0 - Sem dor</span>
+            <span>10 - Dor máxima</span>
           </div>
         </div>
 
