@@ -17,6 +17,7 @@ export interface ChecklistItem {
   dosagem?: string;
   unidade_dose?: string;
   descricao?: string;
+  imagem_url?: string;
 }
 
 interface UseChecklistDailyProps {
@@ -47,7 +48,7 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
       // @ts-ignore - Evita erro de inferência de tipo profunda do Supabase
       const { data: medicamentos } = await supabase
         .from('medicamentos')
-        .select('id, nome, horarios, quantidade_atual, quantidade_por_dose, alerta_minimo, dosagem, unidade_dose')
+        .select('id, nome, horarios, quantidade_atual, quantidade_por_dose, alerta_minimo, dosagem, unidade_dose, imagem_url')
         .eq('context_id', contextId);
 
       // Buscar lembretes pelo context_id
@@ -76,7 +77,8 @@ export function useChecklistDaily({ contextId }: UseChecklistDailyProps = {}) {
               quantidade_por_dose: med.quantidade_por_dose,
               alerta_minimo: med.alerta_minimo,
               dosagem: med.dosagem,
-              unidade_dose: med.unidade_dose
+              unidade_dose: med.unidade_dose,
+              imagem_url: med.imagem_url
             });
           });
         });

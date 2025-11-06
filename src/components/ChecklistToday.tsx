@@ -188,19 +188,27 @@ export function ChecklistToday() {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 space-y-2">
-                      {/* Cabeçalho com ícone, nome e horário */}
+                      {/* Cabeçalho com imagem/ícone, nome e horário */}
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-full ${
-                          item.tipo === 'medicamento' 
-                            ? 'bg-blue-100 dark:bg-blue-900/30' 
-                            : 'bg-purple-100 dark:bg-purple-900/30'
-                        }`}>
-                          {item.tipo === 'medicamento' ? (
-                            <Pill className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                          ) : (
-                            <Bell className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                          )}
-                        </div>
+                        {item.tipo === 'medicamento' && item.imagem_url ? (
+                          <img 
+                            src={item.imagem_url} 
+                            alt={item.nome}
+                            className="w-12 h-12 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className={`p-2 rounded-full ${
+                            item.tipo === 'medicamento' 
+                              ? 'bg-blue-100 dark:bg-blue-900/30' 
+                              : 'bg-purple-100 dark:bg-purple-900/30'
+                          }`}>
+                            {item.tipo === 'medicamento' ? (
+                              <Pill className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            ) : (
+                              <Bell className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                            )}
+                          </div>
+                        )}
                         <div className="flex-1">
                           <h3 className="font-semibold text-lg">{item.nome}</h3>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
