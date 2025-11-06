@@ -4,49 +4,43 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 0 0% 99%;
+    --foreground: 220 15% 20%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 220 15% 20%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 15% 20%;
     
-    /* Healthcare teal/green theme */
-    --primary: 174 73% 35%;
+    /* Minimal teal/sage theme */
+    --primary: 174 35% 45%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 174 50% 50%;
-    --primary-dark: 174 73% 25%;
+    --primary-light: 174 30% 65%;
+    --primary-dark: 174 40% 35%;
     
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 174 30% 90%;
-    --accent-foreground: 174 73% 25%;
+    --secondary: 210 25% 96%;
+    --secondary-foreground: 220 15% 30%;
+    --muted: 210 20% 96%;
+    --muted-foreground: 220 10% 50%;
+    --accent: 174 20% 94%;
+    --accent-foreground: 174 40% 35%;
     
-    /* Alert colors */
-    --destructive: 0 84.2% 60.2%;
+    /* Alert colors - softer */
+    --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
-    --warning: 45 93% 58%;
+    --warning: 40 85% 60%;
     --warning-foreground: 0 0% 100%;
-    --success: 142 76% 36%;
+    --success: 142 60% 45%;
     --success-foreground: 0 0% 100%;
     
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 174 73% 35%;
-    --radius: 0.75rem;
+    --border: 220 15% 90%;
+    --input: 220 15% 92%;
+    --ring: 174 35% 45%;
+    --radius: 0.875rem;
     
-    /* Healthcare specific colors */
-    --health-primary: 174 73% 35%;
-    --health-light: 174 50% 90%;
-    --health-accent: 184 65% 59%;
-    --health-muted: 220 14% 96%;
-    
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.1), 0 2px 4px -2px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
+    /* Minimal shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.03);
+    --shadow-md: 0 2px 8px -2px hsl(0 0% 0% / 0.08);
+    --shadow-lg: 0 4px 16px -4px hsl(0 0% 0% / 0.12);
     
     --chart-1: 174 73% 35%;
     --chart-2: 184 65% 59%;
@@ -56,40 +50,35 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --background: 220 20% 12%;
+    --foreground: 210 30% 92%;
+    --card: 220 18% 15%;
+    --card-foreground: 210 30% 92%;
+    --popover: 220 18% 15%;
+    --popover-foreground: 210 30% 92%;
     
-    --primary: 174 50% 50%;
-    --primary-foreground: 222.2 84% 4.9%;
-    --primary-light: 174 50% 60%;
-    --primary-dark: 174 73% 25%;
+    --primary: 174 40% 55%;
+    --primary-foreground: 220 20% 12%;
+    --primary-light: 174 40% 65%;
+    --primary-dark: 174 45% 40%;
     
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --secondary: 220 15% 20%;
+    --secondary-foreground: 210 30% 92%;
+    --muted: 220 15% 22%;
+    --muted-foreground: 220 10% 60%;
+    --accent: 220 15% 20%;
+    --accent-foreground: 210 30% 92%;
     
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --warning: 45 93% 58%;
-    --warning-foreground: 222.2 84% 4.9%;
-    --success: 142 76% 36%;
-    --success-foreground: 210 40% 98%;
+    --destructive: 0 60% 50%;
+    --destructive-foreground: 210 30% 92%;
+    --warning: 40 80% 55%;
+    --warning-foreground: 220 20% 12%;
+    --success: 142 55% 50%;
+    --success-foreground: 210 30% 92%;
     
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 174 50% 50%;
-    
-    --health-primary: 174 50% 50%;
-    --health-light: 174 30% 20%;
-    --health-accent: 184 65% 59%;
-    --health-muted: 217.2 32.6% 17.5%;
+    --border: 220 15% 25%;
+    --input: 220 15% 25%;
+    --ring: 174 40% 55%;
     
     --chart-1: 174 50% 50%;
     --chart-2: 184 65% 59%;
@@ -136,37 +125,37 @@
 }
 
 @layer components {
-  /* Healthcare themed components */
+  /* Minimal themed components */
   .btn-health {
     @apply bg-primary text-primary-foreground hover:bg-primary/90;
-    @apply rounded-xl px-6 py-3 min-h-[44px] font-medium;
-    @apply transition-colors duration-200;
-    @apply shadow-md hover:shadow-lg;
+    @apply rounded-xl px-6 py-3 min-h-[48px] font-medium;
+    @apply transition-all duration-200;
+    @apply shadow-sm hover:shadow-md;
   }
   
   .btn-health-outline {
-    @apply border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground;
-    @apply rounded-xl px-6 py-3 min-h-[44px] font-medium;
-    @apply transition-colors duration-200;
+    @apply border border-primary/30 text-primary hover:bg-primary/5;
+    @apply rounded-xl px-6 py-3 min-h-[48px] font-medium;
+    @apply transition-all duration-200;
   }
   
   .card-health {
-    @apply bg-card rounded-xl p-4 shadow-md border border-border/50;
+    @apply bg-card rounded-2xl p-5 shadow-sm border border-border/40;
   }
   
   .floating-action-btn {
-    @apply fixed bottom-6 right-6 z-50;
+    @apply fixed bottom-8 right-8 z-50;
     @apply bg-primary text-primary-foreground;
-    @apply w-14 h-14 rounded-full shadow-lg;
+    @apply w-14 h-14 rounded-full shadow-md;
     @apply flex items-center justify-center;
-    @apply hover:bg-primary/90 transition-colors duration-200;
+    @apply hover:bg-primary/90 hover:shadow-lg transition-all duration-200;
   }
   
   .back-btn {
-    @apply absolute top-4 left-4 z-10;
-    @apply w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm;
+    @apply absolute top-5 left-5 z-10;
+    @apply w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm;
     @apply flex items-center justify-center;
-    @apply text-foreground hover:bg-background;
-    @apply transition-colors duration-200;
+    @apply text-foreground hover:bg-background border border-border/40;
+    @apply transition-all duration-200;
   }
 }
