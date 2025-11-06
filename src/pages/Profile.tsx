@@ -233,7 +233,6 @@ const Profile = () => {
                       variant="outline"
                       onClick={handleCancel}
                       className="flex-1"
-                      size="sm"
                     >
                       <X className="h-4 w-4 mr-2" />
                       Cancelar
@@ -241,9 +240,8 @@ const Profile = () => {
                     
                     <Button 
                       onClick={handleSave}
-                      className="btn-health flex-1"
+                      className="flex-1"
                       disabled={loading}
-                      size="sm"
                     >
                       <Save className="h-4 w-4 mr-2" />
                       {loading ? 'Salvando...' : 'Salvar'}
@@ -253,7 +251,6 @@ const Profile = () => {
                   <Button 
                     onClick={handleEdit}
                     className="btn-health"
-                    size="sm"
                   >
                     <Edit className="h-3 w-3 mr-2" />
                     Editar
