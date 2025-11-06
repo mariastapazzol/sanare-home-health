@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import ContextSwitcher from '@/components/ContextSwitcher';
+import logoSanare from '@/assets/logo-sanare.png';
 import { 
   Menu, 
   Pill, 
@@ -106,15 +107,17 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-primary text-primary-foreground p-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-mobile-xl font-semibold">
-            Olá, {dados?.nome || profile?.name || 'Usuário'}!
-          </h1>
+      <div className="bg-gradient-to-br from-primary to-primary-dark text-primary-foreground px-4 py-6">
+        <div className="flex items-center justify-between mb-6">
+          <img 
+            src={logoSanare} 
+            alt="Sanare" 
+            className="h-10 w-auto"
+          />
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-primary-foreground">
+              <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/10">
                 <Menu className="h-6 w-6" />
               </Button>
             </DropdownMenuTrigger>
@@ -130,6 +133,13 @@ const Home = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        
+        <h1 className="text-xl font-medium mb-1">
+          Olá, {dados?.nome || profile?.name || 'Usuário'}
+        </h1>
+        <p className="text-primary-foreground/80 text-sm">
+          Como você está hoje?
+        </p>
       </div>
 
       {/* Context Switcher */}
