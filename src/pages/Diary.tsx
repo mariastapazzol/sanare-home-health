@@ -5,18 +5,55 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useCareContext } from '@/hooks/use-care-context';
+import AddCustomMoodDialog from '@/components/diary/AddCustomMoodDialog';
+
+interface CustomMood {
+  id: string;
+  emoji: string;
+  name: string;
+}
 
 const Diary = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { currentContext, isContextReady } = useCareContext();
   const [selectedMood, setSelectedMood] = useState<string>('');
   const [hasEntries, setHasEntries] = useState<boolean | null>(null);
+  const [customMoods, setCustomMoods] = useState<CustomMood[]>([]);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
       checkExistingEntries();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (isContextReady) {
+      fetchCustomMoods();
+    }
+  }, [isContextReady, currentContext?.id]);
+
+  const fetchCustomMoods = async () => {
+    if (!currentContext?.id) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('custom_moods')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setCustomMoods(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar emoções:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const checkExistingEntries = async () => {
     if (!user) return;
@@ -57,9 +94,9 @@ const Diary = () => {
     { value: 'very_sad', label: 'Muito Triste', icon: '😭', color: 'text-red-500' }
   ];
 
-  const handleMoodSelect = (mood: string) => {
+  const handleMoodSelect = (mood: string, isCustom = false) => {
     setSelectedMood(mood);
-    navigate('/diario/write', { state: { mood } });
+    navigate('/diario/write', { state: { mood, isCustom } });
   };
 
   return (
@@ -85,21 +122,52 @@ const Diary = () => {
             <CardTitle className="text-xl">Como você está se sentindo hoje?</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4">
+            <div className="grid gap-3">
+              {/* Emoções padrão */}
               {moods.map((mood) => (
                 <Button
                   key={mood.value}
                   variant="outline"
-                  className="h-16 flex items-center justify-start space-x-4 text-left hover:bg-muted/50"
+                  className="h-14 flex items-center justify-start space-x-4 text-left hover:bg-muted/50"
                   onClick={() => handleMoodSelect(mood.value)}
                 >
                   <span className="text-2xl">{mood.icon}</span>
                   <span className={`font-medium ${mood.color}`}>{mood.label}</span>
                 </Button>
               ))}
+
+              {/* Emoções personalizadas */}
+              {customMoods.map((mood) => (
+                <Button
+                  key={mood.id}
+                  variant="outline"
+                  className="h-14 flex items-center justify-start space-x-4 text-left hover:bg-muted/50"
+                  onClick={() => handleMoodSelect(mood.id, true)}
+                >
+                  <span className="text-2xl">{mood.emoji}</span>
+                  <span className="font-medium text-primary">{mood.name}</span>
+                </Button>
+              ))}
+
+              {/* Botão "Outro" para criar nova emoção */}
+              <Button
+                onClick={() => setShowAddDialog(true)}
+                variant="outline"
+                className="h-14 flex items-center justify-start space-x-4 text-left hover:bg-muted/50 border-dashed border-2"
+                disabled={loading}
+              >
+                <span className="text-2xl">➕</span>
+                <span className="font-medium text-muted-foreground">Outro</span>
+              </Button>
             </div>
           </CardContent>
         </Card>
+
+        <AddCustomMoodDialog
+          open={showAddDialog}
+          onOpenChange={setShowAddDialog}
+          onMoodAdded={fetchCustomMoods}
+        />
       </div>
     </div>
   );
