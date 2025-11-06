@@ -235,6 +235,36 @@ export type Database = {
           },
         ]
       }
+      custom_moods: {
+        Row: {
+          context_id: string | null
+          created_at: string
+          emoji: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          context_id?: string | null
+          created_at?: string
+          emoji: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          context_id?: string | null
+          created_at?: string
+          emoji?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       diary_entries: {
         Row: {
           content: string | null

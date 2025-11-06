@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
 import { useCareContext } from '@/hooks/use-care-context';
@@ -20,17 +20,37 @@ const DiaryWrite = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const mood = location.state?.mood || 'neutral';
+  const isCustom = location.state?.isCustom || false;
+  const [moodDisplay, setMoodDisplay] = useState<{ label: string; icon: string }>({ label: '', icon: '😐' });
 
-  const getMoodDisplay = (mood: string) => {
-    const moods = {
-      'very_happy': { label: 'Muito Feliz', icon: '😄' },
-      'happy': { label: 'Feliz', icon: '😊' },
-      'neutral': { label: 'Neutro', icon: '😐' },
-      'sad': { label: 'Triste', icon: '😢' },
-      'very_sad': { label: 'Muito Triste', icon: '😭' }
+  useEffect(() => {
+    const loadMoodDisplay = async () => {
+      if (isCustom) {
+        // Buscar emoção personalizada
+        const { data } = await supabase
+          .from('custom_moods')
+          .select('emoji, name')
+          .eq('id', mood)
+          .maybeSingle();
+        
+        if (data) {
+          setMoodDisplay({ label: data.name, icon: data.emoji });
+        }
+      } else {
+        // Usar emoções padrão
+        const defaultMoods = {
+          'very_happy': { label: 'Muito Feliz', icon: '😄' },
+          'happy': { label: 'Feliz', icon: '😊' },
+          'neutral': { label: 'Neutro', icon: '😐' },
+          'sad': { label: 'Triste', icon: '😢' },
+          'very_sad': { label: 'Muito Triste', icon: '😭' }
+        };
+        setMoodDisplay(defaultMoods[mood as keyof typeof defaultMoods] || defaultMoods.neutral);
+      }
     };
-    return moods[mood as keyof typeof moods] || moods.neutral;
-  };
+
+    loadMoodDisplay();
+  }, [mood, isCustom]);
 
   const handleSave = async () => {
     if (!isContextReady || !currentContext?.id) {
@@ -82,8 +102,7 @@ const DiaryWrite = () => {
     );
   }
 
-  const moodDisplay = getMoodDisplay(mood);
-  const isFormValid = content.trim().length > 0 && currentContext?.id;
+  const isFormValid = content.trim().length > 0 && currentContext?.id && moodDisplay.label;
 
   return (
     <div className="min-h-screen bg-background">

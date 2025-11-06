@@ -8,6 +8,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+interface CustomMood {
+  emoji: string;
+  name: string;
+}
+
 interface DiaryEntry {
   id: string;
   mood: string;
@@ -19,42 +24,68 @@ const DiaryRecords = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
+  const [customMoods, setCustomMoods] = useState<Record<string, CustomMood>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
-      fetchEntries();
+      fetchData();
     }
   }, [user]);
 
-  const fetchEntries = async () => {
+  const fetchData = async () => {
     if (!user) return;
 
     try {
-      // RLS filtra automaticamente por contexto
-      const { data, error } = await supabase
+      // Buscar entradas
+      const { data: entriesData, error: entriesError } = await supabase
         .from('diary_entries')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setEntries(data || []);
+      if (entriesError) throw entriesError;
+      
+      // Buscar emoções personalizadas
+      const { data: customMoodsData } = await supabase
+        .from('custom_moods')
+        .select('id, emoji, name');
+
+      // Criar um mapa de emoções personalizadas
+      const moodsMap: Record<string, CustomMood> = {};
+      if (customMoodsData) {
+        customMoodsData.forEach(mood => {
+          moodsMap[mood.id] = { emoji: mood.emoji, name: mood.name };
+        });
+      }
+
+      setEntries(entriesData || []);
+      setCustomMoods(moodsMap);
     } catch (error) {
-      console.error('Erro ao buscar entradas:', error);
+      console.error('Erro ao buscar dados:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const getMoodDisplay = (mood: string) => {
-    const moods = {
+    // Verificar se é uma emoção personalizada
+    if (customMoods[mood]) {
+      return {
+        label: customMoods[mood].name,
+        icon: customMoods[mood].emoji,
+        color: 'text-primary'
+      };
+    }
+
+    // Emoções padrão
+    const defaultMoods = {
       'very_happy': { label: 'Muito Feliz', icon: '😄', color: 'text-green-500' },
       'happy': { label: 'Feliz', icon: '😊', color: 'text-green-400' },
       'neutral': { label: 'Neutro', icon: '😐', color: 'text-yellow-500' },
       'sad': { label: 'Triste', icon: '😢', color: 'text-orange-500' },
       'very_sad': { label: 'Muito Triste', icon: '😭', color: 'text-red-500' }
     };
-    return moods[mood as keyof typeof moods] || moods.neutral;
+    return defaultMoods[mood as keyof typeof defaultMoods] || defaultMoods.neutral;
   };
 
   const formatDate = (dateString: string) => {
