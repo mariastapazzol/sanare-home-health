@@ -90,6 +90,18 @@ const Profile = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const calcularIdade = (nascimento: string | null | undefined): number | null => {
+    if (!nascimento) return null;
+    const hoje = new Date();
+    const dataNasc = new Date(nascimento);
+    let idade = hoje.getFullYear() - dataNasc.getFullYear();
+    const mes = hoje.getMonth() - dataNasc.getMonth();
+    if (mes < 0 || (mes === 0 && hoje.getDate() < dataNasc.getDate())) {
+      idade--;
+    }
+    return idade;
+  };
+
 
   // Loading state
   if (status === "loading") {
@@ -204,23 +216,34 @@ const Profile = () => {
             )}
 
             {'nascimento' in (dados || {}) && (
-              <div className="space-y-2">
-                <Label>Data de nascimento</Label>
-                {editing ? (
-                  <Input
-                    type="date"
-                    value={formData.nascimento}
-                    onChange={(e) => handleChange('nascimento', e.target.value)}
-                    className="min-h-[44px]"
-                  />
-                ) : (
-                  <p className="px-3 py-2 bg-muted/50 rounded-md min-h-[44px] flex items-center">
-                    {(dados as any).nascimento 
-                      ? new Date((dados as any).nascimento).toLocaleDateString('pt-BR') 
-                      : 'Não informado'}
-                  </p>
+              <>
+                <div className="space-y-2">
+                  <Label>Data de nascimento</Label>
+                  {editing ? (
+                    <Input
+                      type="date"
+                      value={formData.nascimento}
+                      onChange={(e) => handleChange('nascimento', e.target.value)}
+                      className="min-h-[44px]"
+                    />
+                  ) : (
+                    <p className="px-3 py-2 bg-muted/50 rounded-md min-h-[44px] flex items-center">
+                      {(dados as any).nascimento 
+                        ? new Date((dados as any).nascimento).toLocaleDateString('pt-BR') 
+                        : 'Não informado'}
+                    </p>
+                  )}
+                </div>
+
+                {(dados as any).nascimento && calcularIdade((dados as any).nascimento) !== null && (
+                  <div className="space-y-2">
+                    <Label>Idade</Label>
+                    <p className="px-3 py-2 bg-muted/30 rounded-md min-h-[44px] flex items-center text-muted-foreground">
+                      {calcularIdade((dados as any).nascimento)} anos
+                    </p>
+                  </div>
                 )}
-              </div>
+              </>
             )}
 
             {/* Botão de editar - apenas para cuidadores */}
