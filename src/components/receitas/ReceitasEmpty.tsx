@@ -12,7 +12,7 @@ export function ReceitasEmpty({ onAddReceita, onAddMedicamento }: ReceitasEmptyP
       <p className="text-lg text-muted-foreground mb-6">
         Nenhuma receita cadastrada ainda.
       </p>
-      <div className="flex gap-3">
+      <div className="flex flex-col gap-3 w-full max-w-xs">
         <Button onClick={onAddMedicamento}>
           <Plus className="h-4 w-4 mr-2" />
           Cadastrar Medicamento
