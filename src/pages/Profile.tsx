@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, Heart, Edit, Save, X, User } from 'lucide-react';
+import { ArrowLeft, Heart, Edit, Save, X, User, Lock, Eye, EyeOff } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -26,6 +26,14 @@ const Profile = () => {
     nome: '',
     nascimento: ''
   });
+  
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSave = async () => {
     if (!dados || !papel) return;
@@ -100,6 +108,80 @@ const Profile = () => {
       idade--;
     }
     return idade;
+  };
+
+  const validatePassword = (password: string) => {
+    if (password.length < 8) {
+      return 'A senha deve ter no mínimo 8 caracteres';
+    }
+    if (!/[a-zA-Z]/.test(password)) {
+      return 'A senha deve conter pelo menos 1 letra';
+    }
+    if (!/[0-9]/.test(password)) {
+      return 'A senha deve conter pelo menos 1 número';
+    }
+    return null;
+  };
+
+  const handleChangePassword = async () => {
+    const passwordError = validatePassword(passwordData.newPassword);
+    if (passwordError) {
+      toast({
+        title: "Senha inválida",
+        description: passwordError,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast({
+        title: "Erro",
+        description: "As senhas não conferem.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: passwordData.newPassword
+      });
+
+      if (error) {
+        toast({
+          title: "Erro ao alterar senha",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Senha atualizada",
+          description: "Sua senha foi alterada com sucesso."
+        });
+        setChangingPassword(false);
+        setPasswordData({ newPassword: '', confirmPassword: '' });
+        setShowNewPassword(false);
+        setShowConfirmPassword(false);
+      }
+    } catch (error) {
+      toast({
+        title: "Erro inesperado",
+        description: "Tente novamente mais tarde.",
+        variant: "destructive"
+      });
+    }
+
+    setLoading(false);
+  };
+
+  const handleCancelPasswordChange = () => {
+    setChangingPassword(false);
+    setPasswordData({ newPassword: '', confirmPassword: '' });
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
   };
 
 
@@ -283,6 +365,104 @@ const Profile = () => {
             )}
           </div>
         </Card>
+
+        {/* Alterar senha - apenas para cuidadores e autônomos */}
+        {(papel === 'cuidador' || papel === 'paciente_autonomo') && (
+          <Card className="card-health">
+            <div className="space-y-6">
+              <div className="flex items-center gap-2">
+                <Lock className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold text-lg">Segurança</h3>
+              </div>
+
+              {!changingPassword ? (
+                <Button 
+                  onClick={() => setChangingPassword(true)}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Lock className="h-4 w-4 mr-2" />
+                  Alterar senha
+                </Button>
+              ) : (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">Nova senha</Label>
+                    <div className="relative">
+                      <Input
+                        id="newPassword"
+                        type={showNewPassword ? "text" : "password"}
+                        value={passwordData.newPassword}
+                        onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                        placeholder="Digite sua nova senha"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={passwordData.confirmPassword}
+                        onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                        placeholder="Digite novamente a senha"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-muted-foreground space-y-1 bg-muted/30 p-3 rounded-lg">
+                    <p className="font-medium">A senha deve conter:</p>
+                    <ul className="list-disc list-inside space-y-1 ml-2">
+                      <li>Mínimo 8 caracteres</li>
+                      <li>Pelo menos 1 letra</li>
+                      <li>Pelo menos 1 número</li>
+                    </ul>
+                  </div>
+
+                  <div className="flex space-x-4">
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      onClick={handleCancelPasswordChange}
+                      className="flex-1"
+                      disabled={loading}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancelar
+                    </Button>
+                    
+                    <Button 
+                      onClick={handleChangePassword}
+                      className="flex-1"
+                      disabled={loading || !passwordData.newPassword || !passwordData.confirmPassword}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {loading ? 'Salvando...' : 'Salvar'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
 
         {/* Dependentes section - only for caregivers */}
         {papel === 'cuidador' && dependentes.length > 0 && (
