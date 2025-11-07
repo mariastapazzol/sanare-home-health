@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useChecklistDaily } from "@/hooks/use-checklist-daily";
 import { useCareContext } from "@/hooks/use-care-context";
 import { formatDateDisplay, getTodayKey } from "@/lib/checklist-utils";
-import { RefreshCw, History, CheckCircle, XCircle, Clock, AlertTriangle, Package, Pill, Bell, Heart, Zap, Star, Coffee, Apple, Activity, AlertCircle } from "lucide-react";
+import { RefreshCw, History, CheckCircle, XCircle, Clock, AlertTriangle, Package, Pill, Bell, Heart, Zap, Star, Coffee, Apple, Activity, AlertCircle, Sun } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
@@ -30,7 +30,7 @@ export function ChecklistToday() {
     zap: Zap,
     coffee: Coffee,
     apple: Apple,
-    pill: Pill,
+    sun: Sun,
     activity: Activity,
     alert: AlertCircle
   };

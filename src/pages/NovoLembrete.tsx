@@ -22,7 +22,7 @@ import {
   Star,
   Coffee,
   Apple,
-  Pill,
+  Sun,
   Activity,
   AlertCircle
 } from 'lucide-react';
@@ -57,7 +57,7 @@ const iconeOptions = [
   { id: 'zap', label: 'Raio', Icon: Zap },
   { id: 'coffee', label: 'Café', Icon: Coffee },
   { id: 'apple', label: 'Maçã', Icon: Apple },
-  { id: 'pill', label: 'Pílula', Icon: Pill },
+  { id: 'sun', label: 'Sol', Icon: Sun },
   { id: 'activity', label: 'Atividade', Icon: Activity },
   { id: 'alert', label: 'Alerta', Icon: AlertCircle }
 ];
@@ -532,14 +532,14 @@ const NovoLembrete = () => {
                     key={opcao.id}
                     type="button"
                     onClick={() => setFormData(prev => ({ ...prev, icone: opcao.id }))}
-                    className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-1 ${
+                    className={`p-4 rounded-lg border-2 transition-all flex items-center justify-center ${
                       isSelected 
                         ? 'border-primary bg-primary/10' 
                         : 'border-border hover:border-primary/50 hover:bg-muted/50'
                     }`}
+                    title={opcao.label}
                   >
                     <Icon className={`h-6 w-6 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
-                    <span className="text-xs">{opcao.label}</span>
                   </button>
                 );
               })}
