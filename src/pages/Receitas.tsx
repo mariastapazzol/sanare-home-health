@@ -330,21 +330,15 @@ export default function Receitas() {
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-card border-b border-border sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/home")}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-xl font-semibold text-foreground">Receitas</h1>
-          </div>
-          <Button onClick={() => setUploadDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar Receita
+        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/home")}
+          >
+            <ArrowLeft className="h-5 w-5" />
           </Button>
+          <h1 className="text-xl font-semibold text-foreground">Receitas</h1>
         </div>
       </header>
 
@@ -389,6 +383,15 @@ export default function Receitas() {
         uploading={uploading}
         onFileSelect={handleFileSelect}
       />
+
+      {/* Floating Action Button */}
+      <Button
+        onClick={() => setUploadDialogOpen(true)}
+        size="icon"
+        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg"
+      >
+        <Plus className="h-6 w-6" />
+      </Button>
     </div>
   );
 }
