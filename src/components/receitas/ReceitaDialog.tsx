@@ -58,10 +58,11 @@ export function ReceitaDialog({
             </Button>
             <Button 
               variant="destructive" 
+              size="icon"
               onClick={onExcluir}
+              title="Excluir receita"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Excluir Receita
+              <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         </div>
