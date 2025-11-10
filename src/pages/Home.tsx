@@ -8,8 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import ContextSwitcher from '@/components/ContextSwitcher';
-import logoSanare from '@/assets/logo-sanare.png';
-import { 
+import {
   Menu, 
   Pill, 
   Package, 
@@ -109,16 +108,9 @@ const Home = () => {
       {/* Header */}
       <div className="bg-primary text-primary-foreground p-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <img 
-              src={logoSanare} 
-              alt="Sanare" 
-              className="h-10 w-10"
-            />
-            <h1 className="text-mobile-xl font-semibold">
-              Olá, {dados?.nome || profile?.name || 'Usuário'}!
-            </h1>
-          </div>
+          <h1 className="text-mobile-xl font-semibold">
+            Olá, {dados?.nome || profile?.name || 'Usuário'}!
+          </h1>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
