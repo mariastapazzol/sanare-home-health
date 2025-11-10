@@ -111,161 +111,166 @@ const Sintomas = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <div className="bg-primary text-primary-foreground p-4 relative">
-        <Button
-          variant="ghost"
-          size="icon"
+    <div className="min-h-screen bg-background">
+      <div className="relative">
+        <button
           onClick={() => navigate('/home')}
-          className="absolute left-4 text-primary-foreground hover:bg-primary-foreground/10"
+          className="back-btn"
         >
-          <ArrowLeft className="h-6 w-6" />
-        </Button>
-        <h1 className="text-mobile-xl font-semibold text-center">
-          Sintomas e Sinais Vitais
-        </h1>
-      </div>
+          <ArrowLeft className="w-5 h-5" />
+        </button>
 
-      <div className="p-4 space-y-6">
-        {/* Botões de Ação */}
-        <div className="grid grid-cols-2 gap-4">
-          <Button
-            onClick={() => navigate('/sintomas/novo')}
-            className="btn-health h-20 flex-col space-y-2"
-          >
-            <AlertCircle className="h-6 w-6" />
-            <span>Registrar Sintoma</span>
-          </Button>
-          
-          <Button
-            onClick={() => navigate('/sinais-vitais/novo')}
-            className="btn-health h-20 flex-col space-y-2"
-          >
-            <Heart className="h-6 w-6" />
-            <span>Registrar Sinal Vital</span>
-          </Button>
-        </div>
+        <div className="pt-16 pb-20 px-4">
+          <div className="mb-6">
+            <h1 className="text-mobile-2xl font-bold text-foreground mb-2">
+              Sintomas e Sinais Vitais
+            </h1>
+            <p className="text-muted-foreground">
+              Monitore sua saúde
+            </p>
+          </div>
 
-        {/* Últimos Sintomas */}
-        <Card className="card-health">
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <AlertCircle className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold">Últimos Sintomas</h3>
+          <div className="space-y-6">
+            {/* Botões de Ação */}
+            <div className="grid grid-cols-2 gap-4">
+              <Button
+                onClick={() => navigate('/sintomas/novo')}
+                className="btn-health h-20 flex-col space-y-2"
+              >
+                <AlertCircle className="h-6 w-6" />
+                <span>Registrar Sintoma</span>
+              </Button>
+              
+              <Button
+                onClick={() => navigate('/sinais-vitais/novo')}
+                className="btn-health h-20 flex-col space-y-2"
+              >
+                <Heart className="h-6 w-6" />
+                <span>Registrar Sinal Vital</span>
+              </Button>
             </div>
-            
-            {loading ? (
-              <p className="text-muted-foreground text-center py-4">Carregando...</p>
-            ) : sintomas.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">
-                Nenhum sintoma registrado
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {sintomas.map((sintoma) => (
-                  <div 
-                    key={sintoma.id}
-                    className="flex items-start justify-between p-3 bg-muted/50 rounded-lg"
-                  >
-                    <div className="flex-1">
-                      <p className="font-medium">{sintoma.tipo_sintoma}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Duração: {sintoma.duracao}
-                      </p>
-                      {sintoma.fatores_relacionados.length > 0 && (
-                        <p className="text-sm text-muted-foreground">
-                          Fatores: {sintoma.fatores_relacionados.join(', ')}
+
+            {/* Últimos Sintomas */}
+            <Card className="card-health">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold">Últimos Sintomas</h3>
+                </div>
+                
+                {loading ? (
+                  <p className="text-muted-foreground text-center py-4">Carregando...</p>
+                ) : sintomas.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-4">
+                    Nenhum sintoma registrado
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {sintomas.map((sintoma) => (
+                      <div 
+                        key={sintoma.id}
+                        className="flex items-start justify-between p-3 bg-muted/50 rounded-lg"
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium">{sintoma.tipo_sintoma}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Duração: {sintoma.duracao}
+                          </p>
+                          {sintoma.fatores_relacionados.length > 0 && (
+                            <p className="text-sm text-muted-foreground">
+                              Fatores: {sintoma.fatores_relacionados.join(', ')}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {format(new Date(sintoma.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className={`text-lg font-bold ${getIntensidadeColor(sintoma.intensidade)}`}>
+                            {sintoma.intensidade}/10
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* Últimos Sinais Vitais */}
+            <Card className="card-health">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Heart className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold">Últimos Sinais Vitais</h3>
+                </div>
+                
+                {loading ? (
+                  <p className="text-muted-foreground text-center py-4">Carregando...</p>
+                ) : sinaisVitais.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-4">
+                    Nenhum sinal vital registrado
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {sinaisVitais.map((sinal) => (
+                      <div 
+                        key={sinal.id}
+                        className="p-3 bg-muted/50 rounded-lg space-y-2"
+                      >
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          {sinal.pressao_sistolica && sinal.pressao_diastolica && (
+                            <div>
+                              <span className="text-muted-foreground">PA: </span>
+                              <span className={getSinalVitalStatus('pressao_sistolica', sinal.pressao_sistolica)}>
+                                {sinal.pressao_sistolica}/{sinal.pressao_diastolica}
+                              </span>
+                            </div>
+                          )}
+                          {sinal.frequencia_cardiaca && (
+                            <div>
+                              <span className="text-muted-foreground">FC: </span>
+                              <span className={getSinalVitalStatus('fc', sinal.frequencia_cardiaca)}>
+                                {sinal.frequencia_cardiaca} bpm
+                              </span>
+                            </div>
+                          )}
+                          {sinal.saturacao_oxigenio && (
+                            <div>
+                              <span className="text-muted-foreground">SpO₂: </span>
+                              <span className={getSinalVitalStatus('saturacao', sinal.saturacao_oxigenio)}>
+                                {sinal.saturacao_oxigenio}%
+                              </span>
+                            </div>
+                          )}
+                          {sinal.temperatura && (
+                            <div>
+                              <span className="text-muted-foreground">Temp: </span>
+                              <span className={getSinalVitalStatus('temperatura', sinal.temperatura)}>
+                                {sinal.temperatura}°C
+                              </span>
+                            </div>
+                          )}
+                          {sinal.glicose && (
+                            <div>
+                              <span className="text-muted-foreground">Glicose: </span>
+                              <span className={getSinalVitalStatus('glicose', sinal.glicose)}>
+                                {sinal.glicose} mg/dL
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(sinal.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                         </p>
-                      )}
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {format(new Date(sintoma.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <span className={`text-lg font-bold ${getIntensidadeColor(sintoma.intensidade)}`}>
-                        {sintoma.intensidade}/10
-                      </span>
-                    </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            )}
+            </Card>
           </div>
-        </Card>
-
-        {/* Últimos Sinais Vitais */}
-        <Card className="card-health">
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Heart className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold">Últimos Sinais Vitais</h3>
-            </div>
-            
-            {loading ? (
-              <p className="text-muted-foreground text-center py-4">Carregando...</p>
-            ) : sinaisVitais.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">
-                Nenhum sinal vital registrado
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {sinaisVitais.map((sinal) => (
-                  <div 
-                    key={sinal.id}
-                    className="p-3 bg-muted/50 rounded-lg space-y-2"
-                  >
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      {sinal.pressao_sistolica && sinal.pressao_diastolica && (
-                        <div>
-                          <span className="text-muted-foreground">PA: </span>
-                          <span className={getSinalVitalStatus('pressao_sistolica', sinal.pressao_sistolica)}>
-                            {sinal.pressao_sistolica}/{sinal.pressao_diastolica}
-                          </span>
-                        </div>
-                      )}
-                      {sinal.frequencia_cardiaca && (
-                        <div>
-                          <span className="text-muted-foreground">FC: </span>
-                          <span className={getSinalVitalStatus('fc', sinal.frequencia_cardiaca)}>
-                            {sinal.frequencia_cardiaca} bpm
-                          </span>
-                        </div>
-                      )}
-                      {sinal.saturacao_oxigenio && (
-                        <div>
-                          <span className="text-muted-foreground">SpO₂: </span>
-                          <span className={getSinalVitalStatus('saturacao', sinal.saturacao_oxigenio)}>
-                            {sinal.saturacao_oxigenio}%
-                          </span>
-                        </div>
-                      )}
-                      {sinal.temperatura && (
-                        <div>
-                          <span className="text-muted-foreground">Temp: </span>
-                          <span className={getSinalVitalStatus('temperatura', sinal.temperatura)}>
-                            {sinal.temperatura}°C
-                          </span>
-                        </div>
-                      )}
-                      {sinal.glicose && (
-                        <div>
-                          <span className="text-muted-foreground">Glicose: </span>
-                          <span className={getSinalVitalStatus('glicose', sinal.glicose)}>
-                            {sinal.glicose} mg/dL
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {format(new Date(sinal.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </Card>
+        </div>
       </div>
     </div>
   );

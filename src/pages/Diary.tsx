@@ -101,74 +101,85 @@ const Diary = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-primary text-primary-foreground p-4">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/home')}
-            className="text-primary-foreground"
-          >
-            <ArrowLeft className="h-6 w-6" />
-          </Button>
-          <h1 className="text-mobile-xl font-semibold">Diário Emocional</h1>
+      <div className="relative">
+        <button
+          onClick={() => navigate('/home')}
+          className="back-btn"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+
+        <div className="pt-16 pb-20 px-4">
+          <div className="mb-6">
+            <h1 className="text-mobile-2xl font-bold text-foreground mb-2">
+              Diário Emocional
+            </h1>
+            <p className="text-muted-foreground">
+              Como você está se sentindo hoje?
+            </p>
+          </div>
+
+          <Card className="card-health">
+            <CardContent className="pt-6">
+              <div className="grid gap-3">
+                {/* Emoções padrão */}
+                {moods.map((mood) => (
+                  <Button
+                    key={mood.value}
+                    variant="outline"
+                    className="h-14 flex items-center justify-start space-x-4 text-left hover:bg-muted/50"
+                    onClick={() => handleMoodSelect(mood.value)}
+                  >
+                    <span className="text-2xl">{mood.icon}</span>
+                    <span className={`font-medium ${mood.color}`}>{mood.label}</span>
+                  </Button>
+                ))}
+
+                {/* Emoções personalizadas */}
+                {customMoods.map((mood) => (
+                  <Button
+                    key={mood.id}
+                    variant="outline"
+                    className="h-14 flex items-center justify-start space-x-4 text-left hover:bg-muted/50"
+                    onClick={() => handleMoodSelect(mood.id, true)}
+                  >
+                    <span className="text-2xl">{mood.emoji}</span>
+                    <span className="font-medium text-primary">{mood.name}</span>
+                  </Button>
+                ))}
+
+                {/* Botão "Outro" para criar nova emoção */}
+                <Button
+                  onClick={() => setShowAddDialog(true)}
+                  variant="outline"
+                  className="h-14 flex items-center justify-start space-x-4 text-left hover:bg-muted/50 border-dashed border-2"
+                  disabled={loading}
+                >
+                  <span className="text-2xl">➕</span>
+                  <span className="font-medium text-muted-foreground">Outro</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Link para ver histórico */}
+          <div className="mt-6 text-center">
+            <Button
+              variant="link"
+              onClick={() => navigate('/diario/records')}
+              className="text-primary hover:text-primary/80"
+            >
+              Ver histórico de registros
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="p-4">
-        <Card className="card-health">
-          <CardHeader className="text-center">
-            <CardTitle className="text-xl">Como você está se sentindo hoje?</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3">
-              {/* Emoções padrão */}
-              {moods.map((mood) => (
-                <Button
-                  key={mood.value}
-                  variant="outline"
-                  className="h-14 flex items-center justify-start space-x-4 text-left hover:bg-muted/50"
-                  onClick={() => handleMoodSelect(mood.value)}
-                >
-                  <span className="text-2xl">{mood.icon}</span>
-                  <span className={`font-medium ${mood.color}`}>{mood.label}</span>
-                </Button>
-              ))}
-
-              {/* Emoções personalizadas */}
-              {customMoods.map((mood) => (
-                <Button
-                  key={mood.id}
-                  variant="outline"
-                  className="h-14 flex items-center justify-start space-x-4 text-left hover:bg-muted/50"
-                  onClick={() => handleMoodSelect(mood.id, true)}
-                >
-                  <span className="text-2xl">{mood.emoji}</span>
-                  <span className="font-medium text-primary">{mood.name}</span>
-                </Button>
-              ))}
-
-              {/* Botão "Outro" para criar nova emoção */}
-              <Button
-                onClick={() => setShowAddDialog(true)}
-                variant="outline"
-                className="h-14 flex items-center justify-start space-x-4 text-left hover:bg-muted/50 border-dashed border-2"
-                disabled={loading}
-              >
-                <span className="text-2xl">➕</span>
-                <span className="font-medium text-muted-foreground">Outro</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <AddCustomMoodDialog
-          open={showAddDialog}
-          onOpenChange={setShowAddDialog}
-          onMoodAdded={fetchCustomMoods}
-        />
-      </div>
+      <AddCustomMoodDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        onMoodAdded={fetchCustomMoods}
+      />
     </div>
   );
 };

@@ -3,12 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { 
   ArrowLeft,
   Plus,
-  Search,
   Clock,
   Edit,
   Trash2,
@@ -41,8 +39,6 @@ const Lembretes = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [lembretes, setLembretes] = useState<Lembrete[]>([]);
-  const [filteredLembretes, setFilteredLembretes] = useState<Lembrete[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [lembreteToDelete, setLembreteToDelete] = useState<string | null>(null);
@@ -52,14 +48,6 @@ const Lembretes = () => {
       fetchLembretes();
     }
   }, [user]);
-
-  useEffect(() => {
-    const filtered = lembretes.filter(lembrete =>
-      lembrete.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (lembrete.descricao && lembrete.descricao.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-    setFilteredLembretes(filtered);
-  }, [lembretes, searchTerm]);
 
   const fetchLembretes = async () => {
     if (!user) return;
@@ -211,55 +199,36 @@ const Lembretes = () => {
   // Tela de listagem
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-primary text-primary-foreground p-4">
-        <div className="flex items-center space-x-3 mb-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/home')}
-            className="text-primary-foreground"
-          >
-            <ArrowLeft className="h-6 w-6" />
-          </Button>
-          <h1 className="text-mobile-xl font-semibold">Lembretes</h1>
-        </div>
-
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar lembretes..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-background/20 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/70"
-          />
-        </div>
-      </div>
-
-      <div className="p-4 space-y-4">
-        <NotificationPermissionDeniedAlert />
-        
-        {/* Add Button */}
-        <Button
-          onClick={() => navigate('/lembretes/novo')}
-          className="w-full"
+      <NotificationPermissionDeniedAlert />
+      <div className="relative">
+        <button
+          onClick={() => navigate('/home')}
+          className="back-btn"
         >
-          <Plus className="h-4 w-4 mr-2" />
-          Adicionar Novo Lembrete
-        </Button>
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+
+        <div className="pt-16 pb-20 px-4">
+          <div className="mb-6">
+            <h1 className="text-mobile-2xl font-bold text-foreground mb-2">
+              Lembretes
+            </h1>
+            <p className="text-muted-foreground">
+              {lembretes.length} lembrete{lembretes.length !== 1 ? 's' : ''} cadastrado{lembretes.length !== 1 ? 's' : ''}
+            </p>
+          </div>
 
         {/* Lembretes List */}
-        {filteredLembretes.length === 0 ? (
+        {lembretes.length === 0 ? (
           <div className="text-center py-8">
             <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
-              {searchTerm ? 'Nenhum lembrete encontrado' : 'Nenhum lembrete cadastrado'}
+              Nenhum lembrete cadastrado
             </p>
           </div>
         ) : (
           <div className="space-y-3">
-            {filteredLembretes.map((lembrete) => (
+            {lembretes.map((lembrete) => (
               <Card key={lembrete.id} className="p-4">
                 <div className="space-y-3">
                   <div className="flex items-start justify-between">
@@ -309,7 +278,17 @@ const Lembretes = () => {
             ))}
           </div>
         )}
+        </div>
       </div>
+
+      {/* Floating Action Button */}
+      <Button
+        onClick={() => navigate('/lembretes/novo')}
+        size="icon"
+        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg"
+      >
+        <Plus className="h-6 w-6" />
+      </Button>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
