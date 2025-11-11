@@ -10,7 +10,16 @@ import {
   Clock,
   Edit,
   Trash2,
-  Calendar
+  Calendar,
+  Bell,
+  Heart,
+  Zap,
+  Star,
+  Coffee,
+  Apple,
+  Sun,
+  Activity,
+  AlertCircle
 } from 'lucide-react';
 import {
   Dialog,
@@ -35,6 +44,19 @@ interface Lembrete {
   created_at: string;
 }
 
+const iconeMap: Record<string, any> = {
+  bell: Bell,
+  clock: Clock,
+  heart: Heart,
+  star: Star,
+  zap: Zap,
+  coffee: Coffee,
+  apple: Apple,
+  sun: Sun,
+  activity: Activity,
+  alert: AlertCircle
+};
+
 const Lembretes = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -42,6 +64,11 @@ const Lembretes = () => {
   const [loading, setLoading] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [lembreteToDelete, setLembreteToDelete] = useState<string | null>(null);
+
+  const getIconComponent = (iconeName: string) => {
+    const IconComponent = iconeMap[iconeName] || Clock;
+    return IconComponent;
+  };
 
   useEffect(() => {
     if (user) {
@@ -228,39 +255,46 @@ const Lembretes = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {lembretes.map((lembrete) => (
-              <Card key={lembrete.id} className="p-4">
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg">{lembrete.nome}</h3>
-                      {lembrete.descricao && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {lembrete.descricao}
-                        </p>
-                      )}
+            {lembretes.map((lembrete) => {
+              const IconComponent = getIconComponent(lembrete.icone);
+              return (
+                <Card key={lembrete.id} className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <IconComponent className="w-6 h-6 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-lg">{lembrete.nome}</h3>
+                          {lembrete.descricao && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {lembrete.descricao}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => navigate(`/lembretes/editar/${lembrete.id}`)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            setLembreteToDelete(lembrete.id);
+                            setShowDeleteDialog(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => navigate(`/lembretes/editar/${lembrete.id}`)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => {
-                          setLembreteToDelete(lembrete.id);
-                          setShowDeleteDialog(true);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
 
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="secondary" className="flex items-center space-x-1">
@@ -273,9 +307,10 @@ const Lembretes = () => {
                       <span>{formatHorarios(lembrete.horarios)}</span>
                     </Badge>
                   </div>
-                </div>
-              </Card>
-            ))}
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         )}
         </div>
