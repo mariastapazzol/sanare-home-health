@@ -242,26 +242,31 @@ export default function Receitas() {
   if (!isContextReady || loading) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="bg-card border-b border-border sticky top-0 z-10">
-          <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/home")}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-xl font-semibold text-foreground">Receitas</h1>
+        <button
+          onClick={() => navigate("/home")}
+          className="back-btn"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+
+        <div className="pt-16 pb-20 px-4">
+          <div className="mb-6">
+            <h1 className="text-mobile-2xl font-bold text-foreground mb-2">
+              Receitas
+            </h1>
+            <p className="text-muted-foreground">
+              Carregando receitas...
+            </p>
           </div>
-        </header>
-        <main className="container mx-auto px-4 py-8 space-y-4">
-          <Skeleton className="h-12 w-full" />
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <Skeleton className="h-48 w-full" />
-            <Skeleton className="h-48 w-full" />
-            <Skeleton className="h-48 w-full" />
+          <div className="space-y-4">
+            <Skeleton className="h-12 w-full" />
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <Skeleton className="h-48 w-full" />
+              <Skeleton className="h-48 w-full" />
+              <Skeleton className="h-48 w-full" />
+            </div>
           </div>
-        </main>
+        </div>
       </div>
     );
   }
@@ -269,25 +274,23 @@ export default function Receitas() {
   if (!currentContext) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="bg-card border-b border-border sticky top-0 z-10">
-          <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/home")}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-xl font-semibold text-foreground">Receitas</h1>
-          </div>
-        </header>
-        <main className="container mx-auto px-4 py-8">
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <p className="text-lg text-muted-foreground mb-6">
-              Selecione um paciente dependente vinculado para visualizar receitas.
+        <button
+          onClick={() => navigate("/home")}
+          className="back-btn"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+
+        <div className="pt-16 pb-20 px-4">
+          <div className="mb-6">
+            <h1 className="text-mobile-2xl font-bold text-foreground mb-2">
+              Receitas
+            </h1>
+            <p className="text-muted-foreground">
+              Selecione um paciente para visualizar receitas
             </p>
           </div>
-        </main>
+        </div>
       </div>
     );
   }
@@ -295,25 +298,28 @@ export default function Receitas() {
   if (receitas.length === 0) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="bg-card border-b border-border sticky top-0 z-10">
-          <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/home")}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-xl font-semibold text-foreground">Receitas</h1>
-          </div>
-        </header>
+        <button
+          onClick={() => navigate("/home")}
+          className="back-btn"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
 
-        <main className="container mx-auto px-4 py-8">
+        <div className="pt-16 pb-20 px-4">
+          <div className="mb-6">
+            <h1 className="text-mobile-2xl font-bold text-foreground mb-2">
+              Receitas
+            </h1>
+            <p className="text-muted-foreground">
+              Gerencie suas receitas médicas
+            </p>
+          </div>
+
           <ReceitasEmpty 
             onAddReceita={() => setUploadDialogOpen(true)}
             onAddMedicamento={() => navigate("/medicamentos/novo")}
           />
-        </main>
+        </div>
 
         <UploadReceitaDialog
           open={uploadDialogOpen}
@@ -329,20 +335,23 @@ export default function Receitas() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="bg-card border-b border-border sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/home")}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-xl font-semibold text-foreground">Receitas</h1>
-        </div>
-      </header>
+      <button
+        onClick={() => navigate("/home")}
+        className="back-btn"
+      >
+        <ArrowLeft className="w-5 h-5" />
+      </button>
 
-      <main className="container mx-auto px-4 py-6">
+      <div className="pt-16 pb-20 px-4">
+        <div className="mb-6">
+          <h1 className="text-mobile-2xl font-bold text-foreground mb-2">
+            Receitas
+          </h1>
+          <p className="text-muted-foreground">
+            Gerencie suas receitas médicas
+          </p>
+        </div>
+
         <div className="mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -365,7 +374,7 @@ export default function Receitas() {
             />
           ))}
         </div>
-      </main>
+      </div>
 
       <ReceitaDialog
         receita={selectedReceita}

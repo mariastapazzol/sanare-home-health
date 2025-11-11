@@ -101,23 +101,22 @@ const Diary = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="relative">
-        <button
-          onClick={() => navigate('/home')}
-          className="back-btn"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+      <button
+        onClick={() => navigate('/home')}
+        className="back-btn"
+      >
+        <ArrowLeft className="w-5 h-5" />
+      </button>
 
-        <div className="pt-16 pb-20 px-4">
-          <div className="mb-6">
-            <h1 className="text-mobile-2xl font-bold text-foreground mb-2">
-              Diário Emocional
-            </h1>
-            <p className="text-muted-foreground">
-              Como você está se sentindo hoje?
-            </p>
-          </div>
+      <div className="pt-16 pb-20 px-4">
+        <div className="mb-6">
+          <h1 className="text-mobile-2xl font-bold text-foreground mb-2">
+            Diário Emocional
+          </h1>
+          <p className="text-muted-foreground">
+            Como você está se sentindo hoje?
+          </p>
+        </div>
 
           <Card className="card-health">
             <CardContent className="pt-6">
@@ -171,7 +170,6 @@ const Diary = () => {
             >
               Ver histórico de registros
             </Button>
-          </div>
         </div>
       </div>
 
