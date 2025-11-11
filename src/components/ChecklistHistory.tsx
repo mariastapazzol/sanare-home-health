@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useCareContext } from "@/hooks/use-care-context";
 import { formatDateDisplay, getLastNDays } from "@/lib/checklist-utils";
-import { CheckCircle2, XCircle, Calendar, Pill, Bell, TrendingUp, Filter } from "lucide-react";
+import { CheckCircle2, XCircle, Calendar, Pill, Bell, TrendingUp, Filter, Clock, Heart, Zap, Star, Coffee, Apple, Activity, AlertCircle, Sun } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface HistoryItem {
@@ -17,6 +17,7 @@ interface HistoryItem {
   tipo: 'medicamento' | 'lembrete';
   checked: boolean;
   inactive: boolean;
+  icone?: string;
 }
 
 interface DayHistory {
@@ -35,6 +36,25 @@ export function ChecklistHistory() {
   const [daysToShow, setDaysToShow] = useState(7);
   const [filterType, setFilterType] = useState<'all' | 'medicamento' | 'lembrete'>('all');
 
+  // Mapa de ícones disponíveis
+  const iconMap: Record<string, any> = {
+    bell: Bell,
+    clock: Clock,
+    heart: Heart,
+    star: Star,
+    zap: Zap,
+    coffee: Coffee,
+    apple: Apple,
+    sun: Sun,
+    activity: Activity,
+    alert: AlertCircle
+  };
+
+  const getLembreteIcon = (iconeName?: string) => {
+    const Icon = iconMap[iconeName || 'bell'] || Bell;
+    return Icon;
+  };
+
   useEffect(() => {
     if (!currentContext?.id) return;
 
@@ -52,7 +72,7 @@ export function ChecklistHistory() {
         // Buscar lembretes
         const { data: lembretes } = await supabase
           .from('lembretes')
-          .select('id, nome, horarios')
+          .select('id, nome, horarios, icone')
           .eq('context_id', currentContext.id);
 
         // Buscar status histórico
@@ -105,7 +125,8 @@ export function ChecklistHistory() {
                 horario: horarioStr,
                 tipo: 'lembrete',
                 checked: status?.checked || false,
-                inactive: status?.inactive || false
+                inactive: status?.inactive || false,
+                icone: lem.icone
               });
             });
           });
@@ -282,10 +303,17 @@ export function ChecklistHistory() {
                       >
                         <div className="flex items-center gap-3 flex-1">
                           {item.tipo === 'medicamento' ? (
-                            <Pill className="h-4 w-4 text-blue-600" />
-                          ) : (
-                            <Bell className="h-4 w-4 text-purple-600" />
-                          )}
+                            <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/30">
+                              <Pill className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            </div>
+                          ) : (() => {
+                            const LembreteIcon = getLembreteIcon(item.icone);
+                            return (
+                              <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/30">
+                                <LembreteIcon className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                              </div>
+                            );
+                          })()}
                           <div className="flex-1">
                             <span className="font-medium">{item.nome}</span>
                             <span className="text-sm text-muted-foreground ml-2">
