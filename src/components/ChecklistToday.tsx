@@ -219,14 +219,14 @@ export function ChecklistToday() {
                           (() => {
                             const LembreteIcon = getLembreteIcon(item.icone);
                             return (
-                              <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/30">
-                                <LembreteIcon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <LembreteIcon className="h-6 w-6 text-primary" />
                               </div>
                             );
                           })()
                         ) : (
-                          <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/30">
-                            <Pill className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <Pill className="h-6 w-6 text-primary" />
                           </div>
                         )}
                         <div className="flex-1">
