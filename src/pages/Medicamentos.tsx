@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, ArrowLeft, Pill, Edit, Trash2, Clock } from "lucide-react";
+import { Plus, Search, ArrowLeft, Pill, Edit, Trash2, Clock, Package, AlertTriangle, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -28,6 +28,7 @@ interface Medicamento {
   dosagem: string;
   unidade_dose: string;
   quantidade_atual: number;
+  alerta_minimo: number;
   precisa_receita: boolean;
   imagem_url?: string;
   horarios: any;
@@ -51,7 +52,7 @@ const Medicamentos = () => {
       // RLS já filtra por contexto, não precisa filtrar por context_id explicitamente
       const { data, error } = await supabase
         .from('medicamentos')
-        .select('id, nome, dosagem, unidade_dose, quantidade_atual, precisa_receita, imagem_url, horarios');
+        .select('id, nome, dosagem, unidade_dose, quantidade_atual, alerta_minimo, precisa_receita, imagem_url, horarios');
 
       if (error) throw error;
       setMedicamentos(data || []);
@@ -194,10 +195,10 @@ const Medicamentos = () => {
           </div>
 
           {/* Lista de medicamentos */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             {filteredMedicamentos.map((medicamento) => (
-              <Card key={medicamento.id} className="card-health">
-                <CardHeader className="pb-2">
+              <Card key={medicamento.id} className="p-4">
+                <div className="space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3 flex-1">
                       {medicamento.imagem_url ? (
@@ -207,92 +208,84 @@ const Medicamentos = () => {
                           className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
                         />
                       ) : (
-                        <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                          <Pill className="w-6 h-6 text-muted-foreground" />
+                        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Pill className="h-6 w-6 text-primary" />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-foreground truncate">
-                          {medicamento.nome}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {medicamento.dosagem} {medicamento.unidade_dose}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="text-sm">
-                          <span className="text-muted-foreground">Estoque: </span>
-                          <span className="font-medium text-foreground">
-                            {medicamento.quantidade_atual}
-                          </span>
-                        </div>
-                        {medicamento.precisa_receita && (
-                          <Badge variant="secondary" className="text-xs">
-                            Precisa receita
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => editMedicamento(medicamento.id)}
-                          className="w-8 h-8 p-0"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="w-8 h-8 p-0 text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Excluir medicamento</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tem certeza que deseja excluir "{medicamento.nome}"? Esta ação não pode ser desfeita.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => deleteMedicamento(medicamento.id, medicamento.nome)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Excluir
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <h3 className="font-semibold text-lg">{medicamento.nome}</h3>
+                        <p className="text-sm text-muted-foreground">{medicamento.dosagem}</p>
                       </div>
                     </div>
                     
-                    {medicamento.horarios && Array.isArray(medicamento.horarios) && medicamento.horarios.length > 0 && (
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                        <div className="flex flex-wrap gap-1.5">
-                          {medicamento.horarios.map((horario: string, idx: number) => (
-                            <Badge key={idx} variant="outline" className="text-xs">
-                              {horario}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => editMedicamento(medicamento.id)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir medicamento</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja excluir "{medicamento.nome}"? Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteMedicamento(medicamento.id, medicamento.nome)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="secondary" className="flex items-center space-x-1">
+                      <Clock className="h-3 w-3" />
+                      <span>
+                        {medicamento.horarios && medicamento.horarios.length > 0
+                          ? medicamento.horarios.slice(0, 2).join(', ') + (medicamento.horarios.length > 2 ? ` +${medicamento.horarios.length - 2}` : '')
+                          : 'Sem horário'}
+                      </span>
+                    </Badge>
+                    
+                    <Badge variant="outline" className="flex items-center space-x-1">
+                      <Package className="h-3 w-3" />
+                      <span>{medicamento.quantidade_atual} {medicamento.unidade_dose}</span>
+                    </Badge>
+
+                    {medicamento.quantidade_atual <= medicamento.alerta_minimo && (
+                      <Badge variant="destructive" className="flex items-center space-x-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        <span>Estoque baixo</span>
+                      </Badge>
+                    )}
+
+                    {medicamento.precisa_receita && (
+                      <Badge variant="outline" className="flex items-center space-x-1">
+                        <FileText className="h-3 w-3" />
+                        <span>Receita obrigatória</span>
+                      </Badge>
                     )}
                   </div>
-                </CardContent>
+                </div>
               </Card>
             ))}
           </div>
