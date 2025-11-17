@@ -28,16 +28,7 @@ export function ReceitaDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>{receita.nome}</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onOpenChange(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </DialogTitle>
+          <DialogTitle>{receita.nome}</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
