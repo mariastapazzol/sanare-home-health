@@ -17,7 +17,15 @@ import {
   Check,
   X,
   BookOpen,
-  Activity
+  Activity,
+  Bell,
+  Heart,
+  Zap,
+  Star,
+  Coffee,
+  Apple,
+  Sun,
+  AlertCircle
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -44,6 +52,21 @@ const Home = () => {
   const { items: checklistItems, loading: checklistLoading, toggleChecked, toggleInactive } = useChecklistDaily({ 
     contextId: isContextReady ? currentContext?.id : undefined
   });
+
+  // Mapa de ícones para lembretes (mesmo padrão da listagem)
+  const lembreteIconMap: Record<string, any> = {
+    bell: Bell,
+    clock: Clock,
+    heart: Heart,
+    star: Star,
+    zap: Zap,
+    coffee: Coffee,
+    apple: Apple,
+    sun: Sun,
+    activity: Activity,
+    alert: AlertCircle,
+  };
+  const getLembreteIcon = (name?: string) => lembreteIconMap[name || 'bell'] || Bell;
 
   const homeActions = getHomeActionsForRole(papel);
   const menuItems = getSidebarForRole(papel);
@@ -223,7 +246,10 @@ const Home = () => {
                         {item.tipo === 'medicamento' ? (
                           <Pill className="h-4 w-4 text-primary" />
                         ) : (
-                          <AlertTriangle className="h-4 w-4 text-secondary" />
+                          (() => {
+                            const LembreteIcon = getLembreteIcon(item.icone);
+                            return <LembreteIcon className="h-4 w-4 text-primary" />;
+                          })()
                         )}
                       </div>
                       <div className="flex-1">
