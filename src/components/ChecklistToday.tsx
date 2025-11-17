@@ -209,23 +209,22 @@ export function ChecklistToday() {
                     <div className="flex-1 space-y-2">
                       {/* Cabeçalho com imagem/ícone, nome e horário */}
                       <div className="flex items-center gap-3">
-                        {item.tipo === 'medicamento' && item.imagem_url ? (
+                        {/* Ícone ou imagem do lado esquerdo */}
+                        {item.tipo === 'lembrete' && item.icone ? (
+                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            {(() => {
+                              const LembreteIcon = getLembreteIcon(item.icone);
+                              return <LembreteIcon className="h-6 w-6 text-primary" />;
+                            })()}
+                          </div>
+                        ) : item.tipo === 'medicamento' && item.imagem_url ? (
                           <img 
                             src={item.imagem_url} 
                             alt={item.nome}
-                            className="w-12 h-12 rounded-lg object-cover"
+                            className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
                           />
-                        ) : item.tipo === 'lembrete' ? (
-                          (() => {
-                            const LembreteIcon = getLembreteIcon(item.icone);
-                            return (
-                              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                                <LembreteIcon className="h-6 w-6 text-primary" />
-                              </div>
-                            );
-                          })()
                         ) : (
-                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                             <Pill className="h-6 w-6 text-primary" />
                           </div>
                         )}
