@@ -35,6 +35,9 @@ import { NotificationPermissionDeniedAlert } from '@/components/NotificationPerm
 const frequenciaOptions = [
   { id: 'todos_os_dias', label: 'Todos os dias' },
   { id: 'dias_alternados', label: 'Dias alternados' },
+  { id: '3_vezes_semana', label: '3 vezes por semana' },
+  { id: '2_vezes_semana', label: '2 vezes por semana' },
+  { id: '1_vez_semana', label: '1 vez por semana' },
   { id: 'semanal', label: 'Semanal' },
   { id: 'personalizado', label: 'Dias específicos' }
 ];
@@ -80,6 +83,7 @@ const NovoLembrete = () => {
   const [novoHorario, setNovoHorario] = useState('');
   const [frequenciaSelecionada, setFrequenciaSelecionada] = useState<string[]>([]);
   const [diasPersonalizados, setDiasPersonalizados] = useState<string[]>([]);
+  const [diasSemanaEscolhidos, setDiasSemanaEscolhidos] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -87,6 +91,17 @@ const NovoLembrete = () => {
       fetchLembrete(id);
     }
   }, [isEditing, id]);
+
+  // Atualizar datas quando dias da semana são escolhidos
+  useEffect(() => {
+    if (frequenciaSelecionada.includes('1_vez_semana') || 
+        frequenciaSelecionada.includes('2_vezes_semana') || 
+        frequenciaSelecionada.includes('3_vezes_semana')) {
+      if (diasSemanaEscolhidos.length > 0) {
+        setFormData(prev => ({ ...prev, datas: diasSemanaEscolhidos }));
+      }
+    }
+  }, [diasSemanaEscolhidos, frequenciaSelecionada]);
 
   const fetchLembrete = async (lembreteId: string) => {
     if (!user) return;
@@ -161,6 +176,14 @@ const NovoLembrete = () => {
     if (checked) {
       setFrequenciaSelecionada([opcao]);
       
+      // Limpar dias específicos ao mudar frequência
+      if (!['1_vez_semana', '2_vezes_semana', '3_vezes_semana'].includes(opcao)) {
+        setDiasSemanaEscolhidos([]);
+      }
+      if (opcao !== 'personalizado') {
+        setDiasPersonalizados([]);
+      }
+      
       // Atualizar datas baseado na frequência
       let novasDatas: string[] = [];
       
@@ -170,6 +193,8 @@ const NovoLembrete = () => {
         novasDatas = ['dias_alternados'];
       } else if (opcao === 'semanal') {
         novasDatas = ['semanal'];
+      } else if (opcao === '1_vez_semana' || opcao === '2_vezes_semana' || opcao === '3_vezes_semana') {
+        novasDatas = diasSemanaEscolhidos.length > 0 ? diasSemanaEscolhidos : [opcao];
       } else if (opcao === 'personalizado') {
         novasDatas = diasPersonalizados;
       }
@@ -177,6 +202,7 @@ const NovoLembrete = () => {
       setFormData(prev => ({ ...prev, datas: novasDatas }));
     } else {
       setFrequenciaSelecionada([]);
+      setDiasSemanaEscolhidos([]);
       setFormData(prev => ({ ...prev, datas: [] }));
     }
   };
@@ -458,6 +484,57 @@ const NovoLembrete = () => {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Seleção de dias para "X vezes por semana" */}
+            {(frequenciaSelecionada.includes('1_vez_semana') || 
+              frequenciaSelecionada.includes('2_vezes_semana') || 
+              frequenciaSelecionada.includes('3_vezes_semana')) && (
+              <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                <Label className="text-sm font-medium mb-2 block">
+                  Selecione {
+                    frequenciaSelecionada.includes('1_vez_semana') ? 'o dia' : 
+                    frequenciaSelecionada.includes('2_vezes_semana') ? 'os 2 dias' :
+                    'os 3 dias'
+                  } da semana:
+                </Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {diasSemana.map((dia) => (
+                    <div key={dia.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`dia-semana-${dia.id}`}
+                        checked={diasSemanaEscolhidos.includes(dia.id)}
+                        onCheckedChange={(checked) => {
+                          const maxDias = frequenciaSelecionada.includes('1_vez_semana') ? 1 : 
+                                        frequenciaSelecionada.includes('2_vezes_semana') ? 2 : 3;
+                          
+                          if (checked) {
+                            if (diasSemanaEscolhidos.length < maxDias) {
+                              setDiasSemanaEscolhidos([...diasSemanaEscolhidos, dia.id]);
+                            } else {
+                              toast({
+                                title: "Atenção",
+                                description: `Selecione apenas ${maxDias} dia(s) da semana`,
+                                variant: "destructive"
+                              });
+                            }
+                          } else {
+                            setDiasSemanaEscolhidos(diasSemanaEscolhidos.filter(d => d !== dia.id));
+                          }
+                        }}
+                      />
+                      <Label htmlFor={`dia-semana-${dia.id}`} className="text-sm">
+                        {dia.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                {diasSemanaEscolhidos.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {diasSemanaEscolhidos.length} dia(s) selecionado(s)
+                  </p>
+                )}
               </div>
             )}
           </div>
