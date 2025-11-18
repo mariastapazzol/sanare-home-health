@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Plus, X, Upload, Clock } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,6 +45,7 @@ const NovoMedicamento = () => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadingReceita, setUploadingReceita] = useState(false);
+  const [diasSemana, setDiasSemana] = useState<string[]>([]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -617,7 +619,16 @@ const NovoMedicamento = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Frequência</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select 
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            // Limpar dias selecionados ao mudar frequência
+                            if (!['1_vez_semana', '2_vezes_semana', '3_vezes_semana'].includes(value)) {
+                              setDiasSemana([]);
+                            }
+                          }} 
+                          defaultValue={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione a frequência" />
@@ -636,6 +647,63 @@ const NovoMedicamento = () => {
                       </FormItem>
                     )}
                   />
+
+                  {/* Seleção de dias da semana */}
+                  {['1_vez_semana', '2_vezes_semana', '3_vezes_semana'].includes(form.watch('frequencia')) && (
+                    <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
+                      <Label className="text-sm font-medium">
+                        Selecione {
+                          form.watch('frequencia') === '1_vez_semana' ? 'o dia' : 
+                          form.watch('frequencia') === '2_vezes_semana' ? 'os 2 dias' :
+                          'os 3 dias'
+                        } da semana:
+                      </Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { id: 'segunda', label: 'Segunda' },
+                          { id: 'terca', label: 'Terça' },
+                          { id: 'quarta', label: 'Quarta' },
+                          { id: 'quinta', label: 'Quinta' },
+                          { id: 'sexta', label: 'Sexta' },
+                          { id: 'sabado', label: 'Sábado' },
+                          { id: 'domingo', label: 'Domingo' }
+                        ].map((dia) => (
+                          <div key={dia.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`dia-${dia.id}`}
+                              checked={diasSemana.includes(dia.id)}
+                              onCheckedChange={(checked) => {
+                                const maxDias = form.watch('frequencia') === '1_vez_semana' ? 1 : 
+                                              form.watch('frequencia') === '2_vezes_semana' ? 2 : 3;
+                                
+                                if (checked) {
+                                  if (diasSemana.length < maxDias) {
+                                    setDiasSemana([...diasSemana, dia.id]);
+                                  } else {
+                                    toast({
+                                      title: "Atenção",
+                                      description: `Selecione apenas ${maxDias} dia(s) da semana`,
+                                      variant: "destructive"
+                                    });
+                                  }
+                                } else {
+                                  setDiasSemana(diasSemana.filter(d => d !== dia.id));
+                                }
+                              }}
+                            />
+                            <Label htmlFor={`dia-${dia.id}`} className="text-sm">
+                              {dia.label}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                      {diasSemana.length > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          {diasSemana.length} dia(s) selecionado(s)
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   <div>
                     <Label className="text-sm font-medium flex items-center space-x-2">
