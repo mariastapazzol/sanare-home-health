@@ -16,6 +16,7 @@ const ForgotPassword = () => {
   
   const [step, setStep] = useState<Step>('identify');
   const [identifier, setIdentifier] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [email, setEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -43,11 +44,11 @@ const ForgotPassword = () => {
     try {
       const normalizedInput = identifier.trim().toLowerCase();
 
-      // Validação de formato
-      if (!normalizedInput) {
+      // Validação de campos
+      if (!normalizedInput || !birthDate) {
         toast({
-          title: "Campo obrigatório",
-          description: "Digite um e-mail válido ou nome de usuário.",
+          title: "Campos obrigatórios",
+          description: "Digite um e-mail/usuário e data de nascimento.",
           variant: "destructive"
         });
         setLoading(false);
@@ -55,6 +56,7 @@ const ForgotPassword = () => {
       }
 
       let emailToUse = normalizedInput;
+      let userIdToCheck = null;
 
       // Se não for email, buscar username em pacientes_dependentes
       if (!normalizedInput.includes('@')) {
@@ -65,26 +67,50 @@ const ForgotPassword = () => {
           .maybeSingle();
 
         if (dependent?.user_id) {
-          // Buscar o email do Auth via RPC ou consulta direta não é possível
-          // Usar email shadow (formato padrão de dependentes)
+          userIdToCheck = dependent.user_id;
           emailToUse = `${normalizedInput}@dep.sanare.local`;
         }
-        // Não revelar se existe ou não - mensagem neutra
       }
 
-      // Enviar reset (mesmo que não exista, para evitar enumeração)
+      // Verificar se e-mail e data de nascimento correspondem
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('user_id, birth_date')
+        .eq('email', normalizedInput.includes('@') ? normalizedInput : emailToUse)
+        .maybeSingle();
+
+      if (!profile || profile.birth_date !== birthDate) {
+        toast({
+          title: "Dados não conferem",
+          description: "E-mail/usuário ou data de nascimento incorretos.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Enviar reset
       const { error } = await supabase.auth.resetPasswordForEmail(emailToUse, {
         redirectTo: `${window.location.origin}/auth/reset`
       });
 
-      // Sempre mostrar mensagem neutra, mesmo com erro
+      if (error) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível enviar o link de recuperação.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
       setEmail(emailToUse);
       setOtpSent(true);
       setStep('reset');
       
       toast({
-        title: "Instruções enviadas",
-        description: "Se o e-mail/usuário existir, enviaremos instruções para redefinir sua senha."
+        title: "Link enviado",
+        description: "Verifique seu e-mail para redefinir sua senha."
       });
     } catch (error: any) {
       toast({
@@ -204,7 +230,7 @@ const ForgotPassword = () => {
             <>
               <h1 className="text-mobile-2xl font-bold">Esqueceu sua senha?</h1>
               <p className="text-sm text-muted-foreground">
-                Digite seu e-mail ou nome de usuário para recuperar o acesso
+                Digite seu e-mail/usuário e data de nascimento para recuperar o acesso
               </p>
             </>
           )}
@@ -250,12 +276,24 @@ const ForgotPassword = () => {
                 </p>
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="birthDate">Data de nascimento</Label>
+                <Input
+                  id="birthDate"
+                  type="date"
+                  value={birthDate}
+                  onChange={(e) => setBirthDate(e.target.value)}
+                  required
+                  className="min-h-[44px]"
+                />
+              </div>
+
               <Button 
                 type="submit" 
                 className="btn-health w-full"
-                disabled={loading || !identifier.trim()}
+                disabled={loading || !identifier.trim() || !birthDate}
               >
-                {loading ? 'Enviando...' : 'Continuar'}
+                {loading ? 'Verificando...' : 'Continuar'}
               </Button>
             </form>
           </Card>
