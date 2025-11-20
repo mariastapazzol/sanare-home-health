@@ -141,34 +141,29 @@ export function ChecklistToday() {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-1">
-              <CardTitle className="text-2xl">
-                Checklist de hoje
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-primary" />
+              <CardTitle className="text-xl">
+                CheckList Diário
               </CardTitle>
-              <Link to="/checklist/relatorio-dia">
-                <Button variant="link" size="sm" className="text-primary h-auto p-0">
-                  Ver relatório do dia
-                </Button>
-              </Link>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {todayKey && formatDateDisplay(todayKey)} • {completedCount} de {totalCount} concluídas
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Link to="/checklist/historico">
-              <Button variant="outline" size="sm">
-                <History className="h-4 w-4 mr-2" />
-                Histórico
+            <Link to="/checklist/relatorio-dia">
+              <Button 
+                className="bg-[#9BBF30] hover:bg-[#8AAF20] text-white font-semibold uppercase text-xs px-4 py-2 h-auto"
+              >
+                Ver Histórico
               </Button>
             </Link>
-            <Button variant="outline" size="sm" onClick={() => setShowResetDialog(true)}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Resetar
-            </Button>
           </div>
+          <Button variant="outline" size="sm" onClick={() => setShowResetDialog(true)}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Resetar
+          </Button>
         </div>
+        <p className="text-sm text-muted-foreground mt-2">
+          {todayKey && formatDateDisplay(todayKey)} • {completedCount} de {totalCount} concluídas
+        </p>
       </CardHeader>
       <CardContent>
         {visibleTasks.length === 0 ? (
