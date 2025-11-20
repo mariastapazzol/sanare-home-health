@@ -217,12 +217,6 @@ export function ChecklistToday() {
                               return <LembreteIcon className="h-6 w-6 text-primary" />;
                             })()}
                           </div>
-                        ) : item.tipo === 'medicamento' && item.imagem_url ? (
-                          <img 
-                            src={item.imagem_url} 
-                            alt={item.nome}
-                            className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-                          />
                         ) : (
                           <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                             <Pill className="h-6 w-6 text-primary" />
