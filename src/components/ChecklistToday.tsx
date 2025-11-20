@@ -149,7 +149,13 @@ export function ChecklistToday() {
               {todayKey && formatDateDisplay(todayKey)} • {completedCount} de {totalCount} concluídas
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Link to="/checklist/relatorio-dia">
+              <Button variant="outline" size="sm">
+                <History className="h-4 w-4 mr-2" />
+                Ver relatório do dia
+              </Button>
+            </Link>
             <Link to="/checklist/historico">
               <Button variant="outline" size="sm">
                 <History className="h-4 w-4 mr-2" />
