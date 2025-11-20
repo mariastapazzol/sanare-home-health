@@ -36,6 +36,7 @@ import NovoSintoma from "./pages/NovoSintoma";
 import NovoSinalVital from "./pages/NovoSinalVital";
 import ChecklistDiario from "./pages/ChecklistDiario";
 import ChecklistHistorico from "./pages/ChecklistHistorico";
+import RelatorioDia from "./pages/RelatorioDia";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -160,6 +161,11 @@ const AppContent = () => {
             <Route path="/checklist/historico" element={
               <ProtectedRoute>
                 <ChecklistHistorico />
+              </ProtectedRoute>
+            } />
+            <Route path="/checklist/relatorio-dia" element={
+              <ProtectedRoute>
+                <RelatorioDia />
               </ProtectedRoute>
             } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
