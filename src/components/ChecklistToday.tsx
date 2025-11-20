@@ -141,21 +141,22 @@ export function ChecklistToday() {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <CardTitle className="text-2xl">
-              Checklist de hoje
-            </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-1">
+              <CardTitle className="text-2xl">
+                Checklist de hoje
+              </CardTitle>
+              <Link to="/checklist/relatorio-dia">
+                <Button variant="link" size="sm" className="text-primary h-auto p-0">
+                  Ver relatório do dia
+                </Button>
+              </Link>
+            </div>
+            <p className="text-sm text-muted-foreground">
               {todayKey && formatDateDisplay(todayKey)} • {completedCount} de {totalCount} concluídas
             </p>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <Link to="/checklist/relatorio-dia">
-              <Button variant="outline" size="sm">
-                <History className="h-4 w-4 mr-2" />
-                Ver relatório do dia
-              </Button>
-            </Link>
+          <div className="flex gap-2">
             <Link to="/checklist/historico">
               <Button variant="outline" size="sm">
                 <History className="h-4 w-4 mr-2" />
