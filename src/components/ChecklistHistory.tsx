@@ -181,17 +181,12 @@ export function ChecklistHistory() {
 
   return (
     <div className="space-y-6">
-      {/* Header com filtros */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold">Histórico do Checklist</h2>
-          <p className="text-muted-foreground mt-1">
-            Acompanhe seu progresso e adesão ao tratamento
-          </p>
-        </div>
-        <Button variant="outline" onClick={() => navigate('/home')}>
-          Voltar para hoje
-        </Button>
+      {/* Header */}
+      <div>
+        <h2 className="text-3xl font-bold">Histórico do Checklist</h2>
+        <p className="text-muted-foreground mt-1">
+          Acompanhe seu progresso e adesão ao tratamento
+        </p>
       </div>
 
       {/* Estatísticas gerais */}
